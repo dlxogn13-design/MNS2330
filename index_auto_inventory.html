@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>MNS 재고 검색</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+body{font-family:Arial;padding:30px;background:#f4f6f8}
+h2{margin-bottom:15px}
+input{padding:8px;margin:4px;font-size:14px}
+button{padding:8px 12px;margin:4px;background:#2f3640;color:white;border:none;cursor:pointer}
+table{border-collapse:collapse;margin-top:20px;width:100%}
+th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
+th{background:#2f3640;color:white}
+</style>
+</head>
+
+<body>
+
+<h2>📦 MNS 재고 검색</h2>
+
+<input id="model" placeholder="모델 (예: S948)">
+<input id="color" placeholder="색상 (예: 화이트)">
+<input id="branch" placeholder="지사">
+<input id="store" placeholder="점명">
+
+<button onclick="search()">검색</button>
+
+<table>
+<thead>
+<tr>
+<th>지사</th>
+<th>점명</th>
+<th>모델</th>
+<th>색상</th>
+<th>자사</th>
+<th>타사</th>
+</tr>
+</thead>
+<tbody id="result"></tbody>
+</table>
+
+<script>
+
+let data = [];
+
+async function loadInventory(){
+ const response = await fetch("inventory.xlsx");
+ const arrayBuffer = await response.arrayBuffer();
+ const workbook = XLSX.read(arrayBuffer);
+ const sheet = workbook.Sheets[workbook.SheetNames[0]];
+ data = XLSX.utils.sheet_to_json(sheet);
+ console.log("inventory loaded", data.length);
+}
+
+loadInventory();
+
+function search(){
+
+ const model = document.getElementById("model").value.toUpperCase();
+ const color = document.getElementById("color").value;
+ const branch = document.getElementById("branch").value;
+ const store = document.getElementById("store").value;
+
+ let map = {};
+
+ data.forEach(r=>{
+
+  const m = r["모델명"] || "";
+  const qty = Number(r["수량"]||0);
+  const br = r["지사명"] || "";
+  const st = r["점명"] || "";
+  const type = r["자/타사구분"] || "";
+
+  if(qty < 1) return;
+
+  if(model && !m.toUpperCase().includes(model)) return;
+  if(color && !m.includes(color)) return;
+  if(branch && !br.includes(branch)) return;
+  if(store && !st.includes(store)) return;
+
+  const key = br + st + m;
+
+  if(!map[key]){
+   map[key] = {branch:br,store:st,model:m,color:color,self:0,other:0};
+  }
+
+  if(type.includes("자사")) map[key].self += qty;
+  else map[key].other += qty;
+
+ });
+
+ const tbody = document.getElementById("result");
+ tbody.innerHTML="";
+
+ Object.values(map).forEach(r=>{
+
+  const tr = `<tr>
+   <td>${r.branch}</td>
+   <td>${r.store}</td>
+   <td>${r.model}</td>
+   <td>${r.color||"-"}</td>
+   <td>${r.self}</td>
+   <td>${r.other}</td>
+  </tr>`;
+
+  tbody.innerHTML += tr;
+
+ });
+
+}
+
+</script>
+
+</body>
+</html>
