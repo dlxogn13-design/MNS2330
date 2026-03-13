@@ -3,111 +3,358 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>MNS 재고 검색</title>
+<title>KT m&s 재고 검색</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 <style>
-body{font-family:Arial;padding:30px;background:#f4f6f8}
-h2{margin-bottom:15px}
-input{padding:8px;margin:4px;font-size:14px}
-button{padding:8px 12px;margin:4px;background:#2f3640;color:white;border:none;cursor:pointer}
-table{border-collapse:collapse;margin-top:20px;width:100%}
-th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
-th{background:#2f3640;color:white}
+body{
+font-family:Arial;
+background:linear-gradient(#e6f4ff,#ffffff);
+padding:20px;
+}
+
+.container{
+max-width:650px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+.header{
+display:flex;
+align-items:center;
+gap:10px;
+margin-bottom:10px;
+}
+
+.header img{
+height:40px;
+}
+
+.title{
+font-size:22px;
+font-weight:bold;
+}
+
+.update{
+background:#fff5c2;
+padding:8px;
+border-radius:6px;
+text-align:center;
+margin-bottom:10px;
+}
+
+.total{
+font-size:22px;
+color:#1b7bdc;
+text-align:center;
+margin:10px 0;
+font-weight:bold;
+}
+
+.searchbox input{
+width:100%;
+padding:12px;
+margin:6px 0;
+border-radius:6px;
+border:1px solid #ddd;
+}
+
+button{
+width:100%;
+padding:12px;
+background:#3a7be0;
+color:white;
+border:none;
+border-radius:6px;
+font-size:16px;
+cursor:pointer;
+}
+
+.section{
+margin-top:20px;
+}
+
+.item{
+padding:10px;
+border-bottom:1px solid #eee;
+cursor:pointer;
+}
+
+.item:hover{
+background:#f1f7ff;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:8px;
+text-align:center;
+}
+
+th{
+background:#2f3640;
+color:white;
+}
 </style>
 </head>
 
 <body>
 
-<h2>📦 MNS 재고 검색</h2>
+<div class="container">
 
-<input id="model" placeholder="모델 (예: S948)">
-<input id="color" placeholder="색상 (예: 화이트)">
-<input id="branch" placeholder="지사">
-<input id="store" placeholder="점명">
+<div class="header">
+<img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/KT_logo.svg">
+<div class="title">KT m&s 재고 검색 🔍</div>
+</div>
 
+<div class="update" id="updateTime">재고 업데이트 : -</div>
+<div class="total" id="totalCount">총 재고 : 0</div>
+
+<div class="searchbox">
+<input id="model" placeholder="모델 검색">
+<input id="color" placeholder="색상 검색">
+<input id="branch" placeholder="지사 검색">
+<input id="store" placeholder="점명 검색">
 <button onclick="search()">검색</button>
+</div>
 
-<table>
+<div class="section">
+<h3>모델 검색 결과</h3>
+<div id="modelList"></div>
+</div>
+
+<div class="section">
+<h3>지사별 재고 많은 점 TOP10</h3>
+<div id="top10"></div>
+</div>
+
+<table id="result">
 <thead>
 <tr>
 <th>지사</th>
 <th>점명</th>
 <th>모델</th>
-<th>색상</th>
 <th>자사</th>
 <th>타사</th>
 </tr>
 </thead>
-<tbody id="result"></tbody>
+<tbody></tbody>
 </table>
+
+</div>
 
 <script>
 
-let data = [];
+let data=[]
 
 async function loadInventory(){
- const response = await fetch("inventory.xlsx");
- const arrayBuffer = await response.arrayBuffer();
- const workbook = XLSX.read(arrayBuffer);
- const sheet = workbook.Sheets[workbook.SheetNames[0]];
- data = XLSX.utils.sheet_to_json(sheet);
- console.log("inventory loaded", data.length);
+
+const response=await fetch("./inventory.xlsx")
+const buffer=await response.arrayBuffer()
+const workbook=XLSX.read(buffer)
+const sheet=workbook.Sheets[workbook.SheetNames[0]]
+data=XLSX.utils.sheet_to_json(sheet)
+
+document.getElementById("updateTime").innerText=
+"재고 업데이트 : "+new Date().toLocaleString()
+
 }
 
-loadInventory();
+loadInventory()
+
+function normalizeColor(c){
+
+if(!c) return ""
+
+c=c.toLowerCase()
+
+if(c.includes("퍼플") || c.includes("바이올렛")) return "purple"
+
+return c
+
+}
 
 function search(){
 
- const model = document.getElementById("model").value.toUpperCase();
- const color = document.getElementById("color").value;
- const branch = document.getElementById("branch").value;
- const store = document.getElementById("store").value;
+const model=document.getElementById("model").value.toUpperCase()
+const color=normalizeColor(document.getElementById("color").value)
+const branch=document.getElementById("branch").value
+const store=document.getElementById("store").value
 
- let map = {};
+let modelMap={}
+let branchMap={}
+let total=0
 
- data.forEach(r=>{
+data.forEach(r=>{
 
-  const m = r["모델명"] || "";
-  const qty = Number(r["수량"]||0);
-  const br = r["지사명"] || "";
-  const st = r["점명"] || "";
-  const type = r["자/타사구분"] || "";
+const m=r["모델명"]||""
+const qty=Number(r["수량"]||0)
+const br=r["지사명"]||""
+const st=r["점명"]||""
+const type=r["자/타사구분"]||""
 
-  if(qty < 1) return;
+if(qty<1) return
 
-  if(model && !m.toUpperCase().includes(model)) return;
-  if(color && !m.includes(color)) return;
-  if(branch && !br.includes(branch)) return;
-  if(store && !st.includes(store)) return;
+if(model && !m.toUpperCase().includes(model)) return
+if(branch && !br.includes(branch)) return
+if(store && !st.includes(store)) return
 
-  const key = br + st + m;
+if(color){
+let mc=normalizeColor(m)
+if(!mc.includes(color)) return
+}
 
-  if(!map[key]){
-   map[key] = {branch:br,store:st,model:m,color:color,self:0,other:0};
-  }
+if(!modelMap[m]) modelMap[m]=0
+modelMap[m]+=qty
 
-  if(type.includes("자사")) map[key].self += qty;
-  else map[key].other += qty;
+const key=br+"-"+st
 
- });
+if(!branchMap[key]) branchMap[key]={branch:br,store:st,total:0}
+branchMap[key].total+=qty
 
- const tbody = document.getElementById("result");
- tbody.innerHTML="";
+total+=qty
 
- Object.values(map).forEach(r=>{
+})
 
-  const tr = `<tr>
-   <td>${r.branch}</td>
-   <td>${r.store}</td>
-   <td>${r.model}</td>
-   <td>${r.color||"-"}</td>
-   <td>${r.self}</td>
-   <td>${r.other}</td>
-  </tr>`;
+document.getElementById("totalCount").innerText="총 재고 : "+total
 
-  tbody.innerHTML += tr;
+let modelHTML=""
 
- });
+Object.keys(modelMap).forEach(m=>{
+
+modelHTML+=`
+<div class="item" onclick="detailModel('${m}')">
+${m} : ${modelMap[m]}대
+</div>`
+
+})
+
+document.getElementById("modelList").innerHTML=modelHTML
+
+showTop(branchMap)
+
+}
+
+function showTop(map){
+
+let list=Object.values(map)
+
+let branchGroup={}
+
+list.forEach(r=>{
+
+if(!branchGroup[r.branch]) branchGroup[r.branch]=[]
+branchGroup[r.branch].push(r)
+
+})
+
+let html=""
+
+Object.keys(branchGroup).forEach(br=>{
+
+let sorted=branchGroup[br].sort((a,b)=>b.total-a.total).slice(0,10)
+
+html+=`<b>${br}</b>`
+
+sorted.forEach(s=>{
+
+html+=`
+<div class="item" onclick="detailStore('${s.branch}','${s.store}')">
+${s.store} : ${s.total}대
+</div>`
+
+})
+
+})
+
+document.getElementById("top10").innerHTML=html
+
+}
+
+function detailModel(model){
+
+let tbody=document.querySelector("#result tbody")
+tbody.innerHTML=""
+
+let map={}
+
+data.forEach(r=>{
+
+const m=r["모델명"]||""
+const qty=Number(r["수량"]||0)
+const br=r["지사명"]||""
+const st=r["점명"]||""
+const type=r["자/타사구분"]||""
+
+if(!m.includes(model)) return
+
+const key=br+st
+
+if(!map[key]) map[key]={branch:br,store:st,self:0,other:0}
+
+if(type.includes("자사")) map[key].self+=qty
+else map[key].other+=qty
+
+})
+
+Object.values(map).forEach(r=>{
+
+tbody.innerHTML+=`
+<tr>
+<td>${r.branch}</td>
+<td>${r.store}</td>
+<td>${model}</td>
+<td>${r.self}</td>
+<td>${r.other}</td>
+</tr>`
+
+})
+
+window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})
+
+}
+
+function detailStore(branch,store){
+
+let tbody=document.querySelector("#result tbody")
+tbody.innerHTML=""
+
+data.forEach(r=>{
+
+const m=r["모델명"]||""
+const qty=Number(r["수량"]||0)
+const br=r["지사명"]||""
+const st=r["점명"]||""
+const type=r["자/타사구분"]||""
+
+if(br!==branch || st!==store) return
+
+let self=0
+let other=0
+
+if(type.includes("자사")) self=qty
+else other=qty
+
+tbody.innerHTML+=`
+<tr>
+<td>${br}</td>
+<td>${st}</td>
+<td>${m}</td>
+<td>${self}</td>
+<td>${other}</td>
+</tr>`
+
+})
+
+window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})
 
 }
 
