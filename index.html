@@ -3,7 +3,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>KT m&s 재고 검색</title>
+<title>KTm&s 재고 검색</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
@@ -14,7 +14,7 @@ padding:20px;
 }
 
 .container{
-max-width:650px;
+max-width:720px;
 margin:auto;
 background:white;
 padding:20px;
@@ -29,7 +29,7 @@ gap:10px;
 margin-bottom:10px;
 }
 
-.header img{
+.logo{
 height:40px;
 }
 
@@ -73,9 +73,7 @@ font-size:16px;
 cursor:pointer;
 }
 
-.section{
-margin-top:20px;
-}
+.section{margin-top:20px}
 
 .item{
 padding:10px;
@@ -83,9 +81,7 @@ border-bottom:1px solid #eee;
 cursor:pointer;
 }
 
-.item:hover{
-background:#f1f7ff;
-}
+.item:hover{background:#f1f7ff}
 
 table{
 width:100%;
@@ -111,15 +107,15 @@ color:white;
 <div class="container">
 
 <div class="header">
-<img src="https://upload.wikimedia.org/wikipedia/commons/3/3b/KT_logo.svg">
-<div class="title">KT m&s 재고 검색 🔍</div>
+<img src="logo.png" class="logo">
+<div class="title">KTm&s 재고 검색 🔍</div>
 </div>
 
 <div class="update" id="updateTime">재고 업데이트 : -</div>
 <div class="total" id="totalCount">총 재고 : 0</div>
 
 <div class="searchbox">
-<input id="model" placeholder="모델 검색">
+<input id="model" placeholder="모델 검색 (예: 942, S942)">
 <input id="color" placeholder="색상 검색">
 <input id="branch" placeholder="지사 검색">
 <input id="store" placeholder="점명 검색">
@@ -136,24 +132,30 @@ color:white;
 <div id="top10"></div>
 </div>
 
-<table id="result">
+<div class="section">
+<h3>검색 결과</h3>
+
+<table>
 <thead>
 <tr>
 <th>지사</th>
 <th>점명</th>
 <th>모델</th>
-<th>자사</th>
-<th>타사</th>
+<th>수량</th>
+<th>자타사</th>
 </tr>
 </thead>
-<tbody></tbody>
+<tbody id="resultBody"></tbody>
 </table>
+
+</div>
 
 </div>
 
 <script>
 
 let data=[]
+let filtered=[]
 
 async function loadInventory(){
 
@@ -163,8 +165,8 @@ const workbook=XLSX.read(buffer)
 const sheet=workbook.Sheets[workbook.SheetNames[0]]
 data=XLSX.utils.sheet_to_json(sheet)
 
-document.getElementById("updateTime").innerText=
-"재고 업데이트 : "+new Date().toLocaleString()
+document.getElementById("updateTime").innerText =
+"재고 업데이트 : " + new Date().toLocaleString()
 
 }
 
@@ -182,13 +184,32 @@ return c
 
 }
 
+function matchModel(input, modelName){
+
+if(!input) return true
+
+input=input.toUpperCase()
+
+if(modelName.toUpperCase().includes(input)) return true
+
+if(/^[0-9]+$/.test(input)){
+if(modelName.includes("S"+input)) return true
+if(modelName.includes("A"+input)) return true
+if(modelName.includes("M"+input)) return true
+}
+
+return false
+
+}
+
 function search(){
 
-const model=document.getElementById("model").value.toUpperCase()
+const model=document.getElementById("model").value.trim()
 const color=normalizeColor(document.getElementById("color").value)
 const branch=document.getElementById("branch").value
 const store=document.getElementById("store").value
 
+filtered=[]
 let modelMap={}
 let branchMap={}
 let total=0
@@ -199,11 +220,10 @@ const m=r["모델명"]||""
 const qty=Number(r["수량"]||0)
 const br=r["지사명"]||""
 const st=r["점명"]||""
-const type=r["자/타사구분"]||""
 
 if(qty<1) return
 
-if(model && !m.toUpperCase().includes(model)) return
+if(!matchModel(model,m)) return
 if(branch && !br.includes(branch)) return
 if(store && !st.includes(store)) return
 
@@ -212,11 +232,12 @@ let mc=normalizeColor(m)
 if(!mc.includes(color)) return
 }
 
+filtered.push(r)
+
 if(!modelMap[m]) modelMap[m]=0
 modelMap[m]+=qty
 
 const key=br+"-"+st
-
 if(!branchMap[key]) branchMap[key]={branch:br,store:st,total:0}
 branchMap[key].total+=qty
 
@@ -226,27 +247,29 @@ total+=qty
 
 document.getElementById("totalCount").innerText="총 재고 : "+total
 
-let modelHTML=""
-
-Object.keys(modelMap).forEach(m=>{
-
-modelHTML+=`
-<div class="item" onclick="detailModel('${m}')">
-${m} : ${modelMap[m]}대
-</div>`
-
-})
-
-document.getElementById("modelList").innerHTML=modelHTML
-
-showTop(branchMap)
+renderModelList(modelMap)
+renderTop10(branchMap)
+renderTable()
 
 }
 
-function showTop(map){
+function renderModelList(map){
+
+let html=""
+
+Object.keys(map).forEach(m=>{
+
+html+=`<div class="item">${m} : ${map[m]}대</div>`
+
+})
+
+document.getElementById("modelList").innerHTML=html
+
+}
+
+function renderTop10(map){
 
 let list=Object.values(map)
-
 let branchGroup={}
 
 list.forEach(r=>{
@@ -266,10 +289,7 @@ html+=`<b>${br}</b>`
 
 sorted.forEach(s=>{
 
-html+=`
-<div class="item" onclick="detailStore('${s.branch}','${s.store}')">
-${s.store} : ${s.total}대
-</div>`
+html+=`<div class="item" onclick="openDetail('${s.branch}','${s.store}')">${s.store} : ${s.total}대</div>`
 
 })
 
@@ -279,82 +299,81 @@ document.getElementById("top10").innerHTML=html
 
 }
 
-function detailModel(model){
+function renderTable(){
 
-let tbody=document.querySelector("#result tbody")
+let tbody=document.getElementById("resultBody")
 tbody.innerHTML=""
 
-let map={}
-
-data.forEach(r=>{
-
-const m=r["모델명"]||""
-const qty=Number(r["수량"]||0)
-const br=r["지사명"]||""
-const st=r["점명"]||""
-const type=r["자/타사구분"]||""
-
-if(!m.includes(model)) return
-
-const key=br+st
-
-if(!map[key]) map[key]={branch:br,store:st,self:0,other:0}
-
-if(type.includes("자사")) map[key].self+=qty
-else map[key].other+=qty
-
-})
-
-Object.values(map).forEach(r=>{
+filtered.forEach(r=>{
 
 tbody.innerHTML+=`
 <tr>
-<td>${r.branch}</td>
-<td>${r.store}</td>
-<td>${model}</td>
-<td>${r.self}</td>
-<td>${r.other}</td>
-</tr>`
+<td>${r["지사명"]}</td>
+<td>${r["점명"]}</td>
+<td>${r["모델명"]}</td>
+<td>${r["수량"]}</td>
+<td>${r["자/타사구분"]}</td>
+</tr>
+`
 
 })
-
-window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})
 
 }
 
-function detailStore(branch,store){
+function openDetail(branch,store){
 
-let tbody=document.querySelector("#result tbody")
-tbody.innerHTML=""
+let rows=filtered.filter(r =>
+r["지사명"]===branch && r["점명"]===store
+)
 
-data.forEach(r=>{
+let html=`
+<html>
+<head>
+<title>점 재고 상세</title>
+<style>
+body{font-family:Arial;padding:20px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:8px;text-align:center}
+th{background:#2f3640;color:white}
+</style>
+</head>
+<body>
 
-const m=r["모델명"]||""
-const qty=Number(r["수량"]||0)
-const br=r["지사명"]||""
-const st=r["점명"]||""
-const type=r["자/타사구분"]||""
+<h2>${branch} / ${store} 재고</h2>
 
-if(br!==branch || st!==store) return
-
-let self=0
-let other=0
-
-if(type.includes("자사")) self=qty
-else other=qty
-
-tbody.innerHTML+=`
+<table>
 <tr>
-<td>${br}</td>
-<td>${st}</td>
-<td>${m}</td>
-<td>${self}</td>
-<td>${other}</td>
-</tr>`
+<th>지사</th>
+<th>점명</th>
+<th>모델</th>
+<th>수량</th>
+<th>자타사</th>
+</tr>
+`
+
+rows.forEach(r=>{
+
+html+=`
+<tr>
+<td>${r["지사명"]}</td>
+<td>${r["점명"]}</td>
+<td>${r["모델명"]}</td>
+<td>${r["수량"]}</td>
+<td>${r["자/타사구분"]}</td>
+</tr>
+`
 
 })
 
-window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})
+html+=`
+</table>
+</body>
+</html>
+`
+
+let win=window.open("","_blank")
+win.document.write(html)
+win.document.close()
 
 }
 
