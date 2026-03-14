@@ -44,6 +44,7 @@ padding:8px;
 border-radius:6px;
 text-align:center;
 margin-bottom:10px;
+font-size:14px;
 }
 
 .total{
@@ -60,6 +61,7 @@ padding:12px;
 margin:6px 0;
 border-radius:6px;
 border:1px solid #ddd;
+box-sizing:border-box;
 }
 
 button{
@@ -111,7 +113,7 @@ color:white;
 <div class="title">KTm&s 재고 검색 🔍</div>
 </div>
 
-<div class="update" id="updateTime">재고 업데이트 : -</div>
+<div class="update" id="updateTime">재고 업데이트 : 확인중...</div>
 <div class="total" id="totalCount">총 재고 : 0</div>
 
 <div class="searchbox">
@@ -157,20 +159,49 @@ color:white;
 let data=[]
 let filtered=[]
 
+const repoOwner="dlxogn13-design"
+const repoName="MNS2330"
+
+async function loadUpdateTime(){
+
+try{
+
+const res = await fetch(
+`https://api.github.com/repos/${repoOwner}/${repoName}/commits?path=inventory.xlsx&per_page=1`
+)
+
+const json = await res.json()
+
+const time = json[0].commit.committer.date
+
+const d = new Date(time)
+
+document.getElementById("updateTime").innerText =
+"재고 업데이트 : "+ d.toLocaleString()
+
+}catch(e){
+
+document.getElementById("updateTime").innerText =
+"재고 업데이트 : 확인 불가"
+
+}
+
+}
+
 async function loadInventory(){
 
 const response=await fetch("./inventory.xlsx")
 const buffer=await response.arrayBuffer()
+
 const workbook=XLSX.read(buffer)
 const sheet=workbook.Sheets[workbook.SheetNames[0]]
-data=XLSX.utils.sheet_to_json(sheet)
 
-document.getElementById("updateTime").innerText =
-"재고 업데이트 : " + new Date().toLocaleString()
+data=XLSX.utils.sheet_to_json(sheet)
 
 }
 
 loadInventory()
+loadUpdateTime()
 
 function normalizeColor(c){
 
@@ -238,7 +269,9 @@ if(!modelMap[m]) modelMap[m]=0
 modelMap[m]+=qty
 
 const key=br+"-"+st
+
 if(!branchMap[key]) branchMap[key]={branch:br,store:st,total:0}
+
 branchMap[key].total+=qty
 
 total+=qty
@@ -270,11 +303,13 @@ document.getElementById("modelList").innerHTML=html
 function renderTop10(map){
 
 let list=Object.values(map)
+
 let branchGroup={}
 
 list.forEach(r=>{
 
 if(!branchGroup[r.branch]) branchGroup[r.branch]=[]
+
 branchGroup[r.branch].push(r)
 
 })
@@ -283,13 +318,18 @@ let html=""
 
 Object.keys(branchGroup).forEach(br=>{
 
-let sorted=branchGroup[br].sort((a,b)=>b.total-a.total).slice(0,10)
+let sorted=branchGroup[br]
+.sort((a,b)=>b.total-a.total)
+.slice(0,10)
 
 html+=`<b>${br}</b>`
 
 sorted.forEach(s=>{
 
-html+=`<div class="item" onclick="openDetail('${s.branch}','${s.store}')">${s.store} : ${s.total}대</div>`
+html+=`
+<div class="item" onclick="openDetail('${s.branch}','${s.store}')">
+${s.store} : ${s.total}대
+</div>`
 
 })
 
@@ -302,6 +342,7 @@ document.getElementById("top10").innerHTML=html
 function renderTable(){
 
 let tbody=document.getElementById("resultBody")
+
 tbody.innerHTML=""
 
 filtered.forEach(r=>{
@@ -372,7 +413,9 @@ html+=`
 `
 
 let win=window.open("","_blank")
+
 win.document.write(html)
+
 win.document.close()
 
 }
