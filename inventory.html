@@ -3,26 +3,106 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>KTm&s 재고 검색</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<title>KT m&s 재고 검색</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+body{
+font-family:Arial;
+background:#e9f0f7;
+padding:20px;
+}
+
+.container{
+background:white;
+border-radius:10px;
+padding:20px;
+max-width:900px;
+margin:auto;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+}
+
+input{
+width:100%;
+padding:10px;
+margin:6px 0;
+border:1px solid #ddd;
+border-radius:6px;
+}
+
+button{
+width:100%;
+padding:12px;
+background:#3a74c9;
+color:white;
+border:none;
+border-radius:6px;
+font-size:16px;
+margin-top:10px;
+}
+
+h2{
+margin-bottom:5px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+th{
+background:#0f2345;
+color:white;
+padding:8px;
+}
+
+td{
+border-bottom:1px solid #ddd;
+padding:6px;
+text-align:center;
+}
+
+.total{
+text-align:center;
+font-size:22px;
+color:#2f6fb5;
+margin:10px 0;
+}
+
+.update{
+background:#f2e4b5;
+padding:8px;
+text-align:center;
+border-radius:5px;
+margin-bottom:10px;
+}
+</style>
 </head>
+
 <body>
 
-<div class="nav">
-<button class="navBtn" onclick="location.href='index.html'">🏠 메인</button>
-<button class="navBtn" onclick="history.back()">← 뒤로</button>
-</div>
+<div class="container">
 
 <h2>KTm&s 재고 검색 🔎</h2>
 
-<div class="inventory-box">
+<div class="update" id="updateTime">재고 업데이트 :</div>
+
+<div class="total" id="totalStock"></div>
+
 <input id="model" placeholder="모델 검색">
 <input id="color" placeholder="색상 검색">
-<input id="region" placeholder="지역 검색">
+<input id="branch" placeholder="지사 검색">
 <input id="shop" placeholder="점명 검색">
+
 <button onclick="search()">검색</button>
-</div>
+
+<h3>모델 검색 결과</h3>
+<div id="modelResult"></div>
+
+<h3>지사별 재고 많은 점 TOP10</h3>
+<div id="top10"></div>
 
 <table id="resultTable">
 <thead>
@@ -32,57 +112,114 @@
 <th>모델</th>
 <th>수량</th>
 <th>자사</th>
+<th>타사</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
+</div>
+
 <script>
-async function search(){
 
-const file=await fetch("inventory.xlsx")
-const data=await file.arrayBuffer()
-const wb=XLSX.read(data)
+let inventory=[]
 
-const sheet=wb.Sheets[wb.SheetNames[0]]
-const rows=XLSX.utils.sheet_to_json(sheet)
+fetch("inventory.xlsx")
+.then(res=>res.arrayBuffer())
+.then(data=>{
 
-let modelKey=document.getElementById("model").value.toLowerCase()
-let colorKey=document.getElementById("color").value.toLowerCase()
-let regionKey=document.getElementById("region").value.toLowerCase()
-let shopKey=document.getElementById("shop").value.toLowerCase()
+let workbook=XLSX.read(data)
 
-let html=""
+let sheet=workbook.Sheets[workbook.SheetNames[0]]
 
-rows.forEach(r=>{
+inventory=XLSX.utils.sheet_to_json(sheet)
 
-let model=(r.모델||"").toString().toLowerCase()
-let color=(r.색상||"").toString().toLowerCase()
-let region=(r.지사||"").toString().toLowerCase()
-let shop=(r.점명||"").toString().toLowerCase()
-
-if(
-model.includes(modelKey) &&
-color.includes(colorKey) &&
-region.includes(regionKey) &&
-shop.includes(shopKey)
-){
-
-html+=`<tr>
-<td>${r.지사||""}</td>
-<td>${r.점명||""}</td>
-<td>${r.모델||""}</td>
-<td>${r.수량||""}</td>
-<td>${r.자사||""}</td>
-</tr>`
-
-}
+document.getElementById("updateTime").innerText =
+"재고 업데이트 : " + new Date().toLocaleString()
 
 })
 
-document.querySelector("#resultTable tbody").innerHTML=html
+function search(){
+
+let model=document.getElementById("model").value.toLowerCase()
+let color=document.getElementById("color").value.toLowerCase()
+let branch=document.getElementById("branch").value.toLowerCase()
+let shop=document.getElementById("shop").value.toLowerCase()
+
+let result=inventory.filter(r=>{
+
+return (
+(!model || String(r.모델).toLowerCase().includes(model)) &&
+(!color || String(r.색상).toLowerCase().includes(color)) &&
+(!branch || String(r.지사).toLowerCase().includes(branch)) &&
+(!shop || String(r.점명).toLowerCase().includes(shop))
+)
+
+})
+
+render(result)
 
 }
+
+function render(rows){
+
+let tbody=document.querySelector("#resultTable tbody")
+tbody.innerHTML=""
+
+let total=0
+let modelMap={}
+let shopMap={}
+
+rows.forEach(r=>{
+
+let qty=Number(r.수량)||0
+
+total+=qty
+
+let modelKey=r.모델+"("+r.색상+")"
+
+modelMap[modelKey]=(modelMap[modelKey]||0)+qty
+
+shopMap[r.점명]=(shopMap[r.점명]||0)+qty
+
+let tr=document.createElement("tr")
+
+tr.innerHTML=`
+<td>${r.지사}</td>
+<td>${r.점명}</td>
+<td>${r.모델}</td>
+<td>${qty}</td>
+<td>${r.자사||0}</td>
+<td>${r.타사||0}</td>
+`
+
+tbody.appendChild(tr)
+
+})
+
+document.getElementById("totalStock").innerText="총 재고 : "+total
+
+let modelHtml=""
+
+Object.entries(modelMap).forEach(([k,v])=>{
+modelHtml+=`${k} : ${v}대<br>`
+})
+
+document.getElementById("modelResult").innerHTML=modelHtml
+
+let topHtml=""
+
+Object.entries(shopMap)
+.sort((a,b)=>b[1]-a[1])
+.slice(0,10)
+.forEach(([k,v])=>{
+topHtml+=`${k} : ${v}대<br>`
+})
+
+document.getElementById("top10").innerHTML=topHtml
+
+}
+
 </script>
 
 </body>
