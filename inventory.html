@@ -10,7 +10,7 @@
 <body>
 
 <div class="nav">
-<button onclick="location.href='index.html'">🏠 메인</button>
+<button class="homeBtn" onclick="location.href='index.html'">🏠 메인</button>
 </div>
 
 <h2>KTm&s 재고 검색 🔎</h2>
@@ -20,21 +20,38 @@
 <button onclick="search()">검색</button>
 </div>
 
-<div id="result"></div>
+<table id="resultTable">
+<thead>
+<tr>
+<th>지사</th>
+<th>점명</th>
+<th>모델</th>
+<th>수량</th>
+<th>자사</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
 
 <script>
 async function search(){
+
 const file=await fetch("inventory.xlsx")
 const data=await file.arrayBuffer()
 const wb=XLSX.read(data)
+
 const sheet=wb.Sheets[wb.SheetNames[0]]
 const rows=XLSX.utils.sheet_to_json(sheet)
 
-let key=document.getElementById("model").value
-let html="<table><tr><th>지사</th><th>점명</th><th>모델</th><th>수량</th><th>자사</th></tr>"
+let key=document.getElementById("model").value.toLowerCase()
+let html=""
 
 rows.forEach(r=>{
-if(r.모델 && r.모델.toString().includes(key)){
+
+let model=(r.모델||"").toString().toLowerCase()
+
+if(model.includes(key)){
+
 html+=`<tr>
 <td>${r.지사||""}</td>
 <td>${r.점명||""}</td>
@@ -42,11 +59,13 @@ html+=`<tr>
 <td>${r.수량||""}</td>
 <td>${r.자사||""}</td>
 </tr>`
+
 }
+
 })
 
-html+="</table>"
-document.getElementById("result").innerHTML=html
+document.querySelector("#resultTable tbody").innerHTML=html
+
 }
 </script>
 
