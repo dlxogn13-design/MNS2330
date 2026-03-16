@@ -3,223 +3,233 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>유무선 실적</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<title>강북도매 유/무선 실적</title>
+
+<style>
+body{
+font-family:Arial;
+background:#f4f6fb;
+padding:20px;
+}
+
+h2{
+margin-top:10px;
+}
+
+button{
+padding:8px 14px;
+border-radius:6px;
+border:1px solid #ccc;
+background:white;
+cursor:pointer;
+}
+
+.centerGrid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:8px;
+margin:20px 0;
+max-width:400px;
+}
+
+.centerGrid button{
+background:#f1f3f7;
+font-weight:bold;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+th{
+background:#0f2345;
+color:white;
+padding:8px;
+font-size:13px;
+}
+
+td{
+border-bottom:1px solid #ddd;
+padding:6px;
+text-align:center;
+font-size:13px;
+}
+
+.popup{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:white;
+border-radius:10px;
+padding:20px;
+box-shadow:0 5px 20px rgba(0,0,0,0.2);
+display:none;
+width:260px;
+}
+
+.popup h3{
+margin-top:0;
+}
+
+.popup input{
+width:100%;
+padding:6px;
+margin-bottom:8px;
+}
+
+.track{
+margin-top:30px;
+}
+
+.trackBar{
+height:20px;
+background:#e2e6f0;
+border-radius:10px;
+margin:10px 0;
+position:relative;
+}
+
+.runner{
+position:absolute;
+top:-5px;
+font-size:20px;
+}
+</style>
 </head>
+
 <body>
 
-<div class="nav">
-<button class="navBtn" onclick="location.href='index.html'">🏠 메인</button>
-<button class="navBtn" onclick="history.back()">← 뒤로</button>
+<button onclick="location.href='index.html'">메인</button>
+<button onclick="history.back()">뒤로</button>
+
+<h2>강북도매 유/무선 실적 0시 기준</h2>
+
+<div class="centerGrid">
+<button onclick="openCenter('서대문')">서대문</button>
+<button onclick="openCenter('의정부')">의정부</button>
+<button onclick="openCenter('고양')">고양</button>
+<button onclick="openCenter('구리')">구리</button>
+<button onclick="openCenter('노원')">노원</button>
+<button onclick="openCenter('광진')">광진</button>
+<button onclick="openCenter('강릉')">강릉</button>
+<button onclick="openCenter('원주')">원주</button>
+<button onclick="openCenter('춘천')">춘천</button>
 </div>
 
-<h2 id="title"></h2>
-
-<table id="summary">
+<table>
 <thead>
 <tr>
 <th>완료</th>
 <th>센터</th>
+
 <th>무선목표</th>
-<th>무선실적</th>
-<th>증분</th>
+<th>실적</th>
 <th>달성율</th>
+<th>순위</th>
+<th>증분</th>
+
 <th>MNP</th>
+<th>비중</th>
+
 <th>중고</th>
+<th>비중</th>
+
 <th>유선목표</th>
-<th>유선실적</th>
-<th>증분</th>
+<th>실적</th>
 <th>달성율</th>
-<th>약갱</th>
+<th>순위</th>
+<th>증분</th>
+
+<th>약갱실적</th>
 </tr>
 </thead>
-<tbody></tbody>
+
+<tbody id="salesTable">
+
+<tr><td>-</td><td>강북도매</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td>-</td><td>강북상권</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td>-</td><td>강원상권</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+
+<tr><td></td><td>서대문</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
+<tr><td></td><td>의정부</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
+<tr><td></td><td>고양</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
+<tr><td></td><td>구리</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
+<tr><td></td><td>노원</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
+<tr><td></td><td>광진</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
+<tr><td></td><td>강릉</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
+<tr><td></td><td>원주</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
+<tr><td></td><td>춘천</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
+
+</tbody>
 </table>
+
+<div class="track">
+<h3>강북도매 달성율 트랙</h3>
+
+무선
+<div class="trackBar">
+<div class="runner" id="wirelessRunner">🏃</div>
+</div>
+
+유선
+<div class="trackBar">
+<div class="runner" id="wiredRunner">🏃</div>
+</div>
+
+</div>
+
+<div class="popup" id="centerPopup">
+<h3 id="popupCenter"></h3>
+
+<input id="wireless" placeholder="무선실적">
+<input id="mnp" placeholder="MNP">
+<input id="used" placeholder="중고">
+<input id="wired" placeholder="유선실적">
+<input id="renew" placeholder="약갱">
+
+<button onclick="saveCenter()">저장</button>
+<button onclick="closePopup()">닫기</button>
+
+</div>
 
 <script>
 
-const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
-const gangbuk=["서대문","의정부","고양","구리","노원","광진"]
-const gangwon=["강릉","원주","춘천"]
+let currentCenter=""
 
-document.getElementById("title").innerText="강북도매 유/무선 실적 "+new Date().getHours()+"시 기준"
+function openCenter(name){
 
-function resetCheck(){
-
-let today=new Date().toISOString().slice(0,10)
-let savedDate=localStorage.getItem("portal_date")
-
-if(savedDate!==today){
-localStorage.clear()
-localStorage.setItem("portal_date",today)
-}
+currentCenter=name
+document.getElementById("popupCenter").innerText=name
+document.getElementById("centerPopup").style.display="block"
 
 }
 
-async function loadTargets(){
+function closePopup(){
 
-const file=await fetch("target.xlsx")
-const data=await file.arrayBuffer()
-const wb=XLSX.read(data)
-
-const wSheet=XLSX.utils.sheet_to_json(wb.Sheets["무선목표"])
-const lSheet=XLSX.utils.sheet_to_json(wb.Sheets["유선목표"])
-
-let today=new Date()
-let key=(today.getMonth()+1)+"/"+today.getDate()
-
-let targets={}
-
-wSheet.forEach(r=>{
-Object.keys(r).forEach(c=>{
-if(c.includes(key)){
-targets[r.센터]={w:r[c]}
-}
-})
-})
-
-lSheet.forEach(r=>{
-Object.keys(r).forEach(c=>{
-if(c.includes(key)){
-if(!targets[r.센터]) targets[r.센터]={}
-targets[r.센터].l=r[c]
-}
-})
-})
-
-return targets
+document.getElementById("centerPopup").style.display="none"
 
 }
 
-function rate(v,t){
-if(!t) return "0%"
-return ((v/t)*100).toFixed(1)+"%"
+function saveCenter(){
+
+let data={
+wireless:document.getElementById("wireless").value,
+mnp:document.getElementById("mnp").value,
+used:document.getElementById("used").value,
+wired:document.getElementById("wired").value,
+renew:document.getElementById("renew").value
 }
 
-async function load(){
+localStorage.setItem("center_"+currentCenter,JSON.stringify(data))
 
-resetCheck()
+closePopup()
 
-let targets=await loadTargets()
-
-let html=""
-
-let totalW=0,totalL=0
-let gbW=0,gbL=0
-let gwW=0,gwL=0
-
-centers.forEach(c=>{
-
-let d=JSON.parse(localStorage.getItem(c)||"{}")
-
-let w=d.w||0
-let l=d.l||0
-
-totalW+=w
-totalL+=l
-
-if(gangbuk.includes(c)){gbW+=w;gbL+=l}
-if(gangwon.includes(c)){gwW+=w;gwL+=l}
-
-})
-
-html+=`
-<tr class="sumRow">
-<td>-</td>
-<td>강북도매</td>
-<td>-</td>
-<td>${totalW}</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>${totalL}</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-</tr>`
-
-html+=`
-<tr class="sumRow">
-<td>-</td>
-<td>강북상권</td>
-<td>-</td>
-<td>${gbW}</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>${gbL}</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-</tr>`
-
-html+=`
-<tr class="sumRow">
-<td>-</td>
-<td>강원상권</td>
-<td>-</td>
-<td>${gwW}</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>${gwL}</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-</tr>`
-
-centers.forEach(c=>{
-
-let d=JSON.parse(localStorage.getItem(c)||"{}")
-
-let w=d.w||0
-let prevW=d.prevW||0
-let incW=w-prevW
-
-let l=d.l||0
-let prevL=d.prevL||0
-let incL=l-prevL
-
-let m=d.m||0
-let u=d.u||0
-let r=d.r||0
-
-let tW=targets[c]?.w||0
-let tL=targets[c]?.l||0
-
-let done=(w||m||u||l||r)?"✔":""
-
-html+=`
-<tr>
-<td>${done}</td>
-<td>${c}</td>
-<td>${tW}</td>
-<td>${w}</td>
-<td>${incW}</td>
-<td>${rate(w,tW)}</td>
-<td>${m}</td>
-<td>${u}</td>
-<td>${tL}</td>
-<td>${l}</td>
-<td>${incL}</td>
-<td>${rate(l,tL)}</td>
-<td>${r}</td>
-</tr>`
-
-})
-
-document.querySelector("#summary tbody").innerHTML=html
+alert("저장되었습니다")
 
 }
-
-load()
 
 </script>
 
