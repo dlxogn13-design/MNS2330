@@ -9,7 +9,8 @@
 <body>
 
 <div class="nav">
-<button class="homeBtn" onclick="location.href='index.html'">🏠 메인</button>
+<button class="navBtn" onclick="location.href='index.html'">🏠 메인</button>
+<button class="navBtn" onclick="history.back()">← 뒤로</button>
 </div>
 
 <h2 id="title"></h2>
@@ -37,11 +38,15 @@ document.getElementById("title").innerText=center+" 입력"
 
 function save(){
 
+let prev=JSON.parse(localStorage.getItem(center)||"{}")
+
 let data={
 w:Number(wireless.value||0),
+prevW:prev.w||0,
 m:Number(mnp.value||0),
 u:Number(used.value||0),
 l:Number(wired.value||0),
+prevL:prev.l||0,
 r:Number(renew.value||0)
 }
 

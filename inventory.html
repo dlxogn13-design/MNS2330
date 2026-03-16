@@ -10,13 +10,17 @@
 <body>
 
 <div class="nav">
-<button class="homeBtn" onclick="location.href='index.html'">🏠 메인</button>
+<button class="navBtn" onclick="location.href='index.html'">🏠 메인</button>
+<button class="navBtn" onclick="history.back()">← 뒤로</button>
 </div>
 
 <h2>KTm&s 재고 검색 🔎</h2>
 
 <div class="inventory-box">
 <input id="model" placeholder="모델 검색">
+<input id="color" placeholder="색상 검색">
+<input id="region" placeholder="지역 검색">
+<input id="shop" placeholder="점명 검색">
 <button onclick="search()">검색</button>
 </div>
 
@@ -43,14 +47,26 @@ const wb=XLSX.read(data)
 const sheet=wb.Sheets[wb.SheetNames[0]]
 const rows=XLSX.utils.sheet_to_json(sheet)
 
-let key=document.getElementById("model").value.toLowerCase()
+let modelKey=document.getElementById("model").value.toLowerCase()
+let colorKey=document.getElementById("color").value.toLowerCase()
+let regionKey=document.getElementById("region").value.toLowerCase()
+let shopKey=document.getElementById("shop").value.toLowerCase()
+
 let html=""
 
 rows.forEach(r=>{
 
 let model=(r.모델||"").toString().toLowerCase()
+let color=(r.색상||"").toString().toLowerCase()
+let region=(r.지사||"").toString().toLowerCase()
+let shop=(r.점명||"").toString().toLowerCase()
 
-if(model.includes(key)){
+if(
+model.includes(modelKey) &&
+color.includes(colorKey) &&
+region.includes(regionKey) &&
+shop.includes(shopKey)
+){
 
 html+=`<tr>
 <td>${r.지사||""}</td>

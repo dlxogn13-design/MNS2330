@@ -10,28 +10,26 @@
 <body>
 
 <div class="nav">
-<button class="homeBtn" onclick="location.href='index.html'">🏠 메인</button>
+<button class="navBtn" onclick="location.href='index.html'">🏠 메인</button>
+<button class="navBtn" onclick="history.back()">← 뒤로</button>
 </div>
 
-<h2 id="timeTitle"></h2>
-<h3 id="completeCount"></h3>
-
-<div class="totals-grid" id="totalsBoxes"></div>
-
-<div class="center-grid" id="centers"></div>
+<h2 id="title"></h2>
 
 <table id="summary">
 <thead>
 <tr>
-<th>센터</th>
 <th>완료</th>
+<th>센터</th>
 <th>무선목표</th>
 <th>무선실적</th>
+<th>증분</th>
 <th>달성율</th>
 <th>MNP</th>
 <th>중고</th>
 <th>유선목표</th>
 <th>유선실적</th>
+<th>증분</th>
 <th>달성율</th>
 <th>약갱</th>
 </tr>
@@ -45,19 +43,19 @@ const centers=["서대문","의정부","고양","구리","노원","광진","강�
 const gangbuk=["서대문","의정부","고양","구리","노원","광진"]
 const gangwon=["강릉","원주","춘천"]
 
-document.getElementById("timeTitle").innerText="강북도매 유/무선 실적 "+new Date().getHours()+"시 기준"
+document.getElementById("title").innerText="강북도매 유/무선 실적 "+new Date().getHours()+"시 기준"
 
-let grid=document.getElementById("centers")
+function resetCheck(){
 
-centers.forEach(c=>{
+let today=new Date().toISOString().slice(0,10)
+let savedDate=localStorage.getItem("portal_date")
 
-let b=document.createElement("button")
-b.innerText=c
-b.id="btn_"+c
-b.onclick=()=>location.href="center.html?c="+c
-grid.appendChild(b)
+if(savedDate!==today){
+localStorage.clear()
+localStorage.setItem("portal_date",today)
+}
 
-})
+}
 
 async function loadTargets(){
 
@@ -74,130 +72,154 @@ let key=(today.getMonth()+1)+"/"+today.getDate()
 let targets={}
 
 wSheet.forEach(r=>{
-
-let val=0
-
 Object.keys(r).forEach(c=>{
-
-if(c.includes(key)) val=r[c]
-
+if(c.includes(key)){
+targets[r.센터]={w:r[c]}
+}
 })
-
-targets[r.센터]={w:val,l:0}
-
 })
 
 lSheet.forEach(r=>{
-
-let val=0
-
 Object.keys(r).forEach(c=>{
-
-if(c.includes(key)) val=r[c]
-
-})
-
+if(c.includes(key)){
 if(!targets[r.센터]) targets[r.센터]={}
-
-targets[r.센터].l=val
-
+targets[r.센터].l=r[c]
+}
+})
 })
 
 return targets
 
 }
 
-function rateColor(rate){
-
-rate=parseFloat(rate)
-
-if(rate>=100) return "rateGreen"
-if(rate>=80) return "rateYellow"
-return "rateRed"
-
+function rate(v,t){
+if(!t) return "0%"
+return ((v/t)*100).toFixed(1)+"%"
 }
 
-function loadData(targets){
+async function load(){
+
+resetCheck()
+
+let targets=await loadTargets()
 
 let html=""
-let complete=0
 
-let gW=0
-let gL=0
-let gwW=0
-let gwL=0
+let totalW=0,totalL=0
+let gbW=0,gbL=0
+let gwW=0,gwL=0
 
 centers.forEach(c=>{
 
 let d=JSON.parse(localStorage.getItem(c)||"{}")
 
 let w=d.w||0
-let m=d.m||0
-let u=d.u||0
 let l=d.l||0
-let r=d.r||0
 
-let done=w||m||u||l||r
+totalW+=w
+totalL+=l
 
-if(done){
-complete++
-document.getElementById("btn_"+c).classList.add("centerDone")
-}
+if(gangbuk.includes(c)){gbW+=w;gbL+=l}
+if(gangwon.includes(c)){gwW+=w;gwL+=l}
 
-let tw=targets[c]?.w||0
-let tl=targets[c]?.l||0
+})
 
-let rateW=tw?((w/tw)*100).toFixed(1):0
-let rateL=tl?((l/tl)*100).toFixed(1):0
-
-html+=`<tr>
-<td>${c}</td>
-<td>${done?"✔":""}</td>
-<td>${tw}</td>
-<td>${w}</td>
-<td class="${rateColor(rateW)}">${rateW}%</td>
-<td>${m}</td>
-<td>${u}</td>
-<td>${tl}</td>
-<td>${l}</td>
-<td class="${rateColor(rateL)}">${rateL}%</td>
-<td>${r}</td>
+html+=`
+<tr class="sumRow">
+<td>-</td>
+<td>강북도매</td>
+<td>-</td>
+<td>${totalW}</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>${totalL}</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
 </tr>`
 
-if(gangbuk.includes(c)){
-gW+=w
-gL+=l
-}
+html+=`
+<tr class="sumRow">
+<td>-</td>
+<td>강북상권</td>
+<td>-</td>
+<td>${gbW}</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>${gbL}</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>`
 
-if(gangwon.includes(c)){
-gwW+=w
-gwL+=l
-}
+html+=`
+<tr class="sumRow">
+<td>-</td>
+<td>강원상권</td>
+<td>-</td>
+<td>${gwW}</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>${gwL}</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>`
+
+centers.forEach(c=>{
+
+let d=JSON.parse(localStorage.getItem(c)||"{}")
+
+let w=d.w||0
+let prevW=d.prevW||0
+let incW=w-prevW
+
+let l=d.l||0
+let prevL=d.prevL||0
+let incL=l-prevL
+
+let m=d.m||0
+let u=d.u||0
+let r=d.r||0
+
+let tW=targets[c]?.w||0
+let tL=targets[c]?.l||0
+
+let done=(w||m||u||l||r)?"✔":""
+
+html+=`
+<tr>
+<td>${done}</td>
+<td>${c}</td>
+<td>${tW}</td>
+<td>${w}</td>
+<td>${incW}</td>
+<td>${rate(w,tW)}</td>
+<td>${m}</td>
+<td>${u}</td>
+<td>${tL}</td>
+<td>${l}</td>
+<td>${incL}</td>
+<td>${rate(l,tL)}</td>
+<td>${r}</td>
+</tr>`
 
 })
 
 document.querySelector("#summary tbody").innerHTML=html
 
-document.getElementById("completeCount").innerText="센터 입력 "+complete+" / 9 완료"
-
-let totalsHTML=""
-
-totalsHTML+=`<div class="totalCard">강북상권<br>무선 ${gW} / 유선 ${gL}</div>`
-totalsHTML+=`<div class="totalCard">강원상권<br>무선 ${gwW} / 유선 ${gwL}</div>`
-totalsHTML+=`<div class="totalCard">강북총계<br>무선 ${gW+gwW} / 유선 ${gL+gwL}</div>`
-
-document.getElementById("totalsBoxes").innerHTML=totalsHTML
-
 }
 
-async function init(){
-
-let targets=await loadTargets()
-loadData(targets)
-
-}
-
-init()
+load()
 
 </script>
 
