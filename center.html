@@ -16,27 +16,10 @@
 <h2 id="title"></h2>
 
 <div class="form-grid">
-
-<div>
-<label>무선</label>
-<input id="wireless">
-</div>
-
-<div>
-<label>MNP</label>
-<input id="mnp">
-</div>
-
-<div>
-<label>중고</label>
-<input id="used">
-</div>
-
-<div>
-<label>유선</label>
-<input id="wired">
-</div>
-
+<div><label>무선</label><input id="wireless"></div>
+<div><label>MNP</label><input id="mnp"></div>
+<div><label>중고</label><input id="used"></div>
+<div><label>유선</label><input id="wired"></div>
 </div>
 
 <div class="single">
@@ -52,9 +35,6 @@ let center=new URLSearchParams(location.search).get("c")
 document.getElementById("title").innerText=center+" 입력"
 
 function save(){
-
-let prev=JSON.parse(localStorage.getItem(center)||"{}")
-localStorage.setItem(center+"_prev",JSON.stringify(prev))
 
 let data={
 w:Number(wireless.value||0),

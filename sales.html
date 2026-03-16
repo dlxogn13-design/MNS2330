@@ -6,56 +6,50 @@
 <title>유무선 실적</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
 <div class="nav">
 <button onclick="location.href='index.html'">🏠 메인</button>
 </div>
 
-<h2 id="title"></h2>
+<h2 id="timeTitle"></h2>
+<h3 id="completeCount"></h3>
 
+<div id="topCenters"></div>
 <div class="center-grid" id="centers"></div>
 
 <table id="summary">
 <thead>
 <tr>
 <th>센터</th>
+<th>완료</th>
 <th>무선목표</th>
 <th>무선실적</th>
 <th>달성율</th>
 <th>순위</th>
-<th>증분</th>
 <th>MNP</th>
-<th>MNP비중</th>
 <th>중고</th>
-<th>중고비중</th>
 <th>유선목표</th>
 <th>유선실적</th>
 <th>달성율</th>
-<th>순위</th>
-<th>증분</th>
 <th>약갱</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
-<h3>📈 보조 그래프</h3>
-<canvas id="chart"></canvas>
+<h3 id="totals"></h3>
 
 <script>
 
-const centers=[
-"서대문","의정부","고양",
-"구리","노원","광진",
-"강릉","원주","춘천"
-]
+setInterval(()=>location.reload(),300000)
 
-document.getElementById("title").innerText=
-"강북도매 유/무선 실적 "+new Date().getHours()+"시 기준"
+const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
+const gangbuk=["서대문","의정부","고양","구리","노원","광진"]
+const gangwon=["강릉","원주","춘천"]
+
+document.getElementById("timeTitle").innerText="강북도매 유/무선 실적 "+new Date().getHours()+"시 기준"
 
 let grid=document.getElementById("centers")
 
@@ -72,41 +66,43 @@ const file=await fetch("target.xlsx")
 const data=await file.arrayBuffer()
 const wb=XLSX.read(data)
 
-const wireless=XLSX.utils.sheet_to_json(wb.Sheets["무선목표"])
-const wired=XLSX.utils.sheet_to_json(wb.Sheets["유선목표"])
+const wSheet=XLSX.utils.sheet_to_json(wb.Sheets["무선목표"])
+const lSheet=XLSX.utils.sheet_to_json(wb.Sheets["유선목표"])
 
-const today=(new Date().getMonth()+1)+"/"+new Date().getDate()
+let today=new Date()
+let key=(today.getMonth()+1)+"/"+today.getDate()
 
 let targets={}
 
-wireless.forEach(r=>{
-
-targets[r.센터]={
-w:r[today]||0,
-l:0
-}
-
+wSheet.forEach(r=>{
+let val=0
+Object.keys(r).forEach(c=>{ if(c.includes(key)) val=r[c] })
+targets[r.센터]={w:val,l:0}
 })
 
-wired.forEach(r=>{
-
+lSheet.forEach(r=>{
+let val=0
+Object.keys(r).forEach(c=>{ if(c.includes(key)) val=r[c] })
 if(!targets[r.센터])targets[r.센터]={}
-targets[r.센터].l=r[today]||0
-
+targets[r.센터].l=val
 })
 
 return targets
-
 }
 
 function loadData(targets){
 
 let rows=[]
+let complete=0
+
+let gW=0
+let gL=0
+let gwW=0
+let gwL=0
 
 centers.forEach(c=>{
 
 let d=JSON.parse(localStorage.getItem(c)||"{}")
-let p=JSON.parse(localStorage.getItem(c+"_prev")||"{}")
 
 let w=d.w||0
 let m=d.m||0
@@ -114,70 +110,66 @@ let u=d.u||0
 let l=d.l||0
 let r=d.r||0
 
+let done=w||m||u||l||r
+
+if(done) complete++
+
 let tw=targets[c]?.w||0
 let tl=targets[c]?.l||0
 
 let rateW=tw?((w/tw)*100):0
 let rateL=tl?((l/tl)*100):0
 
-let inc=w-(p.w||0)
+rows.push({c,w,m,u,l,r,tw,tl,rateW,rateL,done})
 
-let mRate=w?(m/w*100):0
-let uRate=w?(u/w*100):0
+if(gangbuk.includes(c)){
+gW+=w
+gL+=l
+}
 
-rows.push({
-c,w,tw,rateW,inc,m,mRate,u,uRate,l,tl,rateL,r
+if(gangwon.includes(c)){
+gwW+=w
+gwL+=l
+}
+
 })
 
+rows.sort((a,b)=>b.rateW-a.rateW)
+rows.forEach((row,i)=>row.rank=i+1)
+
+let topHTML="<b>🏆 TOP 센터</b><br>"
+rows.slice(0,3).forEach((r,i)=>{
+topHTML+=`${i+1}위 ${r.c} (${r.rateW.toFixed(1)}%)<br>`
 })
 
-let rankW=[...rows].sort((a,b)=>b.rateW-a.rateW)
-rankW.forEach((r,i)=>r.rank=i+1)
-
-rows.forEach(r=>{
-let found=rankW.find(x=>x.c===r.c)
-r.rank=found.rank
-})
+document.getElementById("topCenters").innerHTML=topHTML
+document.getElementById("completeCount").innerText="센터 입력 "+complete+" / 9 완료"
 
 let html=""
-let chartData=[]
 
 rows.forEach(r=>{
 
-chartData.push(r.w)
-
-html+=`
-<tr>
+html+=`<tr>
 <td>${r.c}</td>
+<td>${r.done?"✔":""}</td>
 <td>${r.tw}</td>
 <td>${r.w}</td>
 <td>${r.rateW.toFixed(1)}%</td>
 <td>${r.rank}</td>
-<td>${r.inc}</td>
 <td>${r.m}</td>
-<td>${r.mRate.toFixed(1)}%</td>
 <td>${r.u}</td>
-<td>${r.uRate.toFixed(1)}%</td>
 <td>${r.tl}</td>
 <td>${r.l}</td>
 <td>${r.rateL.toFixed(1)}%</td>
-<td>-</td>
-<td>-</td>
 <td>${r.r}</td>
-</tr>
-`
+</tr>`
 
 })
 
 document.querySelector("#summary tbody").innerHTML=html
 
-new Chart(document.getElementById("chart"),{
-type:"bar",
-data:{
-labels:centers,
-datasets:[{label:"무선 실적",data:chartData}]
-}
-})
+document.getElementById("totals").innerText=
+"강북상권 무선 "+gW+" / 유선 "+gL+"   |   강원상권 무선 "+gwW+" / 유선 "+gwL+"   |   강북총계 무선 "+(gW+gwW)+" / 유선 "+(gL+gwL)
 
 }
 
