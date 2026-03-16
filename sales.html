@@ -17,11 +17,34 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 .groupRow{background:#eef3ff;font-weight:bold;}
 .rankTop{background:#dbe9ff;}
 .rankLow{background:#ffdede;}
-.warn{color:red;font-weight:bold;}
-.track{position:relative;height:18px;background:#e2e6f0;border-radius:10px;margin:10px 0;}
-.finish{position:absolute;right:0;width:4px;height:100%;background:red;}
-.runner{position:absolute;top:-4px;font-size:20px;}
-.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:10px;padding:20px;box-shadow:0 5px 20px rgba(0,0,0,0.2);display:none;width:260px;}
+.trackBox{margin-top:25px;}
+.track{
+ position:relative;
+ height:20px;
+ background:#e2e6f0;
+ border-radius:10px;
+ margin:10px 0;
+}
+.finish{
+ position:absolute;
+ right:0;
+ top:0;
+ width:4px;
+ height:100%;
+ background:red;
+}
+.runner{
+ position:absolute;
+ top:-4px;
+ font-size:20px;
+ white-space:nowrap;
+}
+.popup{
+ position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+ background:white;border-radius:10px;padding:20px;
+ box-shadow:0 5px 20px rgba(0,0,0,0.2);
+ display:none;width:260px;
+}
 .popup input{width:100%;margin-bottom:8px;padding:6px;}
 </style>
 </head>
@@ -63,11 +86,21 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 <tbody></tbody>
 </table>
 
-<div style="margin-top:20px;font-weight:bold">강북도매 달성율 트랙</div>
-무선
-<div class="track"><div class="finish"></div><div class="runner" id="wireRunner">🏃‍➡️</div></div>
-유선
-<div class="track"><div class="finish"></div><div class="runner" id="lineRunner">🏃‍➡️</div></div>
+<div class="trackBox">
+<b>강북도매 달성율 트랙</b>
+
+<div>무선</div>
+<div class="track">
+<div class="finish"></div>
+<div class="runner" id="wireRunner">🏃‍➡️ <span id="wirePct">0%</span></div>
+</div>
+
+<div>유선</div>
+<div class="track">
+<div class="finish"></div>
+<div class="runner" id="lineRunner">🏃‍➡️ <span id="linePct">0%</span></div>
+</div>
+</div>
 
 <div class="popup" id="centerPopup">
 <h3 id="popupCenter"></h3>
@@ -83,9 +116,6 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 <script>
 
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
-const gangbuk=["서대문","의정부","고양","구리","노원","광진"]
-const gangwon=["강릉","원주","춘천"]
-
 let targets={}
 
 function resetData(){
@@ -100,6 +130,8 @@ return (d.getMonth()+1)+"/"+d.getDate()
 
 async function loadTargets(){
 
+try{
+
 let res=await fetch("target.xlsx")
 let buf=await res.arrayBuffer()
 let wb=XLSX.read(buf)
@@ -109,27 +141,31 @@ let wsL=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
 let today=todayMD()
 let dateRow=wsW[1]
-let colIndex=-1
+let col=-1
 
 dateRow.forEach((v,i)=>{
  if(v instanceof Date){
   let m=v.getMonth()+1
   let d=v.getDate()
-  if(m+"/"+d===today){colIndex=i}
+  if(m+"/"+d===today){col=i}
  }
 })
 
 centers.forEach(c=>{
 
-let rowW=wsW.find(r=>r.includes(c))
-let rowL=wsL.find(r=>r.includes(c))
+let rowW=wsW.find(r=>r.some(v=>String(v).trim()==c))
+let rowL=wsL.find(r=>r.some(v=>String(v).trim()==c))
 
 targets[c]={
-wireless: rowW?rowW[colIndex]||0:0,
-wired: rowL?rowL[colIndex]||0:0
+wireless:rowW?Number(rowW[col]||0):0,
+wired:rowL?Number(rowL[col]||0):0
 }
 
 })
+
+}catch(e){
+console.log("target load fail",e)
+}
 
 render()
 }
@@ -139,10 +175,9 @@ function render(){
 let tbody=document.querySelector("#salesTable tbody")
 tbody.innerHTML=""
 
-let centerData=[]
-let totals={w:0,wt:0,l:0,lt:0,mnp:0,used:0,renew:0,incW:0,incL:0}
-let gb={w:0,wt:0,l:0,lt:0,mnp:0,used:0,renew:0,incW:0,incL:0}
-let gw={w:0,wt:0,l:0,lt:0,mnp:0,used:0,renew:0,incW:0,incL:0}
+let totalW=0,totalWT=0,totalL=0,totalLT=0
+
+let data=[]
 
 centers.forEach(c=>{
 
@@ -161,92 +196,29 @@ let lt=targets[c]?.wired||0
 let incW=w-(prev.wireless||0)
 let incL=l-(prev.wired||0)
 
-centerData.push({c,w,l,mnp,used,renew,wt,lt,incW,incL})
+let wa=wt? w/wt*100:0
+let la=lt? l/lt*100:0
 
-totals.w+=w; totals.wt+=wt
-totals.l+=l; totals.lt+=lt
-totals.mnp+=mnp; totals.used+=used; totals.renew+=renew
-totals.incW+=incW; totals.incL+=incL
+data.push({c,w,l,mnp,used,renew,wt,lt,incW,incL,wa,la})
 
-if(gangbuk.includes(c)){
-gb.w+=w; gb.wt+=wt; gb.l+=l; gb.lt+=lt
-gb.mnp+=mnp; gb.used+=used; gb.renew+=renew
-gb.incW+=incW; gb.incL+=incL
-}
-
-if(gangwon.includes(c)){
-gw.w+=w; gw.wt+=wt; gw.l+=l; gw.lt+=lt
-gw.mnp+=mnp; gw.used+=used; gw.renew+=renew
-gw.incW+=incW; gw.incL+=incL
-}
+totalW+=w
+totalWT+=wt
+totalL+=l
+totalLT+=lt
 
 })
 
-centerData.forEach(d=>{
-d.wa=d.wt?d.w/d.wt*100:0
-d.la=d.lt?d.l/d.lt*100:0
-})
+let wRank=[...data].sort((a,b)=>b.wa-a.wa)
+let lRank=[...data].sort((a,b)=>b.la-a.la)
 
-let wirelessRank=[...centerData].sort((a,b)=>b.wa-a.wa)
-let wiredRank=[...centerData].sort((a,b)=>b.la-a.la)
+let wMap={},lMap={}
+wRank.forEach((r,i)=>wMap[r.c]=i+1)
+lRank.forEach((r,i)=>lMap[r.c]=i+1)
 
-let wRankMap={},lRankMap={}
-wirelessRank.forEach((r,i)=>wRankMap[r.c]=i+1)
-wiredRank.forEach((r,i)=>lRankMap[r.c]=i+1)
+data.forEach(d=>{
 
-function regionRank(){
-let arr=[
-{name:"강북상권계",ach:gb.wt?gb.w/gb.wt:0},
-{name:"강원상권계",ach:gw.wt?gw.w/gw.wt:0}
-]
-arr.sort((a,b)=>b.ach-a.ach)
-let map={}
-arr.forEach((r,i)=>map[r.name]=i+1)
-return map
-}
-
-let rRank=regionRank()
-
-function groupRow(name,data){
-
-let wa=data.wt?data.w/data.wt*100:0
-let la=data.lt?data.l/data.lt*100:0
-
-let rankCell="-"
-if(name!=="강북도매계"){
-let r=rRank[name]
-rankCell=r
-}
-
-return `<tr class="groupRow">
-<td></td>
-<td>${name}</td>
-<td>${data.wt}</td>
-<td>${data.w}</td>
-<td>${wa.toFixed(0)}%</td>
-<td>${rankCell}</td>
-<td>${data.incW}</td>
-<td>${data.mnp}</td>
-<td>${data.w?(data.mnp/data.w*100).toFixed(0):0}%</td>
-<td>${data.used}</td>
-<td>${data.w?(data.used/data.w*100).toFixed(0):0}%</td>
-<td>${data.lt}</td>
-<td>${data.l}</td>
-<td>${la.toFixed(0)}%</td>
-<td>${rankCell}</td>
-<td>${data.incL}</td>
-<td>${data.renew}</td>
-</tr>`
-}
-
-tbody.innerHTML+=groupRow("강북도매계",totals)
-tbody.innerHTML+=groupRow("강북상권계",gb)
-tbody.innerHTML+=groupRow("강원상권계",gw)
-
-centerData.forEach(d=>{
-
-let wRank=wRankMap[d.c]
-let lRank=lRankMap[d.c]
+let wr=wMap[d.c]
+let lr=lMap[d.c]
 
 tbody.innerHTML+=`
 <tr>
@@ -255,7 +227,7 @@ tbody.innerHTML+=`
 <td>${d.wt}</td>
 <td>${d.w}</td>
 <td>${d.wa.toFixed(0)}%</td>
-<td class="${wRank<=2?'rankTop':(wRank>=8?'rankLow':'')}">${wRank}</td>
+<td class="${wr<=2?'rankTop':(wr>=8?'rankLow':'')}">${wr}</td>
 <td>${d.incW}</td>
 <td>${d.mnp}</td>
 <td>${d.w?(d.mnp/d.w*100).toFixed(0):0}%</td>
@@ -264,17 +236,21 @@ tbody.innerHTML+=`
 <td>${d.lt}</td>
 <td>${d.l}</td>
 <td>${d.la.toFixed(0)}%</td>
-<td class="${lRank<=2?'rankTop':(lRank>=8?'rankLow':'')}">${lRank}</td>
+<td class="${lr<=2?'rankTop':(lr>=8?'rankLow':'')}">${lr}</td>
 <td>${d.incL}</td>
 <td>${d.renew}</td>
 </tr>`
+
 })
 
-let totalAch=totals.wt?totals.w/totals.wt*100:0
-let lineAch=totals.lt?totals.l/totals.lt*100:0
+let wAch=totalWT? totalW/totalWT*100:0
+let lAch=totalLT? totalL/totalLT*100:0
 
-document.getElementById("wireRunner").style.left=Math.min(totalAch,100)+"%"
-document.getElementById("lineRunner").style.left=Math.min(lineAch,100)+"%"
+document.getElementById("wireRunner").style.left=Math.min(wAch,100)+"%"
+document.getElementById("lineRunner").style.left=Math.min(lAch,100)+"%"
+
+document.getElementById("wirePct").innerText=Math.round(wAch)+"%"
+document.getElementById("linePct").innerText=Math.round(lAch)+"%"
 
 }
 
