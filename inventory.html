@@ -4,7 +4,6 @@
 <head>
 <meta charset="UTF-8">
 <title>KT m&s 재고 검색</title>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -40,10 +39,6 @@ border:none;
 border-radius:6px;
 font-size:16px;
 margin-top:10px;
-}
-
-h2{
-margin-bottom:5px;
 }
 
 table{
@@ -91,9 +86,9 @@ margin-bottom:10px;
 
 <div class="total" id="totalStock"></div>
 
-<input id="model" placeholder="모델 검색">
-<input id="color" placeholder="색상 검색">
-<input id="branch" placeholder="지사 검색">
+<input id="model" placeholder="모델 검색 (예:M366)">
+<input id="color" placeholder="색상 검색 (예:블랙,그린)">
+<input id="branch" placeholder="지사 검색 (예:강북)">
 <input id="shop" placeholder="점명 검색">
 
 <button onclick="search()">검색</button>
@@ -129,30 +124,32 @@ fetch("inventory.xlsx")
 .then(data=>{
 
 let workbook=XLSX.read(data)
-
 let sheet=workbook.Sheets[workbook.SheetNames[0]]
-
 inventory=XLSX.utils.sheet_to_json(sheet)
 
 document.getElementById("updateTime").innerText =
-"재고 업데이트 : " + new Date().toLocaleString()
+"재고 업데이트 : "+new Date().toLocaleString()
 
 })
 
 function search(){
 
-let model=document.getElementById("model").value.toLowerCase()
-let color=document.getElementById("color").value.toLowerCase()
-let branch=document.getElementById("branch").value.toLowerCase()
-let shop=document.getElementById("shop").value.toLowerCase()
+let modelKey=document.getElementById("model").value.toLowerCase()
+let colorKey=document.getElementById("color").value.toLowerCase()
+let branchKey=document.getElementById("branch").value.toLowerCase()
+let shopKey=document.getElementById("shop").value.toLowerCase()
 
-let result=inventory.filter(r=>{
+let result = inventory.filter(r=>{
 
-return (
-(!model || String(r.모델).toLowerCase().includes(model)) &&
-(!color || String(r.색상).toLowerCase().includes(color)) &&
-(!branch || String(r.지사).toLowerCase().includes(branch)) &&
-(!shop || String(r.점명).toLowerCase().includes(shop))
+let model=(r["모델명"]||"").toLowerCase()
+let branch=(r["지사명"]||"").toLowerCase()
+let shop=(r["점명"]||"").toLowerCase()
+
+return(
+(!modelKey || model.includes(modelKey)) &&
+(!colorKey || model.includes(colorKey)) &&
+(!branchKey || branch.includes(branchKey)) &&
+(!shopKey || shop.includes(shopKey))
 )
 
 })
@@ -172,25 +169,29 @@ let shopMap={}
 
 rows.forEach(r=>{
 
-let qty=Number(r.수량)||0
+let qty=Number(r["수량"]||0)
 
 total+=qty
 
-let modelKey=r.모델+"("+r.색상+")"
+let modelName=r["모델명"]||""
+let branch=r["지사명"]||""
+let shop=r["점명"]||""
 
-modelMap[modelKey]=(modelMap[modelKey]||0)+qty
+let own=(r["자/타사구분"]||"").includes("자사") ? 1 : 0
+let other=(r["자/타사구분"]||"").includes("타사") ? 1 : 0
 
-shopMap[r.점명]=(shopMap[r.점명]||0)+qty
+modelMap[modelName]=(modelMap[modelName]||0)+qty
+shopMap[shop]=(shopMap[shop]||0)+qty
 
 let tr=document.createElement("tr")
 
 tr.innerHTML=`
-<td>${r.지사}</td>
-<td>${r.점명}</td>
-<td>${r.모델}</td>
+<td>${branch}</td>
+<td>${shop}</td>
+<td>${modelName}</td>
 <td>${qty}</td>
-<td>${r.자사||0}</td>
-<td>${r.타사||0}</td>
+<td>${own}</td>
+<td>${other}</td>
 `
 
 tbody.appendChild(tr)
@@ -202,7 +203,7 @@ document.getElementById("totalStock").innerText="총 재고 : "+total
 let modelHtml=""
 
 Object.entries(modelMap).forEach(([k,v])=>{
-modelHtml+=`${k} : ${v}대<br>`
+modelHtml+=k+" : "+v+"대<br>"
 })
 
 document.getElementById("modelResult").innerHTML=modelHtml
@@ -213,7 +214,7 @@ Object.entries(shopMap)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,10)
 .forEach(([k,v])=>{
-topHtml+=`${k} : ${v}대<br>`
+topHtml+=k+" : "+v+"대<br>"
 })
 
 document.getElementById("top10").innerHTML=topHtml
