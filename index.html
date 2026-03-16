@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>강북도매 영업관리 포털</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f5f6fa;
+    margin:0;
+    padding:20px;
+}
+
+.header{
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:6px;
+}
+
+.date{
+    color:#666;
+    margin-bottom:20px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    margin-bottom:15px;
+    border-radius:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    cursor:pointer;
+    font-size:18px;
+}
+
+.card:hover{
+    background:#f0f4ff;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">📋 강북도매 영업관리 포털</div>
+<div class="date" id="today"></div>
+
+<div class="card" onclick="location.href='inventory.html'">
+📦 재고검색
+</div>
+
+<div class="card" onclick="location.href='sales.html'">
+📊 실적공지
+</div>
+
+<div class="card">
+🛠 준비중
+</div>
+
+<div class="card">
+🛠 준비중
+</div>
+
+<script>
+
+// 오늘 날짜 표시
+const d = new Date();
+const y = d.getFullYear();
+const m = String(d.getMonth()+1).padStart(2,'0');
+const day = String(d.getDate()).padStart(2,'0');
+
+document.getElementById("today").innerText = y+"-"+m+"-"+day;
+
+</script>
+
+</body>
+</html>
