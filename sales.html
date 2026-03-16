@@ -18,11 +18,10 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 .rankTop{background:#dbe9ff;}
 .rankLow{background:#ffdede;}
 .warn{color:red;font-weight:bold;}
-.trackBar{height:18px;background:#e2e6f0;border-radius:10px;margin:8px 0;position:relative;}
-.runner{position:absolute;top:-6px;font-size:18px;}
-.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-background:white;border-radius:10px;padding:20px;box-shadow:0 5px 20px rgba(0,0,0,0.2);
-display:none;width:260px;}
+.track{position:relative;height:18px;background:#e2e6f0;border-radius:10px;margin:10px 0;}
+.finish{position:absolute;right:0;width:4px;height:100%;background:red;}
+.runner{position:absolute;top:-4px;font-size:20px;}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:10px;padding:20px;box-shadow:0 5px 20px rgba(0,0,0,0.2);display:none;width:260px;}
 .popup input{width:100%;margin-bottom:8px;padding:6px;}
 </style>
 </head>
@@ -64,11 +63,11 @@ display:none;width:260px;}
 <tbody></tbody>
 </table>
 
-<div>
-<b>강북도매 달성율 트랙</b>
-<div class="trackBar"><div class="runner" id="wirelessRunner">🏃</div></div>
-<div class="trackBar"><div class="runner" id="wiredRunner">🏃</div></div>
-</div>
+<div style="margin-top:20px;font-weight:bold">강북도매 달성율 트랙</div>
+무선
+<div class="track"><div class="finish"></div><div class="runner" id="wireRunner">🏃‍➡️</div></div>
+유선
+<div class="track"><div class="finish"></div><div class="runner" id="lineRunner">🏃‍➡️</div></div>
 
 <div class="popup" id="centerPopup">
 <h3 id="popupCenter"></h3>
@@ -109,22 +108,21 @@ let wsW=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
 let wsL=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
 let today=todayMD()
-
 let dateRow=wsW[1]
-
 let colIndex=-1
+
 dateRow.forEach((v,i)=>{
-if(v instanceof Date){
-let m=v.getMonth()+1
-let d=v.getDate()
-if(m+"/"+d===today){colIndex=i}
-}
+ if(v instanceof Date){
+  let m=v.getMonth()+1
+  let d=v.getDate()
+  if(m+"/"+d===today){colIndex=i}
+ }
 })
 
 centers.forEach(c=>{
 
-let rowW=wsW.find(r=>r[4]===c)
-let rowL=wsL.find(r=>r[4]===c)
+let rowW=wsW.find(r=>r.includes(c))
+let rowL=wsL.find(r=>r.includes(c))
 
 targets[c]={
 wireless: rowW?rowW[colIndex]||0:0,
@@ -134,7 +132,6 @@ wired: rowL?rowL[colIndex]||0:0
 })
 
 render()
-
 }
 
 function render(){
@@ -142,102 +139,142 @@ function render(){
 let tbody=document.querySelector("#salesTable tbody")
 tbody.innerHTML=""
 
-let wirelessRank=[]
-let wiredRank=[]
-
-let totalW=0,totalWT=0,totalL=0,totalLT=0
-let gbW=0,gbWT=0,gwW=0,gwWT=0
-
-centers.forEach(c=>{
-
-let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
-
-let w=s.wireless||0
-let l=s.wired||0
-
-let wt=targets[c]?.wireless||0
-let lt=targets[c]?.wired||0
-
-let wa=wt?w/wt*100:0
-let la=lt?l/lt*100:0
-
-wirelessRank.push({c,val:wa})
-wiredRank.push({c,val:la})
-
-totalW+=w
-totalWT+=wt
-totalL+=l
-totalLT+=lt
-
-if(gangbuk.includes(c)){gbW+=w;gbWT+=wt}
-if(gangwon.includes(c)){gwW+=w;gwWT+=wt}
-
-})
-
-wirelessRank.sort((a,b)=>b.val-a.val)
-wiredRank.sort((a,b)=>b.val-a.val)
-
-let wRankMap={},lRankMap={}
-
-wirelessRank.forEach((r,i)=>{wRankMap[r.c]=i+1})
-wiredRank.forEach((r,i)=>{lRankMap[r.c]=i+1})
-
-tbody.innerHTML+=`
-<tr class="groupRow"><td></td><td>강북도매계</td><td>${totalWT}</td><td>${totalW}</td><td>${totalWT?(totalW/totalWT*100).toFixed(0):0}%</td><td colspan="12"></td></tr>
-<tr class="groupRow"><td></td><td>강북상권계</td><td>${gbWT}</td><td>${gbW}</td><td>${gbWT?(gbW/gbWT*100).toFixed(0):0}%</td><td colspan="12"></td></tr>
-<tr class="groupRow"><td></td><td>강원상권계</td><td>${gwWT}</td><td>${gwW}</td><td>${gwWT?(gwW/gwWT*100).toFixed(0):0}%</td><td colspan="12"></td></tr>
-`
+let centerData=[]
+let totals={w:0,wt:0,l:0,lt:0,mnp:0,used:0,renew:0,incW:0,incL:0}
+let gb={w:0,wt:0,l:0,lt:0,mnp:0,used:0,renew:0,incW:0,incL:0}
+let gw={w:0,wt:0,l:0,lt:0,mnp:0,used:0,renew:0,incW:0,incL:0}
 
 centers.forEach(c=>{
 
 let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
 let prev=JSON.parse(localStorage.getItem("prev_"+c)||"{}")
 
-let w=s.wireless||0
-let l=s.wired||0
-let mnp=s.mnp||0
-let used=s.used||0
-let renew=s.renew||0
+let w=Number(s.wireless||0)
+let l=Number(s.wired||0)
+let mnp=Number(s.mnp||0)
+let used=Number(s.used||0)
+let renew=Number(s.renew||0)
 
 let wt=targets[c]?.wireless||0
 let lt=targets[c]?.wired||0
 
-let wa=wt?w/wt*100:0
-let la=lt?l/lt*100:0
-
 let incW=w-(prev.wireless||0)
 let incL=l-(prev.wired||0)
 
-let wRank=wRankMap[c]
-let lRank=lRankMap[c]
+centerData.push({c,w,l,mnp,used,renew,wt,lt,incW,incL})
 
-tbody.innerHTML+=`
-<tr>
-<td>${w||l?"✔️":""}</td>
-<td>${c}</td>
-<td>${wt}</td>
-<td>${w}</td>
-<td>${wa.toFixed(0)}%</td>
-<td class="${wRank<=2?'rankTop':(wRank>=8?'rankLow':'')}">${wRank}</td>
-<td>${incW}</td>
-<td>${mnp}</td>
-<td>${w?(mnp/w*100).toFixed(0):0}%</td>
-<td>${used}</td>
-<td>${w?(used/w*100).toFixed(0):0}%</td>
-<td>${lt}</td>
-<td>${l}</td>
-<td>${la.toFixed(0)}%</td>
-<td class="${lRank<=2?'rankTop':(lRank>=8?'rankLow':'')}">${lRank}</td>
-<td>${incL}</td>
-<td>${renew}</td>
-</tr>
-`
+totals.w+=w; totals.wt+=wt
+totals.l+=l; totals.lt+=lt
+totals.mnp+=mnp; totals.used+=used; totals.renew+=renew
+totals.incW+=incW; totals.incL+=incL
+
+if(gangbuk.includes(c)){
+gb.w+=w; gb.wt+=wt; gb.l+=l; gb.lt+=lt
+gb.mnp+=mnp; gb.used+=used; gb.renew+=renew
+gb.incW+=incW; gb.incL+=incL
+}
+
+if(gangwon.includes(c)){
+gw.w+=w; gw.wt+=wt; gw.l+=l; gw.lt+=lt
+gw.mnp+=mnp; gw.used+=used; gw.renew+=renew
+gw.incW+=incW; gw.incL+=incL
+}
 
 })
 
-let totalAch=totalWT?totalW/totalWT*100:0
-document.getElementById("wirelessRunner").style.left=Math.min(totalAch,100)+"%"
-document.getElementById("wiredRunner").style.left=Math.min((totalLT?totalL/totalLT*100:0),100)+"%"
+centerData.forEach(d=>{
+d.wa=d.wt?d.w/d.wt*100:0
+d.la=d.lt?d.l/d.lt*100:0
+})
+
+let wirelessRank=[...centerData].sort((a,b)=>b.wa-a.wa)
+let wiredRank=[...centerData].sort((a,b)=>b.la-a.la)
+
+let wRankMap={},lRankMap={}
+wirelessRank.forEach((r,i)=>wRankMap[r.c]=i+1)
+wiredRank.forEach((r,i)=>lRankMap[r.c]=i+1)
+
+function regionRank(){
+let arr=[
+{name:"강북상권계",ach:gb.wt?gb.w/gb.wt:0},
+{name:"강원상권계",ach:gw.wt?gw.w/gw.wt:0}
+]
+arr.sort((a,b)=>b.ach-a.ach)
+let map={}
+arr.forEach((r,i)=>map[r.name]=i+1)
+return map
+}
+
+let rRank=regionRank()
+
+function groupRow(name,data){
+
+let wa=data.wt?data.w/data.wt*100:0
+let la=data.lt?data.l/data.lt*100:0
+
+let rankCell="-"
+if(name!=="강북도매계"){
+let r=rRank[name]
+rankCell=r
+}
+
+return `<tr class="groupRow">
+<td></td>
+<td>${name}</td>
+<td>${data.wt}</td>
+<td>${data.w}</td>
+<td>${wa.toFixed(0)}%</td>
+<td>${rankCell}</td>
+<td>${data.incW}</td>
+<td>${data.mnp}</td>
+<td>${data.w?(data.mnp/data.w*100).toFixed(0):0}%</td>
+<td>${data.used}</td>
+<td>${data.w?(data.used/data.w*100).toFixed(0):0}%</td>
+<td>${data.lt}</td>
+<td>${data.l}</td>
+<td>${la.toFixed(0)}%</td>
+<td>${rankCell}</td>
+<td>${data.incL}</td>
+<td>${data.renew}</td>
+</tr>`
+}
+
+tbody.innerHTML+=groupRow("강북도매계",totals)
+tbody.innerHTML+=groupRow("강북상권계",gb)
+tbody.innerHTML+=groupRow("강원상권계",gw)
+
+centerData.forEach(d=>{
+
+let wRank=wRankMap[d.c]
+let lRank=lRankMap[d.c]
+
+tbody.innerHTML+=`
+<tr>
+<td>${d.w||d.l?"✔️":""}</td>
+<td>${d.c}</td>
+<td>${d.wt}</td>
+<td>${d.w}</td>
+<td>${d.wa.toFixed(0)}%</td>
+<td class="${wRank<=2?'rankTop':(wRank>=8?'rankLow':'')}">${wRank}</td>
+<td>${d.incW}</td>
+<td>${d.mnp}</td>
+<td>${d.w?(d.mnp/d.w*100).toFixed(0):0}%</td>
+<td>${d.used}</td>
+<td>${d.w?(d.used/d.w*100).toFixed(0):0}%</td>
+<td>${d.lt}</td>
+<td>${d.l}</td>
+<td>${d.la.toFixed(0)}%</td>
+<td class="${lRank<=2?'rankTop':(lRank>=8?'rankLow':'')}">${lRank}</td>
+<td>${d.incL}</td>
+<td>${d.renew}</td>
+</tr>`
+})
+
+let totalAch=totals.wt?totals.w/totals.wt*100:0
+let lineAch=totals.lt?totals.l/totals.lt*100:0
+
+document.getElementById("wireRunner").style.left=Math.min(totalAch,100)+"%"
+document.getElementById("lineRunner").style.left=Math.min(lineAch,100)+"%"
 
 }
 
