@@ -1,172 +1,48 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<title>실적 센터 선택</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>강북도매 유무선 실적</title>
-
-<style>
-body{font-family:Arial;background:#f5f6fa;padding:20px;margin:0}
-.header{font-size:20px;font-weight:bold;margin-bottom:10px}
-.time{color:#666;margin-bottom:15px}
-.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
-.grid button{padding:14px;border-radius:10px;border:none;background:#2a5298;color:white}
-.table{width:100%;border-collapse:collapse;background:white}
-.table th,.table td{border:1px solid #ddd;padding:6px;text-align:center}
-.blue{color:#1e6bff;font-weight:bold}
-.red{color:red;font-weight:bold}
-.summary{margin-top:20px;font-weight:bold}
-</style>
-
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="header">강북도매 유/무선 실적</div>
-<div class="time" id="time"></div>
+<div class="container">
+
+<div class="nav">
+<button onclick="location.href='index.html'">🏠 메인</button>
+</div>
+
+<h2 style="color:white">강북도매 유/무선 실적</h2>
 
 <div class="grid">
 
-<button onclick="input('서대문')">서대문</button>
-<button onclick="input('의정부')">의정부</button>
-<button onclick="input('고양')">고양</button>
+<button class="center-btn" onclick="openCenter('서대문')">서대문</button>
+<button class="center-btn" onclick="openCenter('의정부')">의정부</button>
+<button class="center-btn" onclick="openCenter('고양')">고양</button>
 
-<button onclick="input('구리')">구리</button>
-<button onclick="input('노원')">노원</button>
-<button onclick="input('광진')">광진</button>
+<button class="center-btn" onclick="openCenter('구리')">구리</button>
+<button class="center-btn" onclick="openCenter('노원')">노원</button>
+<button class="center-btn" onclick="openCenter('광진')">광진</button>
 
-<button onclick="input('강릉')">강릉</button>
-<button onclick="input('원주')">원주</button>
-<button onclick="input('춘천')">춘천</button>
+<button class="center-btn" onclick="openCenter('강릉')">강릉</button>
+<button class="center-btn" onclick="openCenter('원주')">원주</button>
+<button class="center-btn" onclick="openCenter('춘천')">춘천</button>
 
 </div>
 
-<div id="complete"></div>
+<button onclick="location.href='summary.html'">📊 요약 실적 보기</button>
 
-<table class="table" id="table">
-<tr>
-<th>센터</th>
-<th>무선</th>
-<th>MNP</th>
-<th>중고</th>
-<th>유선</th>
-<th>약정</th>
-<th>달성율</th>
-<th>순위</th>
-</tr>
-</table>
-
-<div class="summary" id="sum"></div>
-
-<br>
-<button onclick="location.href='index.html'">← 메인</button>
+</div>
 
 <script>
-
-let centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
-
-let targetWireless=178
-let targetWired=39
-
-let data=JSON.parse(localStorage.getItem("sales")||"{}")
-
-function input(c){
-
-let wireless=prompt(c+" 무선 실적")
-if(wireless==null) return
-let mnp=prompt("MNP")
-let used=prompt("중고")
-let wired=prompt("유선")
-let renew=prompt("약정")
-
-data[c]={wireless:+wireless||0,mnp:+mnp||0,used:+used||0,wired:+wired||0,renew:+renew||0}
-
-localStorage.setItem("sales",JSON.stringify(data))
-
-render()
-
+function openCenter(name){
+localStorage.setItem("center",name)
+location.href="center.html"
 }
-
-function render(){
-
-let rows=[]
-
-centers.forEach(c=>{
-
-let d=data[c]||{wireless:0,mnp:0,used:0,wired:0,renew:0}
-
-let rate=d.wireless/targetWireless
-
-rows.push({...d,center:c,rate})
-
-})
-
-rows.sort((a,b)=>b.rate-a.rate)
-
-rows.forEach((r,i)=>r.rank=i+1)
-
-let html=`
-<tr>
-<th>센터</th>
-<th>무선</th>
-<th>MNP</th>
-<th>중고</th>
-<th>유선</th>
-<th>약정</th>
-<th>달성율</th>
-<th>순위</th>
-</tr>
-`
-
-rows.forEach(r=>{
-
-let color=""
-
-if(r.rank<=2) color="blue"
-if(r.rank>=8) color="red"
-
-html+=`
-
-<tr>
-<td>${r.center}</td>
-<td>${r.wireless}</td>
-<td>${r.mnp}</td>
-<td>${r.used}</td>
-<td>${r.wired}</td>
-<td>${r.renew}</td>
-<td>${(r.rate*100).toFixed(1)}%</td>
-<td class="${color}">${r.rank}</td>
-</tr>
-
-`
-
-})
-
-document.getElementById("table").innerHTML=html
-
-let complete=Object.keys(data).length
-
-document.getElementById("complete").innerHTML="입력 완료 : "+complete+" / 9"
-
-let totalWireless=0
-let totalWired=0
-
-rows.forEach(r=>{
-totalWireless+=r.wireless
-totalWired+=r.wired
-})
-
-document.getElementById("sum").innerHTML=
-"강북도매 계 | 무선 "+totalWireless+" / 유선 "+totalWired
-
-}
-
-let now=new Date()
-document.getElementById("time").innerHTML=
-now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate()+" "+now.getHours()+"시 기준"
-
-render()
-
 </script>
 
 </body>

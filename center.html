@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>센터 입력</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="nav">
+<button onclick="location.href='sales.html'">← 센터목록</button>
+<button onclick="location.href='index.html'">🏠 메인</button>
+</div>
+
+<h2 id="title"></h2>
+
+<div class="form">
+
+무선 실적
+<input id="wireless">
+
+MNP
+<input id="mnp">
+
+중고
+<input id="used">
+
+유선 실적
+<input id="wired">
+
+약갱
+<input id="renew">
+
+<button onclick="save()">저장</button>
+
+</div>
+
+</div>
+
+<script>
+
+let center=localStorage.getItem("center")
+document.getElementById("title").innerText=center+" 센터 입력"
+
+let data=JSON.parse(localStorage.getItem("sales")||"{}")
+
+function save(){
+
+data[center]={
+wireless:+document.getElementById("wireless").value||0,
+mnp:+document.getElementById("mnp").value||0,
+used:+document.getElementById("used").value||0,
+wired:+document.getElementById("wired").value||0,
+renew:+document.getElementById("renew").value||0
+}
+
+localStorage.setItem("sales",JSON.stringify(data))
+
+alert("저장 완료")
+
+location.href="summary.html"
+
+}
+
+</script>
+
+</body>
+</html>
