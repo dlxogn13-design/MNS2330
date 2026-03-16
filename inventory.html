@@ -86,9 +86,9 @@ margin-bottom:10px;
 
 <div class="total" id="totalStock"></div>
 
-<input id="model" placeholder="모델 검색 (예:M366)">
-<input id="color" placeholder="색상 검색 (예:블랙,그린)">
-<input id="branch" placeholder="지사 검색 (예:강북)">
+<input id="model" placeholder="모델 검색">
+<input id="color" placeholder="색상 검색">
+<input id="branch" placeholder="지사 검색">
 <input id="shop" placeholder="점명 검색">
 
 <button onclick="search()">검색</button>
@@ -105,7 +105,6 @@ margin-bottom:10px;
 <th>지사</th>
 <th>점명</th>
 <th>모델</th>
-<th>수량</th>
 <th>자사</th>
 <th>타사</th>
 </tr>
@@ -169,27 +168,25 @@ let shopMap={}
 
 rows.forEach(r=>{
 
-let qty=Number(r["수량"]||0)
-
-total+=qty
-
-let modelName=r["모델명"]||""
+let model=r["모델명"]||""
 let branch=r["지사명"]||""
 let shop=r["점명"]||""
+let type=r["자/타사구분"]||""
 
-let own=(r["자/타사구분"]||"").includes("자사") ? 1 : 0
-let other=(r["자/타사구분"]||"").includes("타사") ? 1 : 0
+let own = type.includes("자사") ? 1 : 0
+let other = type.includes("타사") ? 1 : 0
 
-modelMap[modelName]=(modelMap[modelName]||0)+qty
-shopMap[shop]=(shopMap[shop]||0)+qty
+total += 1
+
+modelMap[model]=(modelMap[model]||0)+1
+shopMap[shop]=(shopMap[shop]||0)+1
 
 let tr=document.createElement("tr")
 
 tr.innerHTML=`
 <td>${branch}</td>
 <td>${shop}</td>
-<td>${modelName}</td>
-<td>${qty}</td>
+<td>${model}</td>
 <td>${own}</td>
 <td>${other}</td>
 `
