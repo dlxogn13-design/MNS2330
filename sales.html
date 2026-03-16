@@ -9,7 +9,6 @@
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
 .topbar{display:flex;justify-content:flex-end;gap:10px;margin-bottom:10px;}
-button{cursor:pointer}
 .centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0;max-width:420px;}
 .centerGrid button{background:#eef1f7;font-weight:bold;padding:10px;border:1px solid #ccc;border-radius:6px;}
 table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px;}
@@ -19,12 +18,11 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 .rankTop{background:#dbe9ff;}
 .rankLow{background:#ffdede;}
 .warn{color:red;font-weight:bold;}
-.track{margin-top:25px;}
 .trackBar{height:18px;background:#e2e6f0;border-radius:10px;margin:8px 0;position:relative;}
 .runner{position:absolute;top:-6px;font-size:18px;}
 .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-background:white;border-radius:10px;padding:20px;
-box-shadow:0 5px 20px rgba(0,0,0,0.2);display:none;width:260px;}
+background:white;border-radius:10px;padding:20px;box-shadow:0 5px 20px rgba(0,0,0,0.2);
+display:none;width:260px;}
 .popup input{width:100%;margin-bottom:8px;padding:6px;}
 </style>
 </head>
@@ -33,7 +31,6 @@ box-shadow:0 5px 20px rgba(0,0,0,0.2);display:none;width:260px;}
 
 <div class="topbar">
 <button onclick="resetData()">초기화</button>
-<button onclick="location.href='index.html'">메인포털</button>
 </div>
 
 <h2>강북도매 유/무선 실적</h2>
@@ -53,33 +50,22 @@ box-shadow:0 5px 20px rgba(0,0,0,0.2);display:none;width:260px;}
 <table id="salesTable">
 <thead>
 <tr>
-<th>완료</th>
-<th>센터</th>
-<th>무선목표</th>
-<th>무선실적</th>
-<th>달성율</th>
-<th>순위</th>
-<th>증분</th>
-<th>MNP</th>
-<th>비중</th>
-<th>중고</th>
-<th>비중</th>
-<th>유선목표</th>
-<th>유선실적</th>
-<th>달성율</th>
-<th>순위</th>
-<th>증분</th>
+<th>완료</th><th>센터</th>
+<th>무선목표</th><th>무선실적</th><th>달성율</th>
+<th>순위</th><th>증분</th>
+<th>MNP</th><th>비중</th>
+<th>중고</th><th>비중</th>
+<th>유선목표</th><th>유선실적</th><th>달성율</th>
+<th>순위</th><th>증분</th>
 <th>약갱</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
-<div class="track">
+<div>
 <b>강북도매 달성율 트랙</b>
-무선
 <div class="trackBar"><div class="runner" id="wirelessRunner">🏃</div></div>
-유선
 <div class="trackBar"><div class="runner" id="wiredRunner">🏃</div></div>
 </div>
 
@@ -102,25 +88,14 @@ const gangwon=["강릉","원주","춘천"]
 
 let targets={}
 
-function todayStr(){
- let d=new Date()
- return (d.getMonth()+1)+"/"+d.getDate()
-}
-
 function resetData(){
- if(confirm("실적 초기화하시겠습니까?")){
- localStorage.clear()
- location.reload()
- }
+localStorage.clear()
+location.reload()
 }
 
-function midnightReset(){
- let today=new Date().toDateString()
- let saved=localStorage.getItem("lastDate")
- if(saved!=today){
- localStorage.clear()
- localStorage.setItem("lastDate",today)
- }
+function todayMD(){
+let d=new Date()
+return (d.getMonth()+1)+"/"+d.getDate()
 }
 
 async function loadTargets(){
@@ -129,24 +104,31 @@ let res=await fetch("target.xlsx")
 let buf=await res.arrayBuffer()
 let wb=XLSX.read(buf)
 
-let today=todayStr()
+let wsW=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
+let wsL=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
-let ws1=wb.Sheets[wb.SheetNames[0]]
-let ws2=wb.Sheets[wb.SheetNames[1]]
+let today=todayMD()
 
-let wireless=XLSX.utils.sheet_to_json(ws1,{header:1})
-let wired=XLSX.utils.sheet_to_json(ws2,{header:1})
+// 날짜행 = 2행
+let dateRow=wsW[1]
 
-let dateCol=wireless[0].findIndex(v=>String(v).includes(today))
+let colIndex=-1
+dateRow.forEach((v,i)=>{
+if(v instanceof Date){
+let m=v.getMonth()+1
+let d=v.getDate()
+if(m+"/"+d===today){colIndex=i}
+}
+})
 
 centers.forEach(c=>{
 
-let rowW=wireless.find(r=>r[0]==c)
-let rowL=wired.find(r=>r[0]==c)
+let rowW=wsW.find(r=>r[4]===c)
+let rowL=wsL.find(r=>r[4]===c)
 
 targets[c]={
-wireless: rowW ? (rowW[dateCol]||0) : 0,
-wired: rowL ? (rowL[dateCol]||0) : 0
+wireless: rowW?rowW[colIndex]||0:0,
+wired: rowL?rowL[colIndex]||0:0
 }
 
 })
@@ -160,81 +142,39 @@ function render(){
 let tbody=document.querySelector("#salesTable tbody")
 tbody.innerHTML=""
 
-let totals={w:0,wt:0,l:0,lt:0}
+let totalW=0,totalWT=0,totalL=0,totalLT=0
 
 centers.forEach(c=>{
 
 let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
 
-totals.w+=Number(s.wireless||0)
-totals.l+=Number(s.wired||0)
-totals.wt+=Number(targets[c]?.wireless||0)
-totals.lt+=Number(targets[c]?.wired||0)
+totalW+=Number(s.wireless||0)
+totalL+=Number(s.wired||0)
+totalWT+=Number(targets[c]?.wireless||0)
+totalLT+=Number(targets[c]?.wired||0)
 
 })
 
-let totalAch = totals.wt? (totals.w/totals.wt*100):0
-
-function makeRow(name,list){
-
-let w=0,wt=0,l=0,lt=0,mnp=0,used=0,renew=0
-
-list.forEach(c=>{
-let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
-w+=Number(s.wireless||0)
-l+=Number(s.wired||0)
-mnp+=Number(s.mnp||0)
-used+=Number(s.used||0)
-renew+=Number(s.renew||0)
-wt+=targets[c]?.wireless||0
-lt+=targets[c]?.wired||0
-})
-
-let wa=wt? w/wt*100:0
-let la=lt? l/lt*100:0
-
-return `<tr class="groupRow">
-<td></td>
-<td>${name}</td>
-<td>${wt}</td>
-<td>${w}</td>
-<td>${wa.toFixed(0)}%</td>
-<td>-</td>
-<td>-</td>
-<td>${mnp}</td>
-<td>${w?(mnp/w*100).toFixed(0):0}%</td>
-<td>${used}</td>
-<td>${w?(used/w*100).toFixed(0):0}%</td>
-<td>${lt}</td>
-<td>${l}</td>
-<td>${la.toFixed(0)}%</td>
-<td>-</td>
-<td>-</td>
-<td>${renew}</td>
-</tr>`
-}
-
-tbody.innerHTML+=makeRow("강북도매계",centers)
-tbody.innerHTML+=makeRow("강북상권계",gangbuk)
-tbody.innerHTML+=makeRow("강원상권계",gangwon)
+let totalAch=totalWT?totalW/totalWT*100:0
 
 centers.forEach(c=>{
 
 let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
 
-let w=Number(s.wireless||0)
-let l=Number(s.wired||0)
-let mnp=Number(s.mnp||0)
-let used=Number(s.used||0)
-let renew=Number(s.renew||0)
+let w=s.wireless||0
+let l=s.wired||0
+let mnp=s.mnp||0
+let used=s.used||0
+let renew=s.renew||0
 
 let wt=targets[c]?.wireless||0
 let lt=targets[c]?.wired||0
 
-let wa=wt? w/wt*100:0
-let la=lt? l/lt*100:0
+let wa=wt?w/wt*100:0
+let la=lt?l/lt*100:0
 
-tbody.innerHTML+=`<tr>
+tbody.innerHTML+=`
+<tr>
 <td>${w||l?"✔️":""}</td>
 <td>${c}</td>
 <td>${wt}</td>
@@ -257,7 +197,7 @@ tbody.innerHTML+=`<tr>
 })
 
 document.getElementById("wirelessRunner").style.left=Math.min(totalAch,100)+"%"
-document.getElementById("wiredRunner").style.left=Math.min((totals.lt?totals.l/totals.lt*100:0),100)+"%"
+document.getElementById("wiredRunner").style.left=Math.min((totalLT?totalL/totalLT*100:0),100)+"%"
 
 }
 
@@ -294,7 +234,6 @@ render()
 
 }
 
-midnightReset()
 loadTargets()
 
 </script>
