@@ -4,99 +4,25 @@
 <head>
 <meta charset="UTF-8">
 <title>강북도매 유/무선 실적</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-body{
-font-family:Arial;
-background:#f4f6fb;
-padding:20px;
-}
-
-h2{
-margin-top:10px;
-}
-
-button{
-padding:8px 14px;
-border-radius:6px;
-border:1px solid #ccc;
-background:white;
-cursor:pointer;
-}
-
-.centerGrid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:8px;
-margin:20px 0;
-max-width:400px;
-}
-
-.centerGrid button{
-background:#f1f3f7;
-font-weight:bold;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:15px;
-}
-
-th{
-background:#0f2345;
-color:white;
-padding:8px;
-font-size:13px;
-}
-
-td{
-border-bottom:1px solid #ddd;
-padding:6px;
-text-align:center;
-font-size:13px;
-}
-
-.popup{
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-background:white;
-border-radius:10px;
-padding:20px;
-box-shadow:0 5px 20px rgba(0,0,0,0.2);
-display:none;
-width:260px;
-}
-
-.popup h3{
-margin-top:0;
-}
-
-.popup input{
-width:100%;
-padding:6px;
-margin-bottom:8px;
-}
-
-.track{
-margin-top:30px;
-}
-
-.trackBar{
-height:20px;
-background:#e2e6f0;
-border-radius:10px;
-margin:10px 0;
-position:relative;
-}
-
-.runner{
-position:absolute;
-top:-5px;
-font-size:20px;
-}
+body{font-family:Arial;background:#f4f6fb;padding:20px;}
+button{padding:8px 14px;border-radius:6px;border:1px solid #ccc;background:white;cursor:pointer;}
+.centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0;max-width:420px;}
+.centerGrid button{background:#eef1f7;font-weight:bold;}
+table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px;}
+th{background:#0f2345;color:white;padding:8px;}
+td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
+.rankTop{background:#d9e8ff;}
+.rankLow{background:#ffd9d9;}
+.warn{color:red;font-weight:bold;}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:10px;padding:20px;box-shadow:0 5px 20px rgba(0,0,0,0.2);display:none;width:260px;}
+.popup input{width:100%;margin-bottom:8px;padding:6px;}
+.track{margin-top:30px;}
+.trackBar{height:20px;background:#e2e6f0;border-radius:10px;margin:10px 0;position:relative;}
+.runner{position:absolute;top:-6px;font-size:20px;}
+.topCenter{margin:10px 0;font-weight:bold;color:#2c3e50;}
 </style>
 </head>
 
@@ -105,7 +31,9 @@ font-size:20px;
 <button onclick="location.href='index.html'">메인</button>
 <button onclick="history.back()">뒤로</button>
 
-<h2>강북도매 유/무선 실적 0시 기준</h2>
+<h2>강북도매 유/무선 실적</h2>
+
+<div class="topCenter" id="topCenter"></div>
 
 <div class="centerGrid">
 <button onclick="openCenter('서대문')">서대문</button>
@@ -119,101 +47,238 @@ font-size:20px;
 <button onclick="openCenter('춘천')">춘천</button>
 </div>
 
-<table>
+<table id="salesTable">
 <thead>
 <tr>
 <th>완료</th>
 <th>센터</th>
-
 <th>무선목표</th>
 <th>실적</th>
 <th>달성율</th>
 <th>순위</th>
 <th>증분</th>
-
 <th>MNP</th>
 <th>비중</th>
-
 <th>중고</th>
 <th>비중</th>
-
 <th>유선목표</th>
 <th>실적</th>
 <th>달성율</th>
 <th>순위</th>
 <th>증분</th>
-
-<th>약갱실적</th>
+<th>약갱</th>
 </tr>
 </thead>
-
-<tbody id="salesTable">
-
-<tr><td>-</td><td>강북도매</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
-<tr><td>-</td><td>강북상권</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
-<tr><td>-</td><td>강원상권</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>0</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
-
-<tr><td></td><td>서대문</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
-<tr><td></td><td>의정부</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
-<tr><td></td><td>고양</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
-<tr><td></td><td>구리</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
-<tr><td></td><td>노원</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
-<tr><td></td><td>광진</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
-<tr><td></td><td>강릉</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
-<tr><td></td><td>원주</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
-<tr><td></td><td>춘천</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td><td>0%</td><td>0</td><td>0%</td><td>0</td><td>0</td><td>0%</td><td></td><td>0</td><td>0</td></tr>
-
-</tbody>
+<tbody></tbody>
 </table>
 
 <div class="track">
 <h3>강북도매 달성율 트랙</h3>
-
 무선
-<div class="trackBar">
-<div class="runner" id="wirelessRunner">🏃</div>
-</div>
-
+<div class="trackBar"><div class="runner" id="wirelessRunner">🏃</div></div>
 유선
-<div class="trackBar">
-<div class="runner" id="wiredRunner">🏃</div>
-</div>
-
+<div class="trackBar"><div class="runner" id="wiredRunner">🏃</div></div>
 </div>
 
 <div class="popup" id="centerPopup">
 <h3 id="popupCenter"></h3>
-
 <input id="wireless" placeholder="무선실적">
 <input id="mnp" placeholder="MNP">
 <input id="used" placeholder="중고">
 <input id="wired" placeholder="유선실적">
 <input id="renew" placeholder="약갱">
-
 <button onclick="saveCenter()">저장</button>
 <button onclick="closePopup()">닫기</button>
-
 </div>
 
 <script>
+
+const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
+const gangbuk=["서대문","의정부","고양","구리","노원","광진"]
+const gangwon=["강릉","원주","춘천"]
+
+let targets={}
+
+function checkReset(){
+let today=new Date().toISOString().slice(0,10)
+let saved=localStorage.getItem("portal_date")
+if(saved!==today){
+localStorage.clear()
+localStorage.setItem("portal_date",today)
+}
+}
+
+function init(){
+
+checkReset()
+
+fetch("target.xlsx")
+.then(r=>r.arrayBuffer())
+.then(data=>{
+
+let wb=XLSX.read(data)
+
+let wireless=XLSX.utils.sheet_to_json(wb.Sheets["무선목표"])
+let wired=XLSX.utils.sheet_to_json(wb.Sheets["유선목표"])
+
+wireless.forEach(r=>{
+targets[r["센터"]]={wireless:r["목표"]||0}
+})
+
+wired.forEach(r=>{
+if(!targets[r["센터"]]) targets[r["센터"]]={}
+targets[r["센터"]].wired=r["목표"]||0
+})
+
+render()
+
+})
+
+}
+
+function render(){
+
+let tbody=document.querySelector("#salesTable tbody")
+tbody.innerHTML=""
+
+let rankData=[]
+let gangbukWireless=0
+let gangbukTarget=0
+
+centers.forEach(c=>{
+
+let saved=JSON.parse(localStorage.getItem("center_"+c)||"{}")
+let prev=JSON.parse(localStorage.getItem("prev_"+c)||"{}")
+
+let wireless=saved.wireless*1||0
+let wired=saved.wired*1||0
+let mnp=saved.mnp*1||0
+let used=saved.used*1||0
+let renew=saved.renew*1||0
+
+let prevWireless=prev.wireless*1||0
+let prevWired=prev.wired*1||0
+
+let wTarget=(targets[c]?.wireless)||0
+let wiTarget=(targets[c]?.wired)||0
+
+let wAch=wTarget?(wireless/wTarget*100):0
+let wiAch=wiTarget?(wired/wiTarget*100):0
+
+if(gangbuk.includes(c)){
+gangbukWireless+=wireless
+gangbukTarget+=wTarget
+}
+
+rankData.push({c,wireless})
+
+let done=(wireless||wired||mnp||used||renew)?"✔":""
+
+tbody.innerHTML+=`
+<tr id="row_${c}">
+<td>${done}</td>
+<td>${c}</td>
+<td>${wTarget}</td>
+<td>${wireless}</td>
+<td class="wAch">${wAch.toFixed(0)}%</td>
+<td class="rank"></td>
+<td>${wireless-prevWireless}</td>
+<td>${mnp}</td>
+<td>${wireless?(mnp/wireless*100).toFixed(0):0}%</td>
+<td>${used}</td>
+<td>${wireless?(used/wireless*100).toFixed(0):0}%</td>
+<td>${wiTarget}</td>
+<td>${wired}</td>
+<td>${wiAch.toFixed(0)}%</td>
+<td class="rank"></td>
+<td>${wired-prevWired}</td>
+<td>${renew}</td>
+</tr>`
+
+})
+
+calcRank(rankData)
+
+let gangbukAch=gangbukTarget?(gangbukWireless/gangbukTarget*100):0
+
+centers.forEach(c=>{
+let row=document.querySelector("#row_"+c)
+let ach=parseFloat(row.querySelector(".wAch").innerText)
+if(ach<gangbukAch) row.querySelector(".wAch").classList.add("warn")
+})
+
+updateTrack(gangbukAch)
+updateTopCenter(rankData)
+
+}
+
+function calcRank(data){
+
+let sorted=[...data].sort((a,b)=>b.wireless-a.wireless)
+let rankMap={}
+sorted.forEach((d,i)=>{rankMap[d.c]=i+1})
+
+centers.forEach(c=>{
+
+let row=document.querySelector("#row_"+c)
+let rank=rankMap[c]
+
+let cells=row.querySelectorAll(".rank")
+cells.forEach(cell=>{
+
+cell.innerText=rank
+
+if(rank<=2) cell.classList.add("rankTop")
+if(rank>=8) cell.classList.add("rankLow")
+
+})
+
+})
+
+}
+
+function updateTrack(wAch){
+
+document.getElementById("wirelessRunner").style.left=Math.min(wAch,100)+"%"
+document.getElementById("wiredRunner").style.left=Math.min(wAch,100)+"%"
+
+}
+
+function updateTopCenter(data){
+
+let sorted=[...data].sort((a,b)=>b.wireless-a.wireless)
+let top=sorted[0]
+document.getElementById("topCenter").innerText="🏆 TOP 센터 : "+top.c+" ("+top.wireless+")"
+
+}
 
 let currentCenter=""
 
 function openCenter(name){
 
 currentCenter=name
+
+let saved=JSON.parse(localStorage.getItem("center_"+name)||"{}")
+
+document.getElementById("wireless").value=saved.wireless||""
+document.getElementById("mnp").value=saved.mnp||""
+document.getElementById("used").value=saved.used||""
+document.getElementById("wired").value=saved.wired||""
+document.getElementById("renew").value=saved.renew||""
+
 document.getElementById("popupCenter").innerText=name
 document.getElementById("centerPopup").style.display="block"
 
 }
 
 function closePopup(){
-
 document.getElementById("centerPopup").style.display="none"
-
 }
 
 function saveCenter(){
+
+let prev=JSON.parse(localStorage.getItem("center_"+currentCenter)||"{}")
+localStorage.setItem("prev_"+currentCenter,JSON.stringify(prev))
 
 let data={
 wireless:document.getElementById("wireless").value,
@@ -226,10 +291,11 @@ renew:document.getElementById("renew").value
 localStorage.setItem("center_"+currentCenter,JSON.stringify(data))
 
 closePopup()
-
-alert("저장되었습니다")
+render()
 
 }
+
+init()
 
 </script>
 
