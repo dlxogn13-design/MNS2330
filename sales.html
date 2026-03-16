@@ -8,8 +8,10 @@
 
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
+.topbar{display:flex;justify-content:flex-end;gap:10px;margin-bottom:10px;}
+button{cursor:pointer}
 .centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0;max-width:420px;}
-.centerGrid button{background:#eef1f7;font-weight:bold;padding:10px;border:1px solid #ccc;border-radius:6px;cursor:pointer;}
+.centerGrid button{background:#eef1f7;font-weight:bold;padding:10px;border:1px solid #ccc;border-radius:6px;}
 table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px;}
 th{background:#0f2345;color:white;padding:8px;}
 td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
@@ -28,6 +30,11 @@ box-shadow:0 5px 20px rgba(0,0,0,0.2);display:none;width:260px;}
 </head>
 
 <body>
+
+<div class="topbar">
+<button onclick="resetData()">초기화</button>
+<button onclick="location.href='index.html'">메인포털</button>
+</div>
 
 <h2>강북도매 유/무선 실적</h2>
 
@@ -95,36 +102,56 @@ const gangwon=["강릉","원주","춘천"]
 
 let targets={}
 
-function todayKey(){
+function todayStr(){
  let d=new Date()
  return (d.getMonth()+1)+"/"+d.getDate()
 }
 
-function init(){
+function resetData(){
+ if(confirm("실적 초기화하시겠습니까?")){
+ localStorage.clear()
+ location.reload()
+ }
+}
 
-fetch("target.xlsx")
-.then(r=>r.arrayBuffer())
-.then(data=>{
+function midnightReset(){
+ let today=new Date().toDateString()
+ let saved=localStorage.getItem("lastDate")
+ if(saved!=today){
+ localStorage.clear()
+ localStorage.setItem("lastDate",today)
+ }
+}
 
-let wb=XLSX.read(data)
-let today=todayKey()
+async function loadTargets(){
 
-let wirelessSheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]])
-let wiredSheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]])
+let res=await fetch("target.xlsx")
+let buf=await res.arrayBuffer()
+let wb=XLSX.read(buf)
 
-wirelessSheet.forEach(r=>{
-targets[r["센터"]] = targets[r["센터"]] || {}
-targets[r["센터"]].wireless = r[today] || 0
-})
+let today=todayStr()
 
-wiredSheet.forEach(r=>{
-targets[r["센터"]] = targets[r["센터"]] || {}
-targets[r["센터"]].wired = r[today] || 0
+let ws1=wb.Sheets[wb.SheetNames[0]]
+let ws2=wb.Sheets[wb.SheetNames[1]]
+
+let wireless=XLSX.utils.sheet_to_json(ws1,{header:1})
+let wired=XLSX.utils.sheet_to_json(ws2,{header:1})
+
+let dateCol=wireless[0].findIndex(v=>String(v).includes(today))
+
+centers.forEach(c=>{
+
+let rowW=wireless.find(r=>r[0]==c)
+let rowL=wired.find(r=>r[0]==c)
+
+targets[c]={
+wireless: rowW ? (rowW[dateCol]||0) : 0,
+wired: rowL ? (rowL[dateCol]||0) : 0
+}
+
 })
 
 render()
-
-})
 
 }
 
@@ -133,59 +160,73 @@ function render(){
 let tbody=document.querySelector("#salesTable tbody")
 tbody.innerHTML=""
 
-let wAch=[], lAch=[]
 let totals={w:0,wt:0,l:0,lt:0}
-let area={w:0,wt:0}
-let gw={w:0,wt:0}
 
 centers.forEach(c=>{
 
 let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
 
-let w=s.wireless*1||0
-let l=s.wired*1||0
-let wt=targets[c]?.wireless||0
-let lt=targets[c]?.wired||0
-
-let wa=wt? w/wt*100:0
-let la=lt? l/lt*100:0
-
-wAch.push({c,val:wa})
-lAch.push({c,val:la})
-
-totals.w+=w; totals.wt+=wt
-totals.l+=l; totals.lt+=lt
-
-if(gangbuk.includes(c)){area.w+=w; area.wt+=wt}
-if(gangwon.includes(c)){gw.w+=w; gw.wt+=wt}
+totals.w+=Number(s.wireless||0)
+totals.l+=Number(s.wired||0)
+totals.wt+=Number(targets[c]?.wireless||0)
+totals.lt+=Number(targets[c]?.wired||0)
 
 })
 
-wAch.sort((a,b)=>b.val-a.val)
-lAch.sort((a,b)=>b.val-a.val)
+let totalAch = totals.wt? (totals.w/totals.wt*100):0
 
-let wr={},lr={}
-wAch.forEach((d,i)=>wr[d.c]=i+1)
-lAch.forEach((d,i)=>lr[d.c]=i+1)
+function makeRow(name,list){
 
-let totalAch=totals.wt?totals.w/totals.wt*100:0
+let w=0,wt=0,l=0,lt=0,mnp=0,used=0,renew=0
 
-tbody.innerHTML+=`
-<tr class="groupRow"><td></td><td>강북도매계</td><td>${totals.wt}</td><td>${totals.w}</td><td>${totalAch.toFixed(0)}%</td><td colspan="12"></td></tr>
-<tr class="groupRow"><td></td><td>강북상권계</td><td>${area.wt}</td><td>${area.w}</td><td>${(area.wt?area.w/area.wt*100:0).toFixed(0)}%</td><td colspan="12"></td></tr>
-<tr class="groupRow"><td></td><td>강원상권계</td><td>${gw.wt}</td><td>${gw.w}</td><td>${(gw.wt?gw.w/gw.wt*100:0).toFixed(0)}%</td><td colspan="12"></td></tr>
-`
+list.forEach(c=>{
+let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
+w+=Number(s.wireless||0)
+l+=Number(s.wired||0)
+mnp+=Number(s.mnp||0)
+used+=Number(s.used||0)
+renew+=Number(s.renew||0)
+wt+=targets[c]?.wireless||0
+lt+=targets[c]?.wired||0
+})
+
+let wa=wt? w/wt*100:0
+let la=lt? l/lt*100:0
+
+return `<tr class="groupRow">
+<td></td>
+<td>${name}</td>
+<td>${wt}</td>
+<td>${w}</td>
+<td>${wa.toFixed(0)}%</td>
+<td>-</td>
+<td>-</td>
+<td>${mnp}</td>
+<td>${w?(mnp/w*100).toFixed(0):0}%</td>
+<td>${used}</td>
+<td>${w?(used/w*100).toFixed(0):0}%</td>
+<td>${lt}</td>
+<td>${l}</td>
+<td>${la.toFixed(0)}%</td>
+<td>-</td>
+<td>-</td>
+<td>${renew}</td>
+</tr>`
+}
+
+tbody.innerHTML+=makeRow("강북도매계",centers)
+tbody.innerHTML+=makeRow("강북상권계",gangbuk)
+tbody.innerHTML+=makeRow("강원상권계",gangwon)
 
 centers.forEach(c=>{
 
 let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
-let p=JSON.parse(localStorage.getItem("prev_"+c)||"{}")
 
-let w=s.wireless*1||0
-let l=s.wired*1||0
-let mnp=s.mnp*1||0
-let used=s.used*1||0
-let renew=s.renew*1||0
+let w=Number(s.wireless||0)
+let l=Number(s.wired||0)
+let mnp=Number(s.mnp||0)
+let used=Number(s.used||0)
+let renew=Number(s.renew||0)
 
 let wt=targets[c]?.wireless||0
 let lt=targets[c]?.wired||0
@@ -193,14 +234,14 @@ let lt=targets[c]?.wired||0
 let wa=wt? w/wt*100:0
 let la=lt? l/lt*100:0
 
-let row=`<tr>
-<td>${(w||l||mnp||used||renew)?"✔️":""}</td>
+tbody.innerHTML+=`<tr>
+<td>${w||l?"✔️":""}</td>
 <td>${c}</td>
 <td>${wt}</td>
 <td>${w}</td>
 <td class="${wa<totalAch?'warn':''}">${wa.toFixed(0)}%</td>
-<td class="${wr[c]<=2?'rankTop':(wr[c]>=8?'rankLow':'')}">${wr[c]}</td>
-<td>${w-(p.wireless||0)}</td>
+<td>-</td>
+<td>-</td>
 <td>${mnp}</td>
 <td>${w?(mnp/w*100).toFixed(0):0}%</td>
 <td>${used}</td>
@@ -208,12 +249,10 @@ let row=`<tr>
 <td>${lt}</td>
 <td>${l}</td>
 <td class="${la<totalAch?'warn':''}">${la.toFixed(0)}%</td>
-<td class="${lr[c]<=2?'rankTop':(lr[c]>=8?'rankLow':'')}">${lr[c]}</td>
-<td>${l-(p.wired||0)}</td>
+<td>-</td>
+<td>-</td>
 <td>${renew}</td>
 </tr>`
-
-tbody.innerHTML+=row
 
 })
 
@@ -240,9 +279,6 @@ function closePopup(){centerPopup.style.display="none"}
 
 function saveCenter(){
 
-let prev=JSON.parse(localStorage.getItem("center_"+currentCenter)||"{}")
-localStorage.setItem("prev_"+currentCenter,JSON.stringify(prev))
-
 let data={
 wireless:wireless.value,
 mnp:mnp.value,
@@ -258,7 +294,8 @@ render()
 
 }
 
-init()
+midnightReset()
+loadTargets()
 
 </script>
 </body>
