@@ -3,7 +3,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>KT m&s 재고 검색</title>
+<title>KTm&s 재고 검색</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -20,22 +20,28 @@ padding:20px;
 max-width:900px;
 margin:auto;
 box-shadow:0 3px 10px rgba(0,0,0,0.1);
+position:relative;
 }
 
-.topbar{
+.topButtons{
+position:absolute;
+top:20px;
+right:20px;
 display:flex;
-justify-content:flex-end;
-gap:10px;
-margin-bottom:10px;
+gap:8px;
 }
 
 button{
-padding:10px 14px;
+padding:8px 14px;
 background:#3a74c9;
 color:white;
 border:none;
 border-radius:6px;
 font-size:14px;
+}
+
+.resetBtn{
+background:#777;
 }
 
 input{
@@ -84,18 +90,6 @@ text-align:center;
 border-radius:5px;
 margin-bottom:10px;
 }
-
-.shopLink{
-color:#2f6fb5;
-font-weight:bold;
-cursor:pointer;
-}
-
-.qtyLink{
-cursor:pointer;
-color:#c0392b;
-font-weight:bold;
-}
 </style>
 </head>
 
@@ -103,9 +97,9 @@ font-weight:bold;
 
 <div class="container">
 
-<div class="topbar">
+<div class="topButtons">
 <button onclick="goMain()">메인포털</button>
-<button onclick="resetSearch()">검색초기화</button>
+<button class="resetBtn" onclick="resetSearch()">검색초기화</button>
 </div>
 
 <h2>KTm&s 재고 검색 🔎</h2>
@@ -163,13 +157,10 @@ location.href="index.html"
 }
 
 function resetSearch(){
-
 document.getElementById("model").value=""
 document.getElementById("color").value=""
 document.getElementById("branch").value=""
 document.getElementById("shop").value=""
-
-search()
 }
 
 function search(){
@@ -228,10 +219,10 @@ let tr=document.createElement("tr")
 
 tr.innerHTML=`
 <td>${branch}</td>
-<td><span class="shopLink" onclick="openShop('${shop}')">${shop}</span></td>
+<td>${shop}</td>
 <td>${model}</td>
-<td class="qtyLink" onclick="showSerial('${shop}','자사')">${own}</td>
-<td class="qtyLink" onclick="showSerial('${shop}','타사')">${other}</td>
+<td>${own}</td>
+<td>${other}</td>
 `
 
 tbody.appendChild(tr)
@@ -241,15 +232,12 @@ tbody.appendChild(tr)
 document.getElementById("totalStock").innerText="총 재고 : "+total
 
 let modelHtml=""
-
 Object.entries(modelMap).forEach(([k,v])=>{
 modelHtml+=k+" : "+v+"대<br>"
 })
-
 document.getElementById("modelResult").innerHTML=modelHtml
 
 let topHtml=""
-
 Object.keys(branchMap).forEach(branch=>{
 
 topHtml+="<b>"+branch+"</b><br>"
@@ -259,36 +247,11 @@ let shops=Object.entries(branchMap[branch])
 .slice(0,10)
 
 shops.forEach(([shop,v])=>{
-
-topHtml+=`&nbsp;&nbsp;<span class="shopLink" onclick="openShop('${shop}')">${shop}</span> : ${v}대<br>`
-
+topHtml+=`&nbsp;&nbsp;${shop} : ${v}대<br>`
 })
 
 })
-
 document.getElementById("top10").innerHTML=topHtml
-
-}
-
-function openShop(shop){
-
-let filtered = inventory.filter(r=>r["점명"]===shop)
-render(filtered)
-window.scrollTo(0,0)
-
-}
-
-function showSerial(shop,type){
-
-let list = inventory.filter(r=>{
-return r["점명"]===shop && (r["자/타사구분"]||"").includes(type)
-})
-
-let serials = list.map(r=>r["일련번호"]||"").join("\n")
-
-if(!serials) serials="일련번호 없음"
-
-alert(serials)
 
 }
 
