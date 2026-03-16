@@ -17,12 +17,9 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 .rankTop{background:#d9e8ff;}
 .rankLow{background:#ffd9d9;}
 .warn{color:red;font-weight:bold;}
+.groupRow{background:#eef3ff;font-weight:bold;}
 .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:10px;padding:20px;box-shadow:0 5px 20px rgba(0,0,0,0.2);display:none;width:260px;}
 .popup input{width:100%;margin-bottom:8px;padding:6px;}
-.track{margin-top:30px;}
-.trackBar{height:20px;background:#e2e6f0;border-radius:10px;margin:10px 0;position:relative;}
-.runner{position:absolute;top:-6px;font-size:20px;}
-.topCenter{margin:10px 0;font-weight:bold;color:#2c3e50;}
 </style>
 </head>
 
@@ -32,8 +29,6 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 <button onclick="history.back()">뒤로</button>
 
 <h2>강북도매 유/무선 실적</h2>
-
-<div class="topCenter" id="topCenter"></div>
 
 <div class="centerGrid">
 <button onclick="openCenter('서대문')">서대문</button>
@@ -72,14 +67,6 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 <tbody></tbody>
 </table>
 
-<div class="track">
-<h3>강북도매 달성율 트랙</h3>
-무선
-<div class="trackBar"><div class="runner" id="wirelessRunner">🏃</div></div>
-유선
-<div class="trackBar"><div class="runner" id="wiredRunner">🏃</div></div>
-</div>
-
 <div class="popup" id="centerPopup">
 <h3 id="popupCenter"></h3>
 <input id="wireless" placeholder="무선실적">
@@ -99,18 +86,7 @@ const gangwon=["강릉","원주","춘천"]
 
 let targets={}
 
-function checkReset(){
-let today=new Date().toISOString().slice(0,10)
-let saved=localStorage.getItem("portal_date")
-if(saved!==today){
-localStorage.clear()
-localStorage.setItem("portal_date",today)
-}
-}
-
 function init(){
-
-checkReset()
 
 fetch("target.xlsx")
 .then(r=>r.arrayBuffer())
@@ -141,14 +117,16 @@ function render(){
 let tbody=document.querySelector("#salesTable tbody")
 tbody.innerHTML=""
 
-let rankData=[]
-let gangbukWireless=0
-let gangbukTarget=0
+let group={
+gangbukWireless:0,
+gangbukTarget:0,
+gangwonWireless:0,
+gangwonTarget:0
+}
 
 centers.forEach(c=>{
 
 let saved=JSON.parse(localStorage.getItem("center_"+c)||"{}")
-let prev=JSON.parse(localStorage.getItem("prev_"+c)||"{}")
 
 let wireless=saved.wireless*1||0
 let wired=saved.wired*1||0
@@ -156,8 +134,55 @@ let mnp=saved.mnp*1||0
 let used=saved.used*1||0
 let renew=saved.renew*1||0
 
-let prevWireless=prev.wireless*1||0
-let prevWired=prev.wired*1||0
+let wTarget=(targets[c]?.wireless)||0
+let wiTarget=(targets[c]?.wired)||0
+
+if(gangbuk.includes(c)){
+group.gangbukWireless+=wireless
+group.gangbukTarget+=wTarget
+}else{
+group.gangwonWireless+=wireless
+group.gangwonTarget+=wTarget
+}
+
+})
+
+let gangbukAch=group.gangbukTarget?(group.gangbukWireless/group.gangbukTarget*100):0
+let gangwonAch=group.gangwonTarget?(group.gangwonWireless/group.gangwonTarget*100):0
+
+tbody.innerHTML+=`
+<tr class="groupRow">
+<td></td>
+<td>강북도매계</td>
+<td>${group.gangbukTarget}</td>
+<td>${group.gangbukWireless}</td>
+<td>${gangbukAch.toFixed(0)}%</td>
+<td></td><td></td><td></td><td></td><td></td><td></td>
+<td></td><td></td><td></td><td></td><td></td><td></td>
+</tr>
+`
+
+tbody.innerHTML+=`
+<tr class="groupRow">
+<td></td>
+<td>강원상권계</td>
+<td>${group.gangwonTarget}</td>
+<td>${group.gangwonWireless}</td>
+<td>${gangwonAch.toFixed(0)}%</td>
+<td></td><td></td><td></td><td></td><td></td><td></td>
+<td></td><td></td><td></td><td></td><td></td><td></td>
+</tr>
+`
+
+centers.forEach(c=>{
+
+let saved=JSON.parse(localStorage.getItem("center_"+c)||"{}")
+
+let wireless=saved.wireless*1||0
+let wired=saved.wired*1||0
+let mnp=saved.mnp*1||0
+let used=saved.used*1||0
+let renew=saved.renew*1||0
 
 let wTarget=(targets[c]?.wireless)||0
 let wiTarget=(targets[c]?.wired)||0
@@ -165,24 +190,15 @@ let wiTarget=(targets[c]?.wired)||0
 let wAch=wTarget?(wireless/wTarget*100):0
 let wiAch=wiTarget?(wired/wiTarget*100):0
 
-if(gangbuk.includes(c)){
-gangbukWireless+=wireless
-gangbukTarget+=wTarget
-}
-
-rankData.push({c,wireless})
-
-let done=(wireless||wired||mnp||used||renew)?"✔":""
-
 tbody.innerHTML+=`
-<tr id="row_${c}">
-<td>${done}</td>
+<tr>
+<td>${(wireless||wired||mnp||used||renew)?"✔":""}</td>
 <td>${c}</td>
 <td>${wTarget}</td>
 <td>${wireless}</td>
-<td class="wAch">${wAch.toFixed(0)}%</td>
-<td class="rank"></td>
-<td>${wireless-prevWireless}</td>
+<td>${wAch.toFixed(0)}%</td>
+<td></td>
+<td></td>
 <td>${mnp}</td>
 <td>${wireless?(mnp/wireless*100).toFixed(0):0}%</td>
 <td>${used}</td>
@@ -190,65 +206,12 @@ tbody.innerHTML+=`
 <td>${wiTarget}</td>
 <td>${wired}</td>
 <td>${wiAch.toFixed(0)}%</td>
-<td class="rank"></td>
-<td>${wired-prevWired}</td>
+<td></td>
+<td></td>
 <td>${renew}</td>
 </tr>`
 
 })
-
-calcRank(rankData)
-
-let gangbukAch=gangbukTarget?(gangbukWireless/gangbukTarget*100):0
-
-centers.forEach(c=>{
-let row=document.querySelector("#row_"+c)
-let ach=parseFloat(row.querySelector(".wAch").innerText)
-if(ach<gangbukAch) row.querySelector(".wAch").classList.add("warn")
-})
-
-updateTrack(gangbukAch)
-updateTopCenter(rankData)
-
-}
-
-function calcRank(data){
-
-let sorted=[...data].sort((a,b)=>b.wireless-a.wireless)
-let rankMap={}
-sorted.forEach((d,i)=>{rankMap[d.c]=i+1})
-
-centers.forEach(c=>{
-
-let row=document.querySelector("#row_"+c)
-let rank=rankMap[c]
-
-let cells=row.querySelectorAll(".rank")
-cells.forEach(cell=>{
-
-cell.innerText=rank
-
-if(rank<=2) cell.classList.add("rankTop")
-if(rank>=8) cell.classList.add("rankLow")
-
-})
-
-})
-
-}
-
-function updateTrack(wAch){
-
-document.getElementById("wirelessRunner").style.left=Math.min(wAch,100)+"%"
-document.getElementById("wiredRunner").style.left=Math.min(wAch,100)+"%"
-
-}
-
-function updateTopCenter(data){
-
-let sorted=[...data].sort((a,b)=>b.wireless-a.wireless)
-let top=sorted[0]
-document.getElementById("topCenter").innerText="🏆 TOP 센터 : "+top.c+" ("+top.wireless+")"
 
 }
 
@@ -276,9 +239,6 @@ document.getElementById("centerPopup").style.display="none"
 }
 
 function saveCenter(){
-
-let prev=JSON.parse(localStorage.getItem("center_"+currentCenter)||"{}")
-localStorage.setItem("prev_"+currentCenter,JSON.stringify(prev))
 
 let data={
 wireless:document.getElementById("wireless").value,
