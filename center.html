@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
 <title>센터 입력</title>
@@ -8,53 +8,68 @@
 </head>
 <body>
 
-<div class="container">
-
 <div class="nav">
-<button onclick="location.href='sales.html'">← 센터</button>
+<button onclick="history.back()">← 센터</button>
 <button onclick="location.href='index.html'">🏠 메인</button>
 </div>
 
 <h2 id="title"></h2>
 
-<div class="grid2">
-<div><label>무선</label><input id="wireless"></div>
-<div><label>MNP</label><input id="mnp"></div>
-<div><label>중고</label><input id="used"></div>
-<div><label>유선</label><input id="wired"></div>
-<div><label>약갱</label><input id="renew"></div>
+<div class="form-grid">
+
+<div>
+<label>무선</label>
+<input id="wireless">
 </div>
 
-<br>
+<div>
+<label>MNP</label>
+<input id="mnp">
+</div>
+
+<div>
+<label>중고</label>
+<input id="used">
+</div>
+
+<div>
+<label>유선</label>
+<input id="wired">
+</div>
+
+</div>
+
+<div class="single">
+<label>약정갱신</label>
+<input id="renew">
+</div>
+
 <button onclick="save()">저장</button>
 
-</div>
-
 <script>
-let center=localStorage.getItem("center")
-document.getElementById("title").innerText=center+" 입력"
 
-let data=JSON.parse(localStorage.getItem("sales")||"{}")
+let center=new URLSearchParams(location.search).get("c")
+document.getElementById("title").innerText=center+" 입력"
 
 function save(){
 
-let prev=data[center]?.now||{}
+let prev=JSON.parse(localStorage.getItem(center)||"{}")
+localStorage.setItem(center+"_prev",JSON.stringify(prev))
 
-data[center]={
-prev:prev,
-now:{
-wireless:+wireless.value||0,
-mnp:+mnp.value||0,
-used:+used.value||0,
-wired:+wired.value||0,
-renew:+renew.value||0
-}
+let data={
+w:Number(wireless.value||0),
+m:Number(mnp.value||0),
+u:Number(used.value||0),
+l:Number(wired.value||0),
+r:Number(renew.value||0)
 }
 
-localStorage.setItem("sales",JSON.stringify(data))
+localStorage.setItem(center,JSON.stringify(data))
+
 alert("저장 완료")
-location.href="sales.html"
+
 }
+
 </script>
 
 </body>

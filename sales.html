@@ -1,131 +1,194 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>실적 대시보드</title>
+<title>유무선 실적</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-<div class="container">
 
 <div class="nav">
 <button onclick="location.href='index.html'">🏠 메인</button>
 </div>
 
-<h2>강북도매 유/무선 실적 <span id="time"></span> 기준</h2>
+<h2 id="title"></h2>
 
-<div id="top"></div>
-<div id="complete"></div>
+<div class="center-grid" id="centers"></div>
 
-<div class="grid" id="centers"></div>
+<table id="summary">
+<thead>
+<tr>
+<th>센터</th>
+<th>무선목표</th>
+<th>무선실적</th>
+<th>달성율</th>
+<th>순위</th>
+<th>증분</th>
+<th>MNP</th>
+<th>MNP비중</th>
+<th>중고</th>
+<th>중고비중</th>
+<th>유선목표</th>
+<th>유선실적</th>
+<th>달성율</th>
+<th>순위</th>
+<th>증분</th>
+<th>약갱</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
 
-<div id="summary"></div>
-
-<div class="widget">
-<h3>🎯 전체 달성율</h3>
-<canvas id="gauge"></canvas>
-</div>
-
-<div class="widget">
-<h3>📊 상권 비교</h3>
-<canvas id="regionChart"></canvas>
-</div>
-
-<div class="widget">
-<h3>📈 센터 무선 실적</h3>
-<canvas id="centerChart"></canvas>
-</div>
-
-</div>
+<h3>📈 보조 그래프</h3>
+<canvas id="chart"></canvas>
 
 <script>
 
-let today=new Date().toISOString().slice(0,10)
+const centers=[
+"서대문","의정부","고양",
+"구리","노원","광진",
+"강릉","원주","춘천"
+]
 
-if(localStorage.getItem("date")!==today){
-localStorage.setItem("sales","{}")
-localStorage.setItem("date",today)
-}
+document.getElementById("title").innerText=
+"강북도매 유/무선 실적 "+new Date().getHours()+"시 기준"
 
-let now=new Date()
-document.getElementById("time").innerText=now.getHours()+"시"
-
-let centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
-let north=["서대문","의정부","고양","구리","노원","광진"]
-let gangwon=["강릉","원주","춘천"]
-
-let sales=JSON.parse(localStorage.getItem("sales")||"{}")
-
-let grid=""
+let grid=document.getElementById("centers")
 
 centers.forEach(c=>{
-let done=sales[c]?.now?"done":""
-grid+=`<button class="center-btn ${done}" onclick="openCenter('${c}')">${c}</button>`
+let b=document.createElement("button")
+b.innerText=c
+b.onclick=()=>location.href="center.html?c="+c
+grid.appendChild(b)
 })
 
-document.getElementById("centers").innerHTML=grid
+async function loadTargets(){
 
-function openCenter(name){
-localStorage.setItem("center",name)
-location.href="center.html"
+const file=await fetch("target.xlsx")
+const data=await file.arrayBuffer()
+const wb=XLSX.read(data)
+
+const wireless=XLSX.utils.sheet_to_json(wb.Sheets["무선목표"])
+const wired=XLSX.utils.sheet_to_json(wb.Sheets["유선목표"])
+
+const today=(new Date().getMonth()+1)+"/"+new Date().getDate()
+
+let targets={}
+
+wireless.forEach(r=>{
+
+targets[r.센터]={
+w:r[today]||0,
+l:0
 }
 
-let completed=Object.keys(sales).length
-document.getElementById("complete").innerHTML="입력완료 "+completed+" / 9"
+})
 
-let wireless=[]
-let labels=[]
-let total=0
+wired.forEach(r=>{
+
+if(!targets[r.센터])targets[r.센터]={}
+targets[r.센터].l=r[today]||0
+
+})
+
+return targets
+
+}
+
+function loadData(targets){
+
+let rows=[]
 
 centers.forEach(c=>{
-let w=sales[c]?.now?.wireless||0
-wireless.push(w)
-labels.push(c)
-total+=w
+
+let d=JSON.parse(localStorage.getItem(c)||"{}")
+let p=JSON.parse(localStorage.getItem(c+"_prev")||"{}")
+
+let w=d.w||0
+let m=d.m||0
+let u=d.u||0
+let l=d.l||0
+let r=d.r||0
+
+let tw=targets[c]?.w||0
+let tl=targets[c]?.l||0
+
+let rateW=tw?((w/tw)*100):0
+let rateL=tl?((l/tl)*100):0
+
+let inc=w-(p.w||0)
+
+let mRate=w?(m/w*100):0
+let uRate=w?(u/w*100):0
+
+rows.push({
+c,w,tw,rateW,inc,m,mRate,u,uRate,l,tl,rateL,r
 })
 
-new Chart(document.getElementById("centerChart"),{
-type:'bar',
-data:{labels:labels,datasets:[{label:'무선 실적',data:wireless}]}
 })
 
-let northSum=0
-let gangSum=0
+let rankW=[...rows].sort((a,b)=>b.rateW-a.rateW)
+rankW.forEach((r,i)=>r.rank=i+1)
 
-north.forEach(c=>northSum+=sales[c]?.now?.wireless||0)
-gangwon.forEach(c=>gangSum+=sales[c]?.now?.wireless||0)
-
-new Chart(document.getElementById("regionChart"),{
-type:'bar',
-data:{
-labels:["강북상권","강원상권"],
-datasets:[{label:"무선 실적",data:[northSum,gangSum]}]
-}
+rows.forEach(r=>{
+let found=rankW.find(x=>x.c===r.c)
+r.rank=found.rank
 })
 
-let goal=200
-let percent=Math.min(100,Math.round(total/goal*100))
+let html=""
+let chartData=[]
 
-new Chart(document.getElementById("gauge"),{
-type:'doughnut',
-data:{
-labels:["달성","미달성"],
-datasets:[{data:[percent,100-percent]}]
-},
-options:{rotation:-90,circumference:180}
-})
+rows.forEach(r=>{
 
-let topCenters=[...centers].sort((a,b)=>(sales[b]?.now?.wireless||0)-(sales[a]?.now?.wireless||0)).slice(0,3)
+chartData.push(r.w)
 
-document.getElementById("top").innerHTML=`
-🏆 TOP 센터<br>
-🥇 ${topCenters[0]||"-"}<br>
-🥈 ${topCenters[1]||"-"}<br>
-🥉 ${topCenters[2]||"-"}
+html+=`
+<tr>
+<td>${r.c}</td>
+<td>${r.tw}</td>
+<td>${r.w}</td>
+<td>${r.rateW.toFixed(1)}%</td>
+<td>${r.rank}</td>
+<td>${r.inc}</td>
+<td>${r.m}</td>
+<td>${r.mRate.toFixed(1)}%</td>
+<td>${r.u}</td>
+<td>${r.uRate.toFixed(1)}%</td>
+<td>${r.tl}</td>
+<td>${r.l}</td>
+<td>${r.rateL.toFixed(1)}%</td>
+<td>-</td>
+<td>-</td>
+<td>${r.r}</td>
+</tr>
 `
+
+})
+
+document.querySelector("#summary tbody").innerHTML=html
+
+new Chart(document.getElementById("chart"),{
+type:"bar",
+data:{
+labels:centers,
+datasets:[{label:"무선 실적",data:chartData}]
+}
+})
+
+}
+
+async function init(){
+
+let targets=await loadTargets()
+loadData(targets)
+
+}
+
+init()
 
 </script>
 

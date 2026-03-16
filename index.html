@@ -1,17 +1,25 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>강북도매 영업관리 포털</title>
 <link rel="stylesheet" href="style.css">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 </head>
 <body>
-<div class="container">
-<div class="header">📋 강북도매 영업관리 포털</div>
-<div class="card" onclick="location.href='inventory.html'">📦 재고검색</div>
-<div class="card" onclick="location.href='sales.html'">📊 유/무선 실적 대시보드</div>
+
+<h1>📋 강북도매 영업관리 포털</h1>
+
+<div class="card" onclick="location.href='inventory.html'">
+<div class="card-title">📦 재고검색</div>
+<div class="card-sub">전사 재고 기준 (오전 / 오후)</div>
 </div>
+
+<div class="card" onclick="location.href='sales.html'">
+<div class="card-title">📊 유/무선 실적</div>
+<div class="card-sub">15시 / 17시 / 19시 기준</div>
+</div>
+
 </body>
 </html>

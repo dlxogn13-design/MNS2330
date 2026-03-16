@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
 <title>재고검색</title>
@@ -8,39 +8,51 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-<div class="container">
 
 <div class="nav">
 <button onclick="location.href='index.html'">🏠 메인</button>
 </div>
 
 <h2>📦 재고검색</h2>
-<input id="search" placeholder="모델 검색">
+
+<input id="model" placeholder="모델 검색">
 <button onclick="search()">검색</button>
 
-<table id="result"></table>
-
-</div>
+<div id="result"></div>
 
 <script>
-let data=[]
-fetch("inventory.xlsx")
-.then(r=>r.arrayBuffer())
-.then(buf=>{
-let wb=XLSX.read(buf)
-let ws=wb.Sheets[wb.SheetNames[0]]
-data=XLSX.utils.sheet_to_json(ws)
+
+async function search(){
+
+const file=await fetch("inventory.xlsx")
+const data=await file.arrayBuffer()
+
+const wb=XLSX.read(data)
+const sheet=wb.Sheets[wb.SheetNames[0]]
+const json=XLSX.utils.sheet_to_json(sheet)
+
+let keyword=document.getElementById("model").value
+
+let html="<table><tr><th>지사</th><th>점명</th><th>모델</th><th>수량</th></tr>"
+
+json.forEach(r=>{
+
+if(r.모델 && r.모델.includes(keyword)){
+html+=`<tr>
+<td>${r.지사||""}</td>
+<td>${r.점명||""}</td>
+<td>${r.모델||""}</td>
+<td>${r.수량||""}</td>
+</tr>`
+}
+
 })
 
-function search(){
-let keyword=document.getElementById("search").value
-let html="<tr><th>모델</th><th>재고</th></tr>"
-data.filter(r=>JSON.stringify(r).includes(keyword))
-.forEach(r=>{
-html+=`<tr><td>${r.모델||""}</td><td>${r.재고||""}</td></tr>`
-})
+html+="</table>"
 document.getElementById("result").innerHTML=html
+
 }
+
 </script>
 
 </body>
