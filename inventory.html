@@ -1,27 +1,47 @@
 
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>재고검색</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
-
 <body>
-
 <div class="container">
 
 <div class="nav">
 <button onclick="location.href='index.html'">🏠 메인</button>
-<button onclick="history.back()">← 뒤로</button>
 </div>
 
 <h2>📦 재고검색</h2>
+<input id="search" placeholder="모델 검색">
+<button onclick="search()">검색</button>
 
-<p>기존 inventory 검색 페이지 코드를 이 파일에 넣으면 됩니다.</p>
+<table id="result"></table>
 
 </div>
+
+<script>
+let data=[]
+fetch("inventory.xlsx")
+.then(r=>r.arrayBuffer())
+.then(buf=>{
+let wb=XLSX.read(buf)
+let ws=wb.Sheets[wb.SheetNames[0]]
+data=XLSX.utils.sheet_to_json(ws)
+})
+
+function search(){
+let keyword=document.getElementById("search").value
+let html="<tr><th>모델</th><th>재고</th></tr>"
+data.filter(r=>JSON.stringify(r).includes(keyword))
+.forEach(r=>{
+html+=`<tr><td>${r.모델||""}</td><td>${r.재고||""}</td></tr>`
+})
+document.getElementById("result").innerHTML=html
+}
+</script>
 
 </body>
 </html>

@@ -1,48 +1,132 @@
 
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>실적 센터 선택</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>실적 대시보드</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
-
 <div class="container">
 
 <div class="nav">
 <button onclick="location.href='index.html'">🏠 메인</button>
 </div>
 
-<h2 style="color:white">강북도매 유/무선 실적</h2>
+<h2>강북도매 유/무선 실적 <span id="time"></span> 기준</h2>
 
-<div class="grid">
+<div id="top"></div>
+<div id="complete"></div>
 
-<button class="center-btn" onclick="openCenter('서대문')">서대문</button>
-<button class="center-btn" onclick="openCenter('의정부')">의정부</button>
-<button class="center-btn" onclick="openCenter('고양')">고양</button>
+<div class="grid" id="centers"></div>
 
-<button class="center-btn" onclick="openCenter('구리')">구리</button>
-<button class="center-btn" onclick="openCenter('노원')">노원</button>
-<button class="center-btn" onclick="openCenter('광진')">광진</button>
+<div id="summary"></div>
 
-<button class="center-btn" onclick="openCenter('강릉')">강릉</button>
-<button class="center-btn" onclick="openCenter('원주')">원주</button>
-<button class="center-btn" onclick="openCenter('춘천')">춘천</button>
-
+<div class="widget">
+<h3>🎯 전체 달성율</h3>
+<canvas id="gauge"></canvas>
 </div>
 
-<button onclick="location.href='summary.html'">📊 요약 실적 보기</button>
+<div class="widget">
+<h3>📊 상권 비교</h3>
+<canvas id="regionChart"></canvas>
+</div>
+
+<div class="widget">
+<h3>📈 센터 무선 실적</h3>
+<canvas id="centerChart"></canvas>
+</div>
 
 </div>
 
 <script>
+
+let today=new Date().toISOString().slice(0,10)
+
+if(localStorage.getItem("date")!==today){
+localStorage.setItem("sales","{}")
+localStorage.setItem("date",today)
+}
+
+let now=new Date()
+document.getElementById("time").innerText=now.getHours()+"시"
+
+let centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
+let north=["서대문","의정부","고양","구리","노원","광진"]
+let gangwon=["강릉","원주","춘천"]
+
+let sales=JSON.parse(localStorage.getItem("sales")||"{}")
+
+let grid=""
+
+centers.forEach(c=>{
+let done=sales[c]?.now?"done":""
+grid+=`<button class="center-btn ${done}" onclick="openCenter('${c}')">${c}</button>`
+})
+
+document.getElementById("centers").innerHTML=grid
+
 function openCenter(name){
 localStorage.setItem("center",name)
 location.href="center.html"
 }
+
+let completed=Object.keys(sales).length
+document.getElementById("complete").innerHTML="입력완료 "+completed+" / 9"
+
+let wireless=[]
+let labels=[]
+let total=0
+
+centers.forEach(c=>{
+let w=sales[c]?.now?.wireless||0
+wireless.push(w)
+labels.push(c)
+total+=w
+})
+
+new Chart(document.getElementById("centerChart"),{
+type:'bar',
+data:{labels:labels,datasets:[{label:'무선 실적',data:wireless}]}
+})
+
+let northSum=0
+let gangSum=0
+
+north.forEach(c=>northSum+=sales[c]?.now?.wireless||0)
+gangwon.forEach(c=>gangSum+=sales[c]?.now?.wireless||0)
+
+new Chart(document.getElementById("regionChart"),{
+type:'bar',
+data:{
+labels:["강북상권","강원상권"],
+datasets:[{label:"무선 실적",data:[northSum,gangSum]}]
+}
+})
+
+let goal=200
+let percent=Math.min(100,Math.round(total/goal*100))
+
+new Chart(document.getElementById("gauge"),{
+type:'doughnut',
+data:{
+labels:["달성","미달성"],
+datasets:[{data:[percent,100-percent]}]
+},
+options:{rotation:-90,circumference:180}
+})
+
+let topCenters=[...centers].sort((a,b)=>(sales[b]?.now?.wireless||0)-(sales[a]?.now?.wireless||0)).slice(0,3)
+
+document.getElementById("top").innerHTML=`
+🏆 TOP 센터<br>
+🥇 ${topCenters[0]||"-"}<br>
+🥈 ${topCenters[1]||"-"}<br>
+🥉 ${topCenters[2]||"-"}
+`
+
 </script>
 
 </body>
