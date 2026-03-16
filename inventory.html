@@ -22,6 +22,22 @@ margin:auto;
 box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
+.topbar{
+display:flex;
+justify-content:flex-end;
+gap:10px;
+margin-bottom:10px;
+}
+
+button{
+padding:10px 14px;
+background:#3a74c9;
+color:white;
+border:none;
+border-radius:6px;
+font-size:14px;
+}
+
 input{
 width:100%;
 padding:10px;
@@ -30,13 +46,8 @@ border:1px solid #ddd;
 border-radius:6px;
 }
 
-button{
+.searchBtn{
 width:100%;
-padding:12px;
-background:#3a74c9;
-color:white;
-border:none;
-border-radius:6px;
 font-size:16px;
 margin-top:10px;
 }
@@ -73,6 +84,18 @@ text-align:center;
 border-radius:5px;
 margin-bottom:10px;
 }
+
+.shopLink{
+color:#2f6fb5;
+font-weight:bold;
+cursor:pointer;
+}
+
+.qtyLink{
+cursor:pointer;
+color:#c0392b;
+font-weight:bold;
+}
 </style>
 </head>
 
@@ -80,10 +103,14 @@ margin-bottom:10px;
 
 <div class="container">
 
+<div class="topbar">
+<button onclick="goMain()">메인포털</button>
+<button onclick="resetSearch()">검색초기화</button>
+</div>
+
 <h2>KTm&s 재고 검색 🔎</h2>
 
-<div class="update" id="updateTime">재고 업데이트 :</div>
-
+<div class="update" id="updateTime"></div>
 <div class="total" id="totalStock"></div>
 
 <input id="model" placeholder="모델 검색">
@@ -91,7 +118,7 @@ margin-bottom:10px;
 <input id="branch" placeholder="지사 검색">
 <input id="shop" placeholder="점명 검색">
 
-<button onclick="search()">검색</button>
+<button class="searchBtn" onclick="search()">검색</button>
 
 <h3>모델 검색 결과</h3>
 <div id="modelResult"></div>
@@ -126,10 +153,24 @@ let workbook=XLSX.read(data)
 let sheet=workbook.Sheets[workbook.SheetNames[0]]
 inventory=XLSX.utils.sheet_to_json(sheet)
 
-document.getElementById("updateTime").innerText =
+document.getElementById("updateTime").innerText=
 "재고 업데이트 : "+new Date().toLocaleString()
 
 })
+
+function goMain(){
+location.href="index.html"
+}
+
+function resetSearch(){
+
+document.getElementById("model").value=""
+document.getElementById("color").value=""
+document.getElementById("branch").value=""
+document.getElementById("shop").value=""
+
+search()
+}
 
 function search(){
 
@@ -164,7 +205,7 @@ tbody.innerHTML=""
 
 let total=0
 let modelMap={}
-let shopMap={}
+let branchMap={}
 
 rows.forEach(r=>{
 
@@ -179,16 +220,18 @@ let other = type.includes("타사") ? 1 : 0
 total += 1
 
 modelMap[model]=(modelMap[model]||0)+1
-shopMap[shop]=(shopMap[shop]||0)+1
+
+if(!branchMap[branch]) branchMap[branch]={}
+branchMap[branch][shop]=(branchMap[branch][shop]||0)+1
 
 let tr=document.createElement("tr")
 
 tr.innerHTML=`
 <td>${branch}</td>
-<td>${shop}</td>
+<td><span class="shopLink" onclick="openShop('${shop}')">${shop}</span></td>
 <td>${model}</td>
-<td>${own}</td>
-<td>${other}</td>
+<td class="qtyLink" onclick="showSerial('${shop}','자사')">${own}</td>
+<td class="qtyLink" onclick="showSerial('${shop}','타사')">${other}</td>
 `
 
 tbody.appendChild(tr)
@@ -207,14 +250,45 @@ document.getElementById("modelResult").innerHTML=modelHtml
 
 let topHtml=""
 
-Object.entries(shopMap)
+Object.keys(branchMap).forEach(branch=>{
+
+topHtml+="<b>"+branch+"</b><br>"
+
+let shops=Object.entries(branchMap[branch])
 .sort((a,b)=>b[1]-a[1])
 .slice(0,10)
-.forEach(([k,v])=>{
-topHtml+=k+" : "+v+"대<br>"
+
+shops.forEach(([shop,v])=>{
+
+topHtml+=`&nbsp;&nbsp;<span class="shopLink" onclick="openShop('${shop}')">${shop}</span> : ${v}대<br>`
+
+})
+
 })
 
 document.getElementById("top10").innerHTML=topHtml
+
+}
+
+function openShop(shop){
+
+let filtered = inventory.filter(r=>r["점명"]===shop)
+render(filtered)
+window.scrollTo(0,0)
+
+}
+
+function showSerial(shop,type){
+
+let list = inventory.filter(r=>{
+return r["점명"]===shop && (r["자/타사구분"]||"").includes(type)
+})
+
+let serials = list.map(r=>r["일련번호"]||"").join("\n")
+
+if(!serials) serials="일련번호 없음"
+
+alert(serials)
 
 }
 
