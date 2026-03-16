@@ -31,6 +31,7 @@ display:none;width:260px;}
 
 <div class="topbar">
 <button onclick="resetData()">초기화</button>
+<button onclick="location.href='index.html'">메인포털</button>
 </div>
 
 <h2>강북도매 유/무선 실적</h2>
@@ -109,7 +110,6 @@ let wsL=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
 let today=todayMD()
 
-// 날짜행 = 2행
 let dateRow=wsW[1]
 
 let colIndex=-1
@@ -142,24 +142,56 @@ function render(){
 let tbody=document.querySelector("#salesTable tbody")
 tbody.innerHTML=""
 
+let wirelessRank=[]
+let wiredRank=[]
+
 let totalW=0,totalWT=0,totalL=0,totalLT=0
+let gbW=0,gbWT=0,gwW=0,gwWT=0
 
 centers.forEach(c=>{
 
 let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
 
-totalW+=Number(s.wireless||0)
-totalL+=Number(s.wired||0)
-totalWT+=Number(targets[c]?.wireless||0)
-totalLT+=Number(targets[c]?.wired||0)
+let w=s.wireless||0
+let l=s.wired||0
+
+let wt=targets[c]?.wireless||0
+let lt=targets[c]?.wired||0
+
+let wa=wt?w/wt*100:0
+let la=lt?l/lt*100:0
+
+wirelessRank.push({c,val:wa})
+wiredRank.push({c,val:la})
+
+totalW+=w
+totalWT+=wt
+totalL+=l
+totalLT+=lt
+
+if(gangbuk.includes(c)){gbW+=w;gbWT+=wt}
+if(gangwon.includes(c)){gwW+=w;gwWT+=wt}
 
 })
 
-let totalAch=totalWT?totalW/totalWT*100:0
+wirelessRank.sort((a,b)=>b.val-a.val)
+wiredRank.sort((a,b)=>b.val-a.val)
+
+let wRankMap={},lRankMap={}
+
+wirelessRank.forEach((r,i)=>{wRankMap[r.c]=i+1})
+wiredRank.forEach((r,i)=>{lRankMap[r.c]=i+1})
+
+tbody.innerHTML+=`
+<tr class="groupRow"><td></td><td>강북도매계</td><td>${totalWT}</td><td>${totalW}</td><td>${totalWT?(totalW/totalWT*100).toFixed(0):0}%</td><td colspan="12"></td></tr>
+<tr class="groupRow"><td></td><td>강북상권계</td><td>${gbWT}</td><td>${gbW}</td><td>${gbWT?(gbW/gbWT*100).toFixed(0):0}%</td><td colspan="12"></td></tr>
+<tr class="groupRow"><td></td><td>강원상권계</td><td>${gwWT}</td><td>${gwW}</td><td>${gwWT?(gwW/gwWT*100).toFixed(0):0}%</td><td colspan="12"></td></tr>
+`
 
 centers.forEach(c=>{
 
 let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
+let prev=JSON.parse(localStorage.getItem("prev_"+c)||"{}")
 
 let w=s.wireless||0
 let l=s.wired||0
@@ -173,29 +205,37 @@ let lt=targets[c]?.wired||0
 let wa=wt?w/wt*100:0
 let la=lt?l/lt*100:0
 
+let incW=w-(prev.wireless||0)
+let incL=l-(prev.wired||0)
+
+let wRank=wRankMap[c]
+let lRank=lRankMap[c]
+
 tbody.innerHTML+=`
 <tr>
 <td>${w||l?"✔️":""}</td>
 <td>${c}</td>
 <td>${wt}</td>
 <td>${w}</td>
-<td class="${wa<totalAch?'warn':''}">${wa.toFixed(0)}%</td>
-<td>-</td>
-<td>-</td>
+<td>${wa.toFixed(0)}%</td>
+<td class="${wRank<=2?'rankTop':(wRank>=8?'rankLow':'')}">${wRank}</td>
+<td>${incW}</td>
 <td>${mnp}</td>
 <td>${w?(mnp/w*100).toFixed(0):0}%</td>
 <td>${used}</td>
 <td>${w?(used/w*100).toFixed(0):0}%</td>
 <td>${lt}</td>
 <td>${l}</td>
-<td class="${la<totalAch?'warn':''}">${la.toFixed(0)}%</td>
-<td>-</td>
-<td>-</td>
+<td>${la.toFixed(0)}%</td>
+<td class="${lRank<=2?'rankTop':(lRank>=8?'rankLow':'')}">${lRank}</td>
+<td>${incL}</td>
 <td>${renew}</td>
-</tr>`
+</tr>
+`
 
 })
 
+let totalAch=totalWT?totalW/totalWT*100:0
 document.getElementById("wirelessRunner").style.left=Math.min(totalAch,100)+"%"
 document.getElementById("wiredRunner").style.left=Math.min((totalLT?totalL/totalLT*100:0),100)+"%"
 
@@ -218,6 +258,9 @@ centerPopup.style.display="block"
 function closePopup(){centerPopup.style.display="none"}
 
 function saveCenter(){
+
+let prev=JSON.parse(localStorage.getItem("center_"+currentCenter)||"{}")
+localStorage.setItem("prev_"+currentCenter,JSON.stringify(prev))
 
 let data={
 wireless:wireless.value,
