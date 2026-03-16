@@ -14,10 +14,13 @@ button{padding:8px 14px;border-radius:6px;border:1px solid #ccc;background:white
 table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px;}
 th{background:#0f2345;color:white;padding:8px;}
 td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
-.rankTop{background:#d9e8ff;}
-.rankLow{background:#ffd9d9;}
-.warn{color:red;font-weight:bold;}
 .groupRow{background:#eef3ff;font-weight:bold;}
+.rankTop{background:#dbe9ff;}
+.rankLow{background:#ffdede;}
+.warn{color:red;font-weight:bold;}
+.track{margin-top:30px;}
+.trackBar{height:20px;background:#e2e6f0;border-radius:10px;margin:10px 0;position:relative;}
+.runner{position:absolute;top:-6px;font-size:20px;}
 .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:10px;padding:20px;box-shadow:0 5px 20px rgba(0,0,0,0.2);display:none;width:260px;}
 .popup input{width:100%;margin-bottom:8px;padding:6px;}
 </style>
@@ -48,7 +51,7 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 <th>완료</th>
 <th>센터</th>
 <th>무선목표</th>
-<th>실적</th>
+<th>무선실적</th>
 <th>달성율</th>
 <th>순위</th>
 <th>증분</th>
@@ -57,7 +60,7 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 <th>중고</th>
 <th>비중</th>
 <th>유선목표</th>
-<th>실적</th>
+<th>유선실적</th>
 <th>달성율</th>
 <th>순위</th>
 <th>증분</th>
@@ -66,6 +69,14 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 </thead>
 <tbody></tbody>
 </table>
+
+<div class="track">
+<h3>강북도매 달성율 트랙</h3>
+무선
+<div class="trackBar"><div class="runner" id="wirelessRunner">🏃</div></div>
+유선
+<div class="trackBar"><div class="runner" id="wiredRunner">🏃</div></div>
+</div>
 
 <div class="popup" id="centerPopup">
 <h3 id="popupCenter"></h3>
@@ -81,8 +92,8 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 <script>
 
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
-const gangbuk=["서대문","의정부","고양","구리","노원","광진"]
-const gangwon=["강릉","원주","춘천"]
+const gangbukArea=["서대문","의정부","고양","구리","노원","광진"]
+const gangwonArea=["강릉","원주","춘천"]
 
 let targets={}
 
@@ -98,12 +109,13 @@ let wireless=XLSX.utils.sheet_to_json(wb.Sheets["무선목표"])
 let wired=XLSX.utils.sheet_to_json(wb.Sheets["유선목표"])
 
 wireless.forEach(r=>{
-targets[r["센터"]]={wireless:r["목표"]||0}
+targets[r["센터"]] = targets[r["센터"]] || {}
+targets[r["센터"]].wireless = r["목표"]||0
 })
 
 wired.forEach(r=>{
-if(!targets[r["센터"]]) targets[r["센터"]]={}
-targets[r["센터"]].wired=r["목표"]||0
+targets[r["센터"]] = targets[r["센터"]] || {}
+targets[r["센터"]].wired = r["목표"]||0
 })
 
 render()
@@ -117,101 +129,94 @@ function render(){
 let tbody=document.querySelector("#salesTable tbody")
 tbody.innerHTML=""
 
-let group={
-gangbukWireless:0,
-gangbukTarget:0,
-gangwonWireless:0,
-gangwonTarget:0
-}
+let wAchList=[]
+let lAchList=[]
+
+let totals={w:0,wt:0,l:0,lt:0}
 
 centers.forEach(c=>{
 
 let saved=JSON.parse(localStorage.getItem("center_"+c)||"{}")
+let w=saved.wireless*1||0
+let l=saved.wired*1||0
 
-let wireless=saved.wireless*1||0
-let wired=saved.wired*1||0
-let mnp=saved.mnp*1||0
-let used=saved.used*1||0
-let renew=saved.renew*1||0
+let wt=targets[c]?.wireless||0
+let lt=targets[c]?.wired||0
 
-let wTarget=(targets[c]?.wireless)||0
-let wiTarget=(targets[c]?.wired)||0
+let wAch=wt?(w/wt*100):0
+let lAch=lt?(l/lt*100):0
 
-if(gangbuk.includes(c)){
-group.gangbukWireless+=wireless
-group.gangbukTarget+=wTarget
-}else{
-group.gangwonWireless+=wireless
-group.gangwonTarget+=wTarget
-}
+wAchList.push({c,val:wAch})
+lAchList.push({c,val:lAch})
+
+totals.w+=w
+totals.wt+=wt
+totals.l+=l
+totals.lt+=lt
 
 })
 
-let gangbukAch=group.gangbukTarget?(group.gangbukWireless/group.gangbukTarget*100):0
-let gangwonAch=group.gangwonTarget?(group.gangwonWireless/group.gangwonTarget*100):0
+wAchList.sort((a,b)=>b.val-a.val)
+lAchList.sort((a,b)=>b.val-a.val)
 
-tbody.innerHTML+=`
-<tr class="groupRow">
-<td></td>
-<td>강북도매계</td>
-<td>${group.gangbukTarget}</td>
-<td>${group.gangbukWireless}</td>
-<td>${gangbukAch.toFixed(0)}%</td>
-<td></td><td></td><td></td><td></td><td></td><td></td>
-<td></td><td></td><td></td><td></td><td></td><td></td>
-</tr>
-`
+let wRank={},lRank={}
+wAchList.forEach((d,i)=>wRank[d.c]=i+1)
+lAchList.forEach((d,i)=>lRank[d.c]=i+1)
 
-tbody.innerHTML+=`
-<tr class="groupRow">
-<td></td>
-<td>강원상권계</td>
-<td>${group.gangwonTarget}</td>
-<td>${group.gangwonWireless}</td>
-<td>${gangwonAch.toFixed(0)}%</td>
-<td></td><td></td><td></td><td></td><td></td><td></td>
-<td></td><td></td><td></td><td></td><td></td><td></td>
-</tr>
-`
+let gangbukAch = totals.wt ? (totals.w/totals.wt*100) : 0
 
 centers.forEach(c=>{
 
 let saved=JSON.parse(localStorage.getItem("center_"+c)||"{}")
+let prev=JSON.parse(localStorage.getItem("prev_"+c)||"{}")
 
-let wireless=saved.wireless*1||0
-let wired=saved.wired*1||0
+let w=saved.wireless*1||0
+let l=saved.wired*1||0
 let mnp=saved.mnp*1||0
 let used=saved.used*1||0
 let renew=saved.renew*1||0
 
-let wTarget=(targets[c]?.wireless)||0
-let wiTarget=(targets[c]?.wired)||0
+let prevW=prev.wireless*1||0
+let prevL=prev.wired*1||0
 
-let wAch=wTarget?(wireless/wTarget*100):0
-let wiAch=wiTarget?(wired/wiTarget*100):0
+let wt=targets[c]?.wireless||0
+let lt=targets[c]?.wired||0
 
-tbody.innerHTML+=`
-<tr>
-<td>${(wireless||wired||mnp||used||renew)?"✔":""}</td>
+let wAch=wt?(w/wt*100):0
+let lAch=lt?(l/lt*100):0
+
+let mnpRate=w?(mnp/w*100):0
+let usedRate=w?(used/w*100):0
+
+let row=`<tr>
+<td>${(w||l||mnp||used||renew)?"✔️":""}</td>
 <td>${c}</td>
-<td>${wTarget}</td>
-<td>${wireless}</td>
-<td>${wAch.toFixed(0)}%</td>
-<td></td>
-<td></td>
+<td>${wt}</td>
+<td>${w}</td>
+<td class="${wAch<gangbukAch?'warn':''}">${wAch.toFixed(0)}%</td>
+<td class="${wRank[c]<=2?'rankTop':(wRank[c]>=8?'rankLow':'')}">${wRank[c]}</td>
+<td>${w-prevW}</td>
 <td>${mnp}</td>
-<td>${wireless?(mnp/wireless*100).toFixed(0):0}%</td>
+<td>${mnpRate.toFixed(0)}%</td>
 <td>${used}</td>
-<td>${wireless?(used/wireless*100).toFixed(0):0}%</td>
-<td>${wiTarget}</td>
-<td>${wired}</td>
-<td>${wiAch.toFixed(0)}%</td>
-<td></td>
-<td></td>
+<td>${usedRate.toFixed(0)}%</td>
+<td>${lt}</td>
+<td>${l}</td>
+<td class="${lAch<gangbukAch?'warn':''}">${lAch.toFixed(0)}%</td>
+<td class="${lRank[c]<=2?'rankTop':(lRank[c]>=8?'rankLow':'')}">${lRank[c]}</td>
+<td>${l-prevL}</td>
 <td>${renew}</td>
 </tr>`
 
+tbody.innerHTML+=row
+
 })
+
+let totalAch=totals.wt?(totals.w/totals.wt*100):0
+let totalLAch=totals.lt?(totals.l/totals.lt*100):0
+
+document.getElementById("wirelessRunner").style.left=Math.min(totalAch,100)+"%"
+document.getElementById("wiredRunner").style.left=Math.min(totalLAch,100)+"%"
 
 }
 
@@ -220,7 +225,6 @@ let currentCenter=""
 function openCenter(name){
 
 currentCenter=name
-
 let saved=JSON.parse(localStorage.getItem("center_"+name)||"{}")
 
 document.getElementById("wireless").value=saved.wireless||""
@@ -239,6 +243,9 @@ document.getElementById("centerPopup").style.display="none"
 }
 
 function saveCenter(){
+
+let prev=JSON.parse(localStorage.getItem("center_"+currentCenter)||"{}")
+localStorage.setItem("prev_"+currentCenter,JSON.stringify(prev))
 
 let data={
 wireless:document.getElementById("wireless").value,
