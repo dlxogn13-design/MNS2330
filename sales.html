@@ -24,7 +24,6 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDgTFfUykzYpLy21gYV3T6Yz3qJckqEwsQ",
@@ -35,7 +34,6 @@ const firebaseConfig = {
   messagingSenderId: "459408318",
   appId: "1:459408318:web:372eaa04b01ff18bb2afef"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 </script>
@@ -125,7 +123,7 @@ centers.forEach(c=>{
 render()
 }
 
-function getData(c){ return JSON.parse(null("c_"+c)||"{}") }
+function getData(c){ return JSON.parse((()=>null)("c_"+c)||"{}") }
 
 function sum(list){
  let o={w:0,l:0,m:0,u:0,r:0,wt:0,lt:0,incW:0,incL:0}
