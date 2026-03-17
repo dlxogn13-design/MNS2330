@@ -3,7 +3,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>강북도매 유/무선 실적 V19</title>
+<title>강북도매 유/무선 실적 V20</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
@@ -48,6 +48,12 @@ ${["서대문","의정부","고양","구리","노원","광진","강릉","원주"
 <tbody></tbody>
 </table>
 
+<h3>강북도매 달성율 트랙</h3>
+<div>무선</div>
+<div class="track"><div class="finish"></div><div id="rw" class="runner">🏃‍➡️ 0%</div></div>
+<div>유선</div>
+<div class="track"><div class="finish"></div><div id="rl" class="runner">🏃‍➡️ 0%</div></div>
+
 <div class="popup" id="popup">
 <h3 id="pTitle"></h3>
 <input id="w" placeholder="무선">
@@ -62,6 +68,8 @@ ${["서대문","의정부","고양","구리","노원","광진","강릉","원주"
 <script>
 
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
+const gangbuk=["서대문","의정부","고양","구리","노원","광진"]
+const gangwon=["강릉","원주","춘천"]
 let targets={}
 
 function today(){
@@ -110,40 +118,100 @@ function getData(c){
 return JSON.parse(localStorage.getItem("c_"+c)||"{}")
 }
 
+function sum(list){
+let o={w:0,l:0,m:0,u:0,r:0,wt:0,lt:0}
+list.forEach(c=>{
+let s=getData(c)
+o.w+=Number(s.w||0)
+o.l+=Number(s.l||0)
+o.m+=Number(s.m||0)
+o.u+=Number(s.u||0)
+o.r+=Number(s.r||0)
+o.wt+=Number(targets[c]?.w||0)
+o.lt+=Number(targets[c]?.l||0)
+})
+return o
+}
+
 function render(){
+
 let tb=document.querySelector("#tbl tbody")
 tb.innerHTML=""
 
+let gAll=sum(centers)
+let gBuk=sum(gangbuk)
+let gWon=sum(gangwon)
+
+function gRow(name,g){
+let wa=g.wt?Math.round(g.w/g.wt*100):0
+let la=g.lt?Math.round(g.l/g.lt*100):0
+
+return `<tr class="group">
+<td></td><td>${name}</td>
+<td>${g.wt}</td><td>${g.w}</td><td>${wa}%</td><td>-</td><td>-</td>
+<td>${g.m}</td><td>${g.w?Math.round(g.m/g.w*100):0}%</td>
+<td>${g.u}</td><td>${g.w?Math.round(g.u/g.w*100):0}%</td>
+<td>${g.lt}</td><td>${g.l}</td><td>${la}%</td><td>-</td><td>-</td>
+<td>${g.r}</td>
+</tr>`
+}
+
+tb.innerHTML+=gRow("강북도매계",gAll)
+tb.innerHTML+=gRow("강북상권계",gBuk)
+tb.innerHTML+=gRow("강원상권계",gWon)
+
+let arr=[]
+
 centers.forEach(c=>{
 let s=getData(c)
-
-let w=s.w||0
-let prevW=s.prevW||0
-let incW=w-prevW
-
-let l=s.l||0
-let prevL=s.prevL||0
-let incL=l-prevL
-
+let w=s.w||0,l=s.l||0
 let wt=targets[c]?.w||0
 let lt=targets[c]?.l||0
+let wa=wt?w/wt*100:0
+let la=lt?l/lt*100:0
 
-let wa=wt?Math.round(w/wt*100):0
-let la=lt?Math.round(l/lt*100):0
+arr.push({c,w,l,wt,lt,wa,la})
+})
+
+let wr=[...arr].sort((a,b)=>b.wa-a.wa)
+let lr=[...arr].sort((a,b)=>b.la-a.la)
+
+let wm={},lm={}
+wr.forEach((r,i)=>wm[r.c]=i+1)
+lr.forEach((r,i)=>lm[r.c]=i+1)
+
+arr.forEach(d=>{
+
+let s=getData(d.c)
+let m=s.m||0,u=s.u||0,r=s.r||0
+
+let incW=(s.w||0)-(s.prevW||0)
+let incL=(s.l||0)-(s.prevL||0)
 
 tb.innerHTML+=`
 <tr>
-<td>${w||l?"✔️":""}</td>
-<td>${c}</td>
-<td>${wt}</td><td>${w}</td><td>${wa}%</td>
-<td>-</td><td>${incW}</td>
-<td>${s.m||0}</td><td>${w?Math.round((s.m||0)/w*100):0}%</td>
-<td>${s.u||0}</td><td>${w?Math.round((s.u||0)/w*100):0}%</td>
-<td>${lt}</td><td>${l}</td><td>${la}%</td>
-<td>-</td><td>${incL}</td>
-<td>${s.r||0}</td>
+<td>${d.w||d.l?"✔️":""}</td>
+<td>${d.c}</td>
+<td>${d.wt}</td><td>${d.w}</td><td>${Math.round(d.wa)}%</td>
+<td class="${wm[d.c]<=2?'rankTop':(wm[d.c]>=8?'rankLow':'')}">${wm[d.c]}</td>
+<td>${incW}</td>
+<td>${m}</td><td>${d.w?Math.round(m/d.w*100):0}%</td>
+<td>${u}</td><td>${d.w?Math.round(u/d.w*100):0}%</td>
+<td>${d.lt}</td><td>${d.l}</td><td>${Math.round(d.la)}%</td>
+<td class="${lm[d.c]<=2?'rankTop':(lm[d.c]>=8?'rankLow':'')}">${lm[d.c]}</td>
+<td>${incL}</td>
+<td>${r}</td>
 </tr>`
 })
+
+let wPct=gAll.wt?Math.min(100,Math.round(gAll.w/gAll.wt*100)):0
+let lPct=gAll.lt?Math.min(100,Math.round(gAll.l/gAll.lt*100)):0
+
+rw.style.left=wPct+"%"
+rw.innerText="🏃‍➡️ "+wPct+"%"
+
+rl.style.left=lPct+"%"
+rl.innerText="🏃‍➡️ "+lPct+"%"
 
 }
 
@@ -162,6 +230,7 @@ popup.style.display="block"
 }
 
 function save(){
+
 let prev=getData(cur)
 
 let data={
@@ -175,8 +244,10 @@ r:Number(r.value||0)
 }
 
 localStorage.setItem("c_"+cur,JSON.stringify(data))
+
 popup.style.display="none"
 render()
+
 }
 
 function resetData(){
