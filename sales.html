@@ -239,5 +239,21 @@ function resetData(){ localStorage.clear(); location.reload() }
 
 loadTargets()
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const btn = document.getElementById("saveBtn");
+  if(btn){
+    btn.addEventListener("click", function(){
+      if(typeof saveData === "function"){
+        saveData();
+      } else {
+        alert("saveData 함수 없음");
+      }
+    });
+  }
+});
+</script>
+
 </body>
 </html>
