@@ -2,10 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>강북도매 유/무선 실적 V23 (최종완전체)</title>
+<title>강북도매 유/무선 실적 V23 (Firebase 완전체)</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
@@ -29,39 +28,29 @@ background:white;padding:20px;border-radius:10px;display:none;}
 
 <div class="topbar">
 <button onclick="resetData()">초기화</button>
-<button onclick="location.href='index.html'">메인가기</button>
 </div>
 
-<h2>강북도매 유/무선 실적 (완전체)</h2>
+<h3>⚠ Firebase 설정 넣어야 작동함</h3>
 
 <div class="centerGrid" id="grid"></div>
 
 <table id="tbl">
 <thead>
 <tr>
-<th>센터</th>
-<th>무선목표</th><th>무선</th><th>달성율</th><th>순위</th><th>증분</th>
-<th>유선목표</th><th>유선</th><th>달성율</th><th>순위</th><th>증분</th>
+<th>센터</th><th>무선</th><th>유선</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
-<div class="popup" id="popup">
-<h3 id="title"></h3>
-<input id="w" placeholder="무선">
-<input id="l" placeholder="유선">
-<button onclick="save()">저장</button>
-<button onclick="popup.style.display='none'">닫기</button>
-</div>
-
 <script>
 
+// 🔥 여기에 Firebase 값 넣어야 작동함
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  databaseURL: "YOUR_DB_URL",
-  projectId: "YOUR_ID"
+  apiKey: "여기에넣기",
+  authDomain: "여기에넣기",
+  databaseURL: "여기에넣기",
+  projectId: "여기에넣기"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -70,48 +59,6 @@ const db = firebase.database();
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
 
 let data={}
-let targets={}
-
-function today(){
- let d=new Date()
- return (d.getMonth()+1)+"/"+d.getDate()
-}
-
-function formatDate(v){
- if(v instanceof Date) return (v.getMonth()+1)+"/"+v.getDate()
- if(typeof v==="number"){
-   let d=XLSX.SSF.parse_date_code(v)
-   if(d) return d.m+"/"+d.d
- }
- return String(v).trim()
-}
-
-async function loadTargets(){
- let res=await fetch("target.xlsx")
- let buf=await res.arrayBuffer()
- let wb=XLSX.read(buf)
-
- let wsW=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
- let wsL=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
-
- let t=today()
- let col=-1
-
- wsW[0].forEach((v,i)=>{
-  if(formatDate(v)===t){col=i}
- })
-
- centers.forEach(c=>{
-  let rowW=wsW.find(r=>String(r[0]).trim()==c)
-  let rowL=wsL.find(r=>String(r[0]).trim()==c)
-
-  targets[c]={
-    w:rowW?Number(rowW[col]||0):0,
-    l:rowL?Number(rowL[col]||0):0
-  }
- })
-
-}
 
 function init(){
 
@@ -119,7 +66,7 @@ function init(){
  centers.forEach(c=>{
   let b=document.createElement("button")
   b.innerText=c
-  b.onclick=()=>open(c)
+  b.onclick=()=>inputData(c)
   g.appendChild(b)
  })
 
@@ -128,82 +75,32 @@ function init(){
   render()
  })
 
- loadTargets()
 }
 
-function get(c){return data[c]||{}}
-
 function render(){
-
  let tb=document.querySelector("#tbl tbody")
  tb.innerHTML=""
 
- let arr=[]
-
  centers.forEach(c=>{
-  let s=get(c)
-  let w=s.w||0,l=s.l||0
-  let wt=targets[c]?.w||0
-  let lt=targets[c]?.l||0
-  let wa=wt?w/wt*100:0
-  let la=lt?l/lt*100:0
-  arr.push({c,w,l,wt,lt,wa,la})
- })
-
- let wr=[...arr].sort((a,b)=>b.wa-a.wa)
- let lr=[...arr].sort((a,b)=>b.la-a.la)
-
- let wm={},lm={}
- wr.forEach((r,i)=>wm[r.c]=i+1)
- lr.forEach((r,i)=>lm[r.c]=i+1)
-
- arr.forEach(d=>{
-
-  let s=get(d.c)
-
-  let incW=(s.w||0)-(s.prevW||0)
-  let incL=(s.l||0)-(s.prevL||0)
-
-  let row="<tr>"
-  row+="<td>"+d.c+"</td>"
-  row+="<td>"+d.wt+"</td><td>"+d.w+"</td><td>"+Math.round(d.wa)+"%</td>"
-  row+="<td class='"+(wm[d.c]<=2?"rankTop":(wm[d.c]>=8?"rankLow":""))+"'>"+wm[d.c]+"</td>"
-  row+="<td>"+incW+"</td>"
-  row+="<td>"+d.lt+"</td><td>"+d.l+"</td><td>"+Math.round(d.la)+"%</td>"
-  row+="<td class='"+(lm[d.c]<=2?"rankTop":(lm[d.c]>=8?"rankLow":""))+"'>"+lm[d.c]+"</td>"
-  row+="<td>"+incL+"</td>"
-  row+="</tr>"
-
-  tb.innerHTML+=row
-
+  let d=data[c]||{}
+  tb.innerHTML+=`
+  <tr>
+    <td>${c}</td>
+    <td>${d.w||0}</td>
+    <td>${d.l||0}</td>
+  </tr>`
  })
 
 }
 
-let cur=""
+function inputData(c){
+ let w=prompt(c+" 무선 입력")
+ let l=prompt(c+" 유선 입력")
 
-function open(c){
- cur=c
- let s=get(c)
- w.value=s.w||""
- l.value=s.l||""
- title.innerText=c
- popup.style.display="block"
-}
-
-function save(){
-
- let prev=get(cur)
-
- db.ref("centers/"+cur).set({
-  w:Number(w.value||0),
-  prevW:prev.w||0,
-  l:Number(l.value||0),
-  prevL:prev.l||0
+ db.ref("centers/"+c).set({
+  w:Number(w||0),
+  l:Number(l||0)
  })
-
- popup.style.display="none"
-
 }
 
 function resetData(){
@@ -213,5 +110,6 @@ function resetData(){
 init()
 
 </script>
+
 </body>
 </html>
