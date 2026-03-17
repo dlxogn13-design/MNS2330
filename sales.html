@@ -123,7 +123,8 @@ centers.forEach(c=>{
 render()
 }
 
-function getData(c){ return JSON.parse((()=>null)("c_"+c)||"{}") }
+let cache = {}
+function getData(c){ return cache[c] || {} }") }
 
 function sum(list){
  let o={w:0,l:0,m:0,u:0,r:0,wt:0,lt:0,incW:0,incL:0}
@@ -235,6 +236,16 @@ function save(){
  db.ref("c_"+cur).set(data)
    .then(()=>{
      popup.style.display="none"
+   })
+   .catch(e=>{
+     alert("에러: "+e.message)
+     console.error(e)
+   })
+}
+
+ db.ref("c_"+cur).set(data)
+   .then(()=>{
+     popup.style.display="none"
      alert("저장완료")
      render()
    })
@@ -251,6 +262,13 @@ function save(){
 function resetData(){ localStorage.clear(); location.reload() }
 
 loadTargets()
+
+function loadData(){
+  db.ref().on("value", snapshot=>{
+    cache = snapshot.val() || {}
+    render()
+  })
+}
 </script>
 </body>
 </html>
