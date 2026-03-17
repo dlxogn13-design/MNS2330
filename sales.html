@@ -3,7 +3,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>강북도매 유/무선 실적 V20</title>
+<title>강북도매 유/무선 실적 V18.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
@@ -19,7 +19,8 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 .track{position:relative;height:18px;background:#e2e6f0;border-radius:10px;margin:10px 0;}
 .finish{position:absolute;right:0;width:4px;height:100%;background:red;}
 .runner{position:absolute;top:-4px;font-size:18px;white-space:nowrap;}
-.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;display:none;}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+background:white;padding:20px;border-radius:10px;display:none;}
 .popup input{width:150px;margin-bottom:8px;padding:6px;}
 </style>
 </head>
@@ -27,12 +28,21 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 
 <div class="topbar">
 <button onclick="resetData()">초기화</button>
+<button onclick="location.href='index.html'">메인가기</button>
 </div>
 
 <h2>강북도매 유/무선 실적</h2>
 
 <div class="centerGrid">
-${["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"].map(c=>`<button onclick="openCenter('${c}')">${c}</button>`).join("")}
+<button onclick="openCenter('서대문')">서대문</button>
+<button onclick="openCenter('의정부')">의정부</button>
+<button onclick="openCenter('고양')">고양</button>
+<button onclick="openCenter('구리')">구리</button>
+<button onclick="openCenter('노원')">노원</button>
+<button onclick="openCenter('광진')">광진</button>
+<button onclick="openCenter('강릉')">강릉</button>
+<button onclick="openCenter('원주')">원주</button>
+<button onclick="openCenter('춘천')">춘천</button>
 </div>
 
 <table id="tbl">
@@ -146,14 +156,13 @@ function gRow(name,g){
 let wa=g.wt?Math.round(g.w/g.wt*100):0
 let la=g.lt?Math.round(g.l/g.lt*100):0
 
-return `<tr class="group">
-<td></td><td>${name}</td>
-<td>${g.wt}</td><td>${g.w}</td><td>${wa}%</td><td>-</td><td>-</td>
-<td>${g.m}</td><td>${g.w?Math.round(g.m/g.w*100):0}%</td>
-<td>${g.u}</td><td>${g.w?Math.round(g.u/g.w*100):0}%</td>
-<td>${g.lt}</td><td>${g.l}</td><td>${la}%</td><td>-</td><td>-</td>
-<td>${g.r}</td>
-</tr>`
+return "<tr class='group'>"+
+"<td></td><td>"+name+"</td>"+
+"<td>"+g.wt+"</td><td>"+g.w+"</td><td>"+wa+"%</td><td>-</td><td>-</td>"+
+"<td>"+g.m+"</td><td>"+(g.w?Math.round(g.m/g.w*100):0)+"%</td>"+
+"<td>"+g.u+"</td><td>"+(g.w?Math.round(g.u/g.w*100):0)+"%</td>"+
+"<td>"+g.lt+"</td><td>"+g.l+"</td><td>"+la+"%</td><td>-</td><td>-</td>"+
+"<td>"+g.r+"</td></tr>"
 }
 
 tb.innerHTML+=gRow("강북도매계",gAll)
@@ -169,7 +178,6 @@ let wt=targets[c]?.w||0
 let lt=targets[c]?.l||0
 let wa=wt?w/wt*100:0
 let la=lt?l/lt*100:0
-
 arr.push({c,w,l,wt,lt,wa,la})
 })
 
@@ -183,25 +191,23 @@ lr.forEach((r,i)=>lm[r.c]=i+1)
 arr.forEach(d=>{
 
 let s=getData(d.c)
-let m=s.m||0,u=s.u||0,r=s.r||0
-
 let incW=(s.w||0)-(s.prevW||0)
 let incL=(s.l||0)-(s.prevL||0)
 
-tb.innerHTML+=`
-<tr>
-<td>${d.w||d.l?"✔️":""}</td>
-<td>${d.c}</td>
-<td>${d.wt}</td><td>${d.w}</td><td>${Math.round(d.wa)}%</td>
-<td class="${wm[d.c]<=2?'rankTop':(wm[d.c]>=8?'rankLow':'')}">${wm[d.c]}</td>
-<td>${incW}</td>
-<td>${m}</td><td>${d.w?Math.round(m/d.w*100):0}%</td>
-<td>${u}</td><td>${d.w?Math.round(u/d.w*100):0}%</td>
-<td>${d.lt}</td><td>${d.l}</td><td>${Math.round(d.la)}%</td>
-<td class="${lm[d.c]<=2?'rankTop':(lm[d.c]>=8?'rankLow':'')}">${lm[d.c]}</td>
-<td>${incL}</td>
-<td>${r}</td>
-</tr>`
+let row="<tr>"
+row+="<td>"+(d.w||d.l?"✔️":"")+"</td>"
+row+="<td>"+d.c+"</td>"
+row+="<td>"+d.wt+"</td><td>"+d.w+"</td><td>"+Math.round(d.wa)+"%</td>"
+row+="<td class='"+(wm[d.c]<=2?"rankTop":(wm[d.c]>=8?"rankLow":""))+"'>"+wm[d.c]+"</td>"
+row+="<td>"+incW+"</td>"
+row+="<td>"+(s.m||0)+"</td><td>"+(d.w?Math.round((s.m||0)/d.w*100):0)+"%</td>"
+row+="<td>"+(s.u||0)+"</td><td>"+(d.w?Math.round((s.u||0)/d.w*100):0)+"%</td>"
+row+="<td>"+d.lt+"</td><td>"+d.l+"</td><td>"+Math.round(d.la)+"%</td>"
+row+="<td class='"+(lm[d.c]<=2?"rankTop":(lm[d.c]>=8?"rankLow":""))+"'>"+lm[d.c]+"</td>"
+row+="<td>"+incL+"</td>"
+row+="<td>"+(s.r||0)+"</td></tr>"
+
+tb.innerHTML+=row
 })
 
 let wPct=gAll.wt?Math.min(100,Math.round(gAll.w/gAll.wt*100)):0
@@ -209,7 +215,6 @@ let lPct=gAll.lt?Math.min(100,Math.round(gAll.l/gAll.lt*100)):0
 
 rw.style.left=wPct+"%"
 rw.innerText="🏃‍➡️ "+wPct+"%"
-
 rl.style.left=lPct+"%"
 rl.innerText="🏃‍➡️ "+lPct+"%"
 
