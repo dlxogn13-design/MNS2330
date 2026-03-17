@@ -124,7 +124,8 @@ render()
 }
 
 let cache = {}
-function getData(c){ return cache[c] || {} }") }
+let cache = {}
+function getData(c){ return cache["c_"+c] || {} } }") }
 
 function sum(list){
  let o={w:0,l:0,m:0,u:0,r:0,wt:0,lt:0,incW:0,incL:0}
@@ -232,6 +233,16 @@ function save(){
   l:Number(l.value||0), prevL:prev.l||0,
   r:Number(r.value||0)
  }
+
+ db.ref("c_"+cur).set(data)
+   .then(()=>{
+     popup.style.display="none"
+   })
+   .catch(e=>{
+     alert("에러: "+e.message)
+     console.error(e)
+   })
+}
 
  db.ref("c_"+cur).set(data)
    .then(()=>{
