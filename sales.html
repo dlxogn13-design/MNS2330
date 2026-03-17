@@ -123,7 +123,7 @@ centers.forEach(c=>{
 render()
 }
 
-function getData(c){ return JSON.parse((()=>null)("c_"+c)||"{}") }
+function getData(c){ return {} }
 
 function sum(list){
  let o={w:0,l:0,m:0,u:0,r:0,wt:0,lt:0,incW:0,incL:0}
@@ -230,7 +230,7 @@ function save(){
   l:Number(l.value||0), prevL:prev.l||0,
   r:Number(r.value||0)
  }
- db.ref("c_"+cur,JSON.stringify(data))
+ db.ref("c_"+cur).set(data)
  popup.style.display="none"
  render()
 }
@@ -253,45 +253,6 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 });
-</script>
-
-
-<script>
-function saveData() {
-  try {
-    const center = document.querySelector("h2, #popupTitle, .popup-title")?.innerText || "unknown";
-
-    const inputs = document.querySelectorAll("input");
-    const data = {
-      wireless: inputs[0]?.value || 0,
-      mnp: inputs[1]?.value || 0,
-      used: inputs[2]?.value || 0,
-      wired: inputs[3]?.value || 0,
-      etc: inputs[4]?.value || 0
-    };
-
-    if (!window.firebase || !window.firebase.database) {
-      alert("Firebase 연결 안됨");
-      return;
-    }
-
-    const db = firebase.database();
-
-    db.ref("sales/" + center).set(data)
-      .then(() => {
-        alert("저장완료");
-        location.reload();
-      })
-      .catch(err => {
-        alert("저장 실패: " + err.message);
-        console.error(err);
-      });
-
-  } catch(e) {
-    alert("에러 발생");
-    console.error(e);
-  }
-}
 </script>
 
 </body>
