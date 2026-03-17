@@ -1,11 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <title>강북도매 유/무선 실적</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
 .topbar{display:flex;justify-content:flex-end;gap:10px;margin-bottom:10px;}
@@ -14,43 +12,16 @@ body{font-family:Arial;background:#f4f6fb;padding:20px;}
 table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px;}
 th{background:#0f2345;color:white;padding:8px;}
 td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
-.groupRow{background:#eef3ff;font-weight:bold;}
 .rankTop{background:#dbe9ff;}
 .rankLow{background:#ffdede;}
-.trackBox{margin-top:25px;}
-.track{
- position:relative;
- height:20px;
- background:#e2e6f0;
- border-radius:10px;
- margin:10px 0;
-}
-.finish{
- position:absolute;
- right:0;
- top:0;
- width:4px;
- height:100%;
- background:red;
-}
-.runner{
- position:absolute;
- top:-4px;
- font-size:20px;
- white-space:nowrap;
-}
-.popup{
- position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
- background:white;border-radius:10px;padding:20px;
- box-shadow:0 5px 20px rgba(0,0,0,0.2);
- display:none;width:260px;
-}
-.popup input{width:100%;margin-bottom:8px;padding:6px;}
+.track{position:relative;height:18px;background:#e2e6f0;border-radius:10px;margin:10px 0;}
+.finish{position:absolute;right:0;width:4px;height:100%;background:red;}
+.runner{position:absolute;top:-4px;font-size:20px;white-space:nowrap;}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:10px;padding:20px;box-shadow:0 5px 20px rgba(0,0,0,0.2);display:none;width:260px;}
+.popup input{width:150px;margin-bottom:8px;padding:6px;}
 </style>
 </head>
-
 <body>
-
 <div class="topbar">
 <button onclick="resetData()">초기화</button>
 <button onclick="location.href='index.html'">메인포털</button>
@@ -86,21 +57,9 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 <tbody></tbody>
 </table>
 
-<div class="trackBox">
 <b>강북도매 달성율 트랙</b>
-
-<div>무선</div>
-<div class="track">
-<div class="finish"></div>
-<div class="runner" id="wireRunner">🏃‍➡️ <span id="wirePct">0%</span></div>
-</div>
-
-<div>유선</div>
-<div class="track">
-<div class="finish"></div>
-<div class="runner" id="lineRunner">🏃‍➡️ <span id="linePct">0%</span></div>
-</div>
-</div>
+<div class="track"><div class="finish"></div><div class="runner" id="wireRunner">🏃‍➡️ <span id="wirePct">0%</span></div></div>
+<div class="track"><div class="finish"></div><div class="runner" id="lineRunner">🏃‍➡️ <span id="linePct">0%</span></div></div>
 
 <div class="popup" id="centerPopup">
 <h3 id="popupCenter"></h3>
@@ -114,14 +73,8 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 </div>
 
 <script>
-
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
 let targets={}
-
-function resetData(){
-localStorage.clear()
-location.reload()
-}
 
 function todayMD(){
 let d=new Date()
@@ -129,9 +82,6 @@ return (d.getMonth()+1)+"/"+d.getDate()
 }
 
 async function loadTargets(){
-
-try{
-
 let res=await fetch("target.xlsx")
 let buf=await res.arrayBuffer()
 let wb=XLSX.read(buf)
@@ -140,72 +90,47 @@ let wsW=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
 let wsL=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
 let today=todayMD()
-let dateRow=wsW[1]
-let col=-1
+let colIndex=-1
 
-dateRow.forEach((v,i)=>{
- if(v instanceof Date){
-  let m=v.getMonth()+1
-  let d=v.getDate()
-  if(m+"/"+d===today){col=i}
- }
+wsW[0].forEach((v,i)=>{
+ if(String(v).trim()==today){colIndex=i}
 })
 
 centers.forEach(c=>{
-
 let rowW=wsW.find(r=>r.some(v=>String(v).trim()==c))
 let rowL=wsL.find(r=>r.some(v=>String(v).trim()==c))
 
 targets[c]={
-wireless:rowW?Number(rowW[col]||0):0,
-wired:rowL?Number(rowL[col]||0):0
+wireless:rowW?Number(rowW[colIndex]||0):0,
+wired:rowL?Number(rowL[colIndex]||0):0
 }
-
 })
-
-}catch(e){
-console.log("target load fail",e)
-}
 
 render()
 }
 
 function render(){
-
 let tbody=document.querySelector("#salesTable tbody")
 tbody.innerHTML=""
-
-let totalW=0,totalWT=0,totalL=0,totalLT=0
 
 let data=[]
 
 centers.forEach(c=>{
-
 let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
 let prev=JSON.parse(localStorage.getItem("prev_"+c)||"{}")
 
 let w=Number(s.wireless||0)
 let l=Number(s.wired||0)
-let mnp=Number(s.mnp||0)
-let used=Number(s.used||0)
-let renew=Number(s.renew||0)
-
 let wt=targets[c]?.wireless||0
 let lt=targets[c]?.wired||0
+
+let wa=wt?w/wt*100:0
+let la=lt?l/lt*100:0
 
 let incW=w-(prev.wireless||0)
 let incL=l-(prev.wired||0)
 
-let wa=wt? w/wt*100:0
-let la=lt? l/lt*100:0
-
-data.push({c,w,l,mnp,used,renew,wt,lt,incW,incL,wa,la})
-
-totalW+=w
-totalWT+=wt
-totalL+=l
-totalLT+=lt
-
+data.push({c,w,l,wt,lt,wa,la,incW,incL})
 })
 
 let wRank=[...data].sort((a,b)=>b.wa-a.wa)
@@ -216,7 +141,6 @@ wRank.forEach((r,i)=>wMap[r.c]=i+1)
 lRank.forEach((r,i)=>lMap[r.c]=i+1)
 
 data.forEach(d=>{
-
 let wr=wMap[d.c]
 let lr=lMap[d.c]
 
@@ -229,69 +153,31 @@ tbody.innerHTML+=`
 <td>${d.wa.toFixed(0)}%</td>
 <td class="${wr<=2?'rankTop':(wr>=8?'rankLow':'')}">${wr}</td>
 <td>${d.incW}</td>
-<td>${d.mnp}</td>
-<td>${d.w?(d.mnp/d.w*100).toFixed(0):0}%</td>
-<td>${d.used}</td>
-<td>${d.w?(d.used/d.w*100).toFixed(0):0}%</td>
+<td>0</td>
+<td>0%</td>
+<td>0</td>
+<td>0%</td>
 <td>${d.lt}</td>
 <td>${d.l}</td>
 <td>${d.la.toFixed(0)}%</td>
 <td class="${lr<=2?'rankTop':(lr>=8?'rankLow':'')}">${lr}</td>
 <td>${d.incL}</td>
-<td>${d.renew}</td>
+<td>0</td>
 </tr>`
-
 })
-
-let wAch=totalWT? totalW/totalWT*100:0
-let lAch=totalLT? totalL/totalLT*100:0
-
-document.getElementById("wireRunner").style.left=Math.min(wAch,100)+"%"
-document.getElementById("lineRunner").style.left=Math.min(lAch,100)+"%"
-
-document.getElementById("wirePct").innerText=Math.round(wAch)+"%"
-document.getElementById("linePct").innerText=Math.round(lAch)+"%"
 
 }
 
-let currentCenter=""
-
 function openCenter(c){
 currentCenter=c
-let s=JSON.parse(localStorage.getItem("center_"+c)||"{}")
-wireless.value=s.wireless||""
-mnp.value=s.mnp||""
-used.value=s.used||""
-wired.value=s.wired||""
-renew.value=s.renew||""
-popupCenter.innerText=c
 centerPopup.style.display="block"
 }
 
 function closePopup(){centerPopup.style.display="none"}
 
-function saveCenter(){
-
-let prev=JSON.parse(localStorage.getItem("center_"+currentCenter)||"{}")
-localStorage.setItem("prev_"+currentCenter,JSON.stringify(prev))
-
-let data={
-wireless:wireless.value,
-mnp:mnp.value,
-used:used.value,
-wired:wired.value,
-renew:renew.value
-}
-
-localStorage.setItem("center_"+currentCenter,JSON.stringify(data))
-
-closePopup()
-render()
-
-}
+function saveCenter(){closePopup();render()}
 
 loadTargets()
-
 </script>
 </body>
 </html>
