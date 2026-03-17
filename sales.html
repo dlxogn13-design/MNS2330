@@ -1,11 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>강북도매 유/무선 실적 V18</title>
+<title>강북도매 유/무선 실적 V18.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
 .topbar{display:flex;justify-content:flex-end;gap:10px;margin-bottom:10px;}
@@ -20,12 +18,10 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 .track{position:relative;height:18px;background:#e2e6f0;border-radius:10px;margin:10px 0;}
 .finish{position:absolute;right:0;width:4px;height:100%;background:red;}
 .runner{position:absolute;top:-4px;font-size:18px;white-space:nowrap;}
-.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-background:white;padding:20px;border-radius:10px;display:none;}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;display:none;}
 .popup input{width:150px;margin-bottom:8px;padding:6px;}
 </style>
 </head>
-
 <body>
 
 <div class="topbar">
@@ -78,11 +74,9 @@ background:white;padding:20px;border-radius:10px;display:none;}
 </div>
 
 <script>
-
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
 const gangbuk=["서대문","의정부","고양","구리","노원","광진"]
 const gangwon=["강릉","원주","춘천"]
-
 let targets={}
 
 function today(){
@@ -90,8 +84,18 @@ let d=new Date()
 return (d.getMonth()+1)+"/"+d.getDate()
 }
 
-async function loadTargets(){
+function formatDate(v){
+  if(v instanceof Date){
+    return (v.getMonth()+1)+"/"+v.getDate()
+  }
+  if(typeof v === "number"){
+    let d = XLSX.SSF.parse_date_code(v)
+    if(d) return d.m+"/"+d.d
+  }
+  return String(v).trim()
+}
 
+async function loadTargets(){
 let res=await fetch("target.xlsx")
 let buf=await res.arrayBuffer()
 let wb=XLSX.read(buf)
@@ -100,16 +104,15 @@ let wsW=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
 let wsL=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
 let t=today()
-
-// 🔥 핵심 수정: 1행에서 날짜 찾기
 let col=-1
+
 wsW[0].forEach((v,i)=>{
- if(String(v).trim()==t){col=i}
+ if(formatDate(v)===t){col=i}
 })
 
 centers.forEach(c=>{
-let rowW=wsW.find(r=>r[0]==c)
-let rowL=wsL.find(r=>r[0]==c)
+let rowW=wsW.find(r=>String(r[0]).trim()==c)
+let rowL=wsL.find(r=>String(r[0]).trim()==c)
 
 targets[c]={
 w:rowW?Number(rowW[col]||0):0,
@@ -140,7 +143,6 @@ return o
 }
 
 function render(){
-
 let tb=document.querySelector("#tbl tbody")
 tb.innerHTML=""
 
@@ -187,7 +189,6 @@ wr.forEach((r,i)=>wm[r.c]=i+1)
 lr.forEach((r,i)=>lm[r.c]=i+1)
 
 arr.forEach(d=>{
-
 let s=getData(d.c)
 let m=s.m||0,u=s.u||0,r=s.r||0
 
@@ -212,14 +213,11 @@ let lPct=gAll.lt?Math.min(100,Math.round(gAll.l/gAll.lt*100)):0
 
 document.getElementById("rw").style.left=wPct+"%"
 document.getElementById("rw").innerText="🏃‍➡️ "+wPct+"%"
-
 document.getElementById("rl").style.left=lPct+"%"
 document.getElementById("rl").innerText="🏃‍➡️ "+lPct+"%"
-
 }
 
 let cur=""
-
 function openCenter(c){
 cur=c
 let s=getData(c)
@@ -246,7 +244,6 @@ location.reload()
 }
 
 loadTargets()
-
 </script>
 </body>
 </html>
