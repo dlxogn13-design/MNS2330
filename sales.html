@@ -255,5 +255,44 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
+
+<script>
+function saveData() {
+  try {
+    const center = document.querySelector("h2, #popupTitle, .popup-title")?.innerText || "unknown";
+
+    const inputs = document.querySelectorAll("input");
+    const data = {
+      wireless: inputs[0]?.value || 0,
+      mnp: inputs[1]?.value || 0,
+      used: inputs[2]?.value || 0,
+      wired: inputs[3]?.value || 0,
+      etc: inputs[4]?.value || 0
+    };
+
+    if (!window.firebase || !window.firebase.database) {
+      alert("Firebase 연결 안됨");
+      return;
+    }
+
+    const db = firebase.database();
+
+    db.ref("sales/" + center).set(data)
+      .then(() => {
+        alert("저장완료");
+        location.reload();
+      })
+      .catch(err => {
+        alert("저장 실패: " + err.message);
+        console.error(err);
+      });
+
+  } catch(e) {
+    alert("에러 발생");
+    console.error(e);
+  }
+}
+</script>
+
 </body>
 </html>
