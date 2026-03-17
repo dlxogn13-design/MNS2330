@@ -3,7 +3,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>강북도매 유/무선 실적 V17</title>
+<title>강북도매 유/무선 실적 V18</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -19,7 +19,7 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 .rankLow{background:#ffdede;}
 .track{position:relative;height:18px;background:#e2e6f0;border-radius:10px;margin:10px 0;}
 .finish{position:absolute;right:0;width:4px;height:100%;background:red;}
-.runner{position:absolute;top:-4px;font-size:20px;}
+.runner{position:absolute;top:-4px;font-size:18px;white-space:nowrap;}
 .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 background:white;padding:20px;border-radius:10px;display:none;}
 .popup input{width:150px;margin-bottom:8px;padding:6px;}
@@ -62,9 +62,9 @@ background:white;padding:20px;border-radius:10px;display:none;}
 
 <h3>강북도매 달성율 트랙</h3>
 <div>무선</div>
-<div class="track"><div class="finish"></div><div id="r1" class="runner">🏃‍➡️ 0%</div></div>
+<div class="track"><div class="finish"></div><div id="rw" class="runner">🏃‍➡️ 0%</div></div>
 <div>유선</div>
-<div class="track"><div class="finish"></div><div id="r2" class="runner">🏃‍➡️ 0%</div></div>
+<div class="track"><div class="finish"></div><div id="rl" class="runner">🏃‍➡️ 0%</div></div>
 
 <div class="popup" id="popup">
 <h3 id="pTitle"></h3>
@@ -91,98 +91,138 @@ return (d.getMonth()+1)+"/"+d.getDate()
 }
 
 async function loadTargets(){
+
 let res=await fetch("target.xlsx")
 let buf=await res.arrayBuffer()
 let wb=XLSX.read(buf)
 
-let s1=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
-let s2=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
+let wsW=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
+let wsL=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
 let t=today()
 
+// 🔥 핵심 수정: 1행에서 날짜 찾기
 let col=-1
-s1.forEach(row=>{
-row.forEach((v,i)=>{
-if(String(v).trim()==t){col=i}
-})
+wsW[0].forEach((v,i)=>{
+ if(String(v).trim()==t){col=i}
 })
 
 centers.forEach(c=>{
-let r1=s1.find(r=>r.includes(c))
-let r2=s2.find(r=>r.includes(c))
+let rowW=wsW.find(r=>r[0]==c)
+let rowL=wsL.find(r=>r[0]==c)
 
 targets[c]={
-w:r1?Number(r1[col]||0):0,
-l:r2?Number(r2[col]||0):0
+w:rowW?Number(rowW[col]||0):0,
+l:rowL?Number(rowL[col]||0):0
 }
 })
 
 render()
 }
 
-function sumGroup(list){
-let obj={w:0,l:0,m:0,u:0,r:0}
+function getData(c){
+return JSON.parse(localStorage.getItem("c_"+c)||"{}")
+}
+
+function sum(list){
+let o={w:0,l:0,m:0,u:0,r:0,wt:0,lt:0}
 list.forEach(c=>{
-let s=JSON.parse(localStorage.getItem("c_"+c)||"{}")
-obj.w+=Number(s.w||0)
-obj.l+=Number(s.l||0)
-obj.m+=Number(s.m||0)
-obj.u+=Number(s.u||0)
-obj.r+=Number(s.r||0)
+let s=getData(c)
+o.w+=Number(s.w||0)
+o.l+=Number(s.l||0)
+o.m+=Number(s.m||0)
+o.u+=Number(s.u||0)
+o.r+=Number(s.r||0)
+o.wt+=Number(targets[c]?.w||0)
+o.lt+=Number(targets[c]?.l||0)
 })
-return obj
+return o
 }
 
 function render(){
+
 let tb=document.querySelector("#tbl tbody")
 tb.innerHTML=""
 
-let g1=sumGroup(centers)
-let g2=sumGroup(gangbuk)
-let g3=sumGroup(gangwon)
+let gAll=sum(centers)
+let gBuk=sum(gangbuk)
+let gWon=sum(gangwon)
 
-function row(name,data){
+function makeGroup(name,g){
+let wa=g.wt?Math.round(g.w/g.wt*100):0
+let la=g.lt?Math.round(g.l/g.lt*100):0
+
 return `<tr class="group">
 <td></td><td>${name}</td>
-<td>-</td><td>${data.w}</td><td>-</td><td>-</td><td>-</td>
-<td>${data.m}</td><td>-</td><td>${data.u}</td><td>-</td>
-<td>-</td><td>${data.l}</td><td>-</td><td>-</td><td>-</td>
-<td>${data.r}</td>
+<td>${g.wt}</td><td>${g.w}</td><td>${wa}%</td><td>-</td><td>-</td>
+<td>${g.m}</td><td>${g.w?Math.round(g.m/g.w*100):0}%</td>
+<td>${g.u}</td><td>${g.w?Math.round(g.u/g.w*100):0}%</td>
+<td>${g.lt}</td><td>${g.l}</td><td>${la}%</td><td>-</td><td>-</td>
+<td>${g.r}</td>
 </tr>`
 }
 
-tb.innerHTML+=row("강북도매계",g1)
-tb.innerHTML+=row("강북상권계",g2)
-tb.innerHTML+=row("강원상권계",g3)
+tb.innerHTML+=makeGroup("강북도매계",gAll)
+tb.innerHTML+=makeGroup("강북상권계",gBuk)
+tb.innerHTML+=makeGroup("강원상권계",gWon)
+
+let arr=[]
 
 centers.forEach(c=>{
-let s=JSON.parse(localStorage.getItem("c_"+c)||"{}")
-let w=s.w||0,l=s.l||0,m=s.m||0,u=s.u||0,r=s.r||0
+let s=getData(c)
+let w=s.w||0,l=s.l||0
 let wt=targets[c]?.w||0
 let lt=targets[c]?.l||0
-let wa=wt?Math.round(w/wt*100):0
-let la=lt?Math.round(l/lt*100):0
+let wa=wt?w/wt*100:0
+let la=lt?l/lt*100:0
+
+arr.push({c,w,l,wt,lt,wa,la})
+})
+
+let wr=[...arr].sort((a,b)=>b.wa-a.wa)
+let lr=[...arr].sort((a,b)=>b.la-a.la)
+
+let wm={},lm={}
+wr.forEach((r,i)=>wm[r.c]=i+1)
+lr.forEach((r,i)=>lm[r.c]=i+1)
+
+arr.forEach(d=>{
+
+let s=getData(d.c)
+let m=s.m||0,u=s.u||0,r=s.r||0
 
 tb.innerHTML+=`
 <tr>
-<td>${w||l?"✔️":""}</td>
-<td>${c}</td>
-<td>${wt}</td><td>${w}</td><td>${wa}%</td>
-<td>-</td><td>-</td>
-<td>${m}</td><td>${w?Math.round(m/w*100):0}%</td>
-<td>${u}</td><td>${w?Math.round(u/w*100):0}%</td>
-<td>${lt}</td><td>${l}</td><td>${la}%</td>
-<td>-</td><td>-</td>
+<td>${d.w||d.l?"✔️":""}</td>
+<td>${d.c}</td>
+<td>${d.wt}</td><td>${d.w}</td><td>${Math.round(d.wa)}%</td>
+<td class="${wm[d.c]<=2?'rankTop':(wm[d.c]>=8?'rankLow':'')}">${wm[d.c]}</td>
+<td>0</td>
+<td>${m}</td><td>${d.w?Math.round(m/d.w*100):0}%</td>
+<td>${u}</td><td>${d.w?Math.round(u/d.w*100):0}%</td>
+<td>${d.lt}</td><td>${d.l}</td><td>${Math.round(d.la)}%</td>
+<td class="${lm[d.c]<=2?'rankTop':(lm[d.c]>=8?'rankLow':'')}">${lm[d.c]}</td>
+<td>0</td>
 <td>${r}</td>
 </tr>`
 })
 
+let wPct=gAll.wt?Math.min(100,Math.round(gAll.w/gAll.wt*100)):0
+let lPct=gAll.lt?Math.min(100,Math.round(gAll.l/gAll.lt*100)):0
+
+document.getElementById("rw").style.left=wPct+"%"
+document.getElementById("rw").innerText="🏃‍➡️ "+wPct+"%"
+
+document.getElementById("rl").style.left=lPct+"%"
+document.getElementById("rl").innerText="🏃‍➡️ "+lPct+"%"
+
 }
 
 let cur=""
+
 function openCenter(c){
 cur=c
-let s=JSON.parse(localStorage.getItem("c_"+c)||"{}")
+let s=getData(c)
 w.value=s.w||""
 m.value=s.m||""
 u.value=s.u||""
