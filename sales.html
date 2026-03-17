@@ -123,7 +123,7 @@ centers.forEach(c=>{
 render()
 }
 
-function getData(c){ return {} }
+function getData(c){ return JSON.parse((()=>null)("c_"+c)||"{}") }
 
 function sum(list){
  let o={w:0,l:0,m:0,u:0,r:0,wt:0,lt:0,incW:0,incL:0}
@@ -224,13 +224,26 @@ function openCenter(c){
 
 function save(){
  let prev=getData(cur)
+
  let data={
   w:Number(w.value||0), prevW:prev.w||0,
   m:Number(m.value||0), u:Number(u.value||0),
   l:Number(l.value||0), prevL:prev.l||0,
   r:Number(r.value||0)
  }
+
  db.ref("c_"+cur).set(data)
+   .then(()=>{
+     popup.style.display="none"
+     alert("저장완료")
+     render()
+   })
+   .catch(e=>{
+     alert("에러: "+e.message)
+     console.error(e)
+   })
+}
+ db.ref("c_"+cur,JSON.stringify(data))
  popup.style.display="none"
  render()
 }
@@ -239,21 +252,5 @@ function resetData(){ localStorage.clear(); location.reload() }
 
 loadTargets()
 </script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  const btn = document.getElementById("saveBtn");
-  if(btn){
-    btn.addEventListener("click", function(){
-      if(typeof saveData === "function"){
-        saveData();
-      } else {
-        alert("saveData 함수 없음");
-      }
-    });
-  }
-});
-</script>
-
 </body>
 </html>
