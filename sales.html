@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>강북도매 유/무선 실적 V18.3</title>
+<title>강북도매 유/무선 실적</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -21,10 +21,10 @@ const db = firebase.database();
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
 .centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0;max-width:420px;}
-.centerGrid button{padding:10px;}
+.centerGrid button{background:#eef1f7;padding:10px;border:1px solid #ccc;border-radius:6px;}
 table{width:100%;border-collapse:collapse;}
-td,th{border:1px solid #ccc;padding:6px;text-align:center;}
-.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;display:none;}
+td,th{border:1px solid #ddd;padding:6px;text-align:center;}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;display:none;}
 </style>
 </head>
 
