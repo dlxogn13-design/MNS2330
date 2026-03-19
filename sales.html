@@ -10,7 +10,6 @@
 
 <style>
 body{font-family:Arial;background:#fff;padding:20px;color:#111;font-weight:500;}
-
 .topbar{display:flex;gap:8px;margin-bottom:10px;}
 button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;font-weight:600;}
 
@@ -24,7 +23,6 @@ td{padding:10px;border-bottom:1px solid #ddd;font-weight:600;}
 
 .rankTop{background:#dbeafe;}
 .rankLow{background:#fee2e2;}
-.totalRow{background:#e2e8f0;font-weight:bold;}
 
 .signal{width:12px;height:12px;border-radius:50%;margin:auto;}
 .green{background:#22c55e;}
@@ -96,8 +94,6 @@ input{width:120px;margin:4px 0;padding:6px;}
 
 <script>
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
-const regionNorth=["서대문","의정부","고양","구리","노원","광진"]
-const regionGang=["강릉","원주","춘천"]
 
 let cache={},targets={},cur=""
 let targetLoaded=false
@@ -164,37 +160,42 @@ function renderBtns(){
  })
 }
 
-function sumRegion(list){
- let s={w:0,l:0,tw:0,tl:0}
- list.forEach(c=>{
-  let d=getData(c),t=targets[c]||{}
-  s.w+=d.w||0;s.l+=d.l||0
-  s.tw+=t.w||0;s.tl+=t.l||0
- })
- return s
-}
-
 function render(){
  if(!targetLoaded) return
 
  let tb=document.querySelector("#tbl tbody")
  tb.innerHTML=""
 
+ // 🔥 순위 계산
+ let wRank=[...centers].map(c=>{
+  let s=getData(c),t=targets[c]||{}
+  return {c,v:(s.w||0)/(t.w||1)}
+ }).sort((a,b)=>b.v-a.v)
+
+ let lRank=[...centers].map(c=>{
+  let s=getData(c),t=targets[c]||{}
+  return {c,v:(s.l||0)/(t.l||1)}
+ }).sort((a,b)=>b.v-a.v)
+
  let sum={w:0,l:0,tw:0,tl:0}
 
  centers.forEach(c=>{
   let s=getData(c),t=targets[c]||{}
+
+  let wr=wRank.findIndex(x=>x.c==c)+1
+  let lr=lRank.findIndex(x=>x.c==c)+1
+
   tb.innerHTML+=`
   <tr>
   <td><div class="signal ${signal(s.ts)}"></div></td>
   <td>${c}</td>
   <td>${t.w||0}</td><td>${s.w||0}</td><td>${pct(s.w,t.w)}%</td>
-  <td></td>
+  <td class="${wr<=2?'rankTop':wr>=8?'rankLow':''}">${wr}</td>
   <td>${(s.w||0)-(s.prevW||0)}</td>
   <td>${s.m||0}</td><td>${ratio(s.m,s.w)}%</td>
   <td>${s.u||0}</td><td>${ratio(s.u,s.w)}%</td>
   <td>${t.l||0}</td><td>${s.l||0}</td><td>${pct(s.l,t.l)}%</td>
-  <td></td>
+  <td class="${lr<=2?'rankTop':lr>=8?'rankLow':''}">${lr}</td>
   <td>${(s.l||0)-(s.prevL||0)}</td>
   <td>${s.r||0}</td>
   </tr>`
@@ -257,12 +258,6 @@ async function loadTarget(){
 
  for(let i=0;i<ws[0].length;i++){
   let v=ws[0][i]
-
-  if(typeof v==="number"){
-   let d=XLSX.SSF.parse_date_code(v)
-   if(d && d.d===today){col=i;break}
-  }
-
   if(typeof v==="string" && v.includes("/"+today)){col=i;break}
  }
 
