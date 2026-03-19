@@ -174,8 +174,35 @@ function save(){
 }
 
 renderBtns()
-loadData()
+loadTarget().then(loadData)
 </script>
+<script>
+async function loadTarget(){
+ const res = await fetch("target.xlsx")
+ const data = await res.arrayBuffer()
+ const wb = XLSX.read(data)
 
+ const wSheet = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1})
+ const lSheet = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]], {header:1})
+
+ const today = new Date().getDate()
+
+ function getCol(header){
+  return header.findIndex(h => String(h).includes("/"+today))
+ }
+
+ const col = getCol(wSheet[0])
+
+ centers.forEach(c=>{
+  const wRow = wSheet.find(r => r[0] === c)
+  const lRow = lSheet.find(r => r[0] === c)
+
+  targets[c] = {
+    w: wRow ? Number(wRow[col] || 0) : 0,
+    l: lRow ? Number(lRow[col] || 0) : 0
+  }
+ })
+}
+</script>
 </body>
 </html>
