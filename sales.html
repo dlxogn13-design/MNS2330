@@ -9,9 +9,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <style>
-body{font-family:Arial;background:#f4f6fb;padding:20px;}
+body{font-family:Arial;background:#ffffff;padding:20px;}
 
-.topbar{display:flex;justify-content:space-between;margin-bottom:10px;}
+.topbar{display:flex;gap:8px;justify-content:space-between;margin-bottom:10px;}
 button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;}
 
 .centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:15px 0;}
@@ -22,7 +22,6 @@ th{
  background:#0f2345;color:white;
  padding:14px 8px;
  line-height:1.3;
- white-space:nowrap;
 }
 
 td{
@@ -33,7 +32,6 @@ td{
 
 .rankTop{background:#dbeafe;}
 .rankLow{background:#fee2e2;}
-
 .totalRow{background:#e2e8f0;font-weight:bold;}
 
 .signal{width:12px;height:12px;border-radius:50%;margin:auto;}
@@ -47,25 +45,6 @@ td{
  border-radius:20px;
  position:relative;
  margin:12px 0;
- overflow:hidden;
-}
-
-.track::before{
- content:"";
- position:absolute;
- left:0;right:0;top:50%;
- height:2px;
- background:white;
- opacity:0.5;
-}
-
-.runner{
- position:absolute;
- top:5px;
- font-size:20px;
- display:flex;
- align-items:center;
- gap:4px;
 }
 
 .finish{
@@ -74,13 +53,23 @@ td{
  top:0;
  bottom:0;
  width:6px;
- background:repeating-linear-gradient(
-  45deg,
-  black,
-  black 5px,
-  white 5px,
-  white 10px
- );
+ background:repeating-linear-gradient(45deg,black,black 5px,white 5px,white 10px);
+}
+
+/* 🔥 트랙 아이콘 + % (위치 수정 완료) */
+.runner{
+ position:absolute;
+ top:-12px;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ font-size:20px;
+}
+
+.runner span{
+ font-size:14px;
+ font-weight:bold;
+ margin-bottom:-3px;
 }
 
 .popup{
@@ -98,6 +87,7 @@ input{width:120px;margin:4px 0;padding:6px;}
 <div class="topbar">
 <button onclick="location.href='index.html'">메인가기</button>
 <button onclick="location.reload()">새로고침</button>
+<button onclick="adminReset()">초기화</button>
 </div>
 
 <div class="centerGrid" id="btns"></div>
@@ -110,20 +100,10 @@ input{width:120px;margin:4px 0;padding:6px;}
 <tr>
 <th></th>
 <th>센터</th>
-<th>무선<br>목표</th>
-<th>무선</th>
-<th>달성율</th>
-<th>순위</th>
-<th>증분</th>
-<th>MNP</th>
-<th>비중</th>
-<th>중고</th>
-<th>비중</th>
-<th>유선<br>목표</th>
-<th>유선</th>
-<th>달성율</th>
-<th>순위</th>
-<th>증분</th>
+<th>무선목표</th><th>무선</th><th>달성율</th><th>순위</th><th>증분</th>
+<th>MNP</th><th>비중</th>
+<th>중고</th><th>비중</th>
+<th>유선목표</th><th>유선</th><th>달성율</th><th>순위</th><th>증분</th>
 <th>약갱</th>
 </tr>
 </thead>
@@ -135,13 +115,13 @@ input{width:120px;margin:4px 0;padding:6px;}
 <div>무선</div>
 <div class="track">
   <div class="finish"></div>
-  <div id="rw" class="runner"><span id="pw"></span> 🏃‍➡️</div>
+  <div id="rw" class="runner"><span id="pw"></span>🏃‍➡️</div>
 </div>
 
 <div>유선</div>
 <div class="track">
   <div class="finish"></div>
-  <div id="rl" class="runner"><span id="pl"></span> 🏃‍➡️</div>
+  <div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div>
 </div>
 
 <div class="popup" id="popup">
@@ -185,23 +165,36 @@ function signal(ts){
  return "red"
 }
 
-// 🔥 트랙 수정 완료 버전
 function trackPos(p){
- if(p <= 100){
+ if(p<=100){
    return (p/100)*66
  }else{
-   let extra = Math.min(p-100,100)
-   return 66 + (extra/100)*34
+   let extra=Math.min(p-100,100)
+   return 66+(extra/100)*34
  }
 }
 
 function updateTime(){
- let now = new Date()
- let m = now.getMonth()+1
- let d = now.getDate()
- let h = now.getHours()
+ let now=new Date()
+ titleTime.innerText=`${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}시 기준`
+}
 
- titleTime.innerText = `${m}월 ${d}일 ${h}시 기준`
+function adminReset(){
+ let pw=prompt("비밀번호 입력")
+ if(pw!=="2330"){
+   alert("비밀번호 틀림")
+   return
+ }
+
+ if(confirm("입력값만 초기화합니다. 진행할까요?")){
+   centers.forEach(c=>{
+     db.ref("c_"+c).update({
+       w:0,m:0,u:0,l:0,r:0,
+       prevW:0,prevL:0,ts:0
+     })
+   })
+   alert("초기화 완료")
+ }
 }
 
 function getData(c){return cache["c_"+c]||{}}
@@ -218,10 +211,8 @@ function sumRegion(list){
  let s={w:0,l:0,tw:0,tl:0}
  list.forEach(c=>{
   let d=getData(c),t=targets[c]||{}
-  s.w+=d.w||0
-  s.l+=d.l||0
-  s.tw+=t.w||0
-  s.tl+=t.l||0
+  s.w+=d.w||0; s.l+=d.l||0
+  s.tw+=t.w||0; s.tl+=t.l||0
  })
  return s
 }
@@ -267,29 +258,6 @@ function render(){
   sum.tw+=t.w||0; sum.tl+=t.l||0
  })
 
- let north=sumRegion(regionNorth)
- let gang=sumRegion(regionGang)
-
- tb.innerHTML+=`
- <tr class="totalRow"><td></td><td>강북도매 계</td>
- <td>${sum.tw}</td><td>${sum.w}</td><td>${pct(sum.w,sum.tw)}%</td>
- <td colspan="6"></td>
- <td>${sum.tl}</td><td>${sum.l}</td><td>${pct(sum.l,sum.tl)}%</td>
- <td colspan="3"></td></tr>
-
- <tr class="totalRow"><td></td><td>강북상권 계</td>
- <td>${north.tw}</td><td>${north.w}</td><td>${pct(north.w,north.tw)}%</td>
- <td colspan="6"></td>
- <td>${north.tl}</td><td>${north.l}</td><td>${pct(north.l,north.tl)}%</td>
- <td colspan="3"></td></tr>
-
- <tr class="totalRow"><td></td><td>강원상권 계</td>
- <td>${gang.tw}</td><td>${gang.w}</td><td>${pct(gang.w,gang.tw)}%</td>
- <td colspan="6"></td>
- <td>${gang.tl}</td><td>${gang.l}</td><td>${pct(gang.l,gang.tl)}%</td>
- <td colspan="3"></td></tr>
- `
-
  let wPct=sum.tw?Math.round(sum.w/sum.tw*100):0
  let lPct=sum.tl?Math.round(sum.l/sum.tl*100):0
 
@@ -320,8 +288,7 @@ function openCenter(c){
 function save(){
  let s=getData(cur)
  db.ref("c_"+cur).update({
-  prevW:s.w||0,
-  prevL:s.l||0,
+  prevW:s.w||0,prevL:s.l||0,
   w:Number(w.value||0),
   m:Number(m.value||0),
   u:Number(u.value||0),
@@ -343,14 +310,7 @@ async function loadTarget(){
  const today=new Date().getDate()
 
  function getCol(header){
-  for(let i=0;i<header.length;i++){
-   let v=header[i]
-   if(typeof v==="number"){
-    let d=XLSX.SSF.parse_date_code(v)
-    if(d && d.d===today) return i
-   }
-   if(typeof v==="string" && v.includes("/"+today)) return i
-  }
+  return header.findIndex(h=>String(h).includes("/"+today))
  }
 
  const col=getCol(wSheet[0])
@@ -366,20 +326,8 @@ async function loadTarget(){
  })
 }
 
-function resetAtMidnight(){
- let now=new Date()
- let next=new Date()
- next.setHours(24,0,0,0)
-
- setTimeout(()=>{
-   db.ref().set({})
-   location.reload()
- }, next-now)
-}
-
 renderBtns()
 loadTarget().then(loadData)
-resetAtMidnight()
 </script>
 
 </body>
