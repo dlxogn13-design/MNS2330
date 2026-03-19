@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>STEP FINAL 1</title>
+<title>FINAL_STEP_INPUT_EXPANDED</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -26,10 +26,9 @@ button{padding:10px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{background:#0f2345;color:white;padding:8px;}
 td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
-.top{background:#dbeafe;}
-.low{background:#fee2e2;}
 .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-background:white;padding:20px;border-radius:10px;display:none;}
+background:white;padding:15px;border-radius:10px;display:none;}
+input{width:120px;margin:3px 0;}
 </style>
 </head>
 
@@ -43,9 +42,11 @@ background:white;padding:20px;border-radius:10px;display:none;}
 <thead>
 <tr>
 <th>센터</th>
-<th>무선목표</th><th>무선</th><th>%</th><th>순위</th>
-<th>MNP</th><th>비중</th><th>중고</th><th>비중</th>
+<th>무선목표</th><th>무선</th><th>%</th>
+<th>MNP</th><th>비중</th>
+<th>중고</th><th>비중</th>
 <th>유선목표</th><th>유선</th><th>%</th>
+<th>약갱</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -53,8 +54,13 @@ background:white;padding:20px;border-radius:10px;display:none;}
 
 <div class="popup" id="popup">
 <h3 id="pTitle"></h3>
+
 <input id="w" placeholder="무선"><br>
+<input id="mnp" placeholder="MNP"><br>
+<input id="used" placeholder="중고"><br>
 <input id="l" placeholder="유선"><br>
+<input id="yak" placeholder="약갱"><br>
+
 <button onclick="save()">저장</button>
 </div>
 
@@ -65,12 +71,12 @@ let cache={}
 let cur=""
 
 function percent(a,b){
- if(!b || b==0) return "0%"
+ if(!a || !b) return "0%"
  return Math.round((a/b)*100)+"%"
 }
 
 function ratio(a,b){
- if(!b || b==0) return "0%"
+ if(!a || !b) return "0%"
  return Math.round((a/b)*100)+"%"
 }
 
@@ -120,43 +126,24 @@ function render(){
  let tb=document.querySelector("#tbl tbody")
  tb.innerHTML=""
 
- let arr=[]
-
  centers.forEach(c=>{
   let s=getData(c)
   let t=targets[c]||{w:0,l:0}
-  let p=Number(percent(s.w||0,t.w).replace("%",""))
-  arr.push({c,p})
- })
-
- arr.sort((a,b)=>b.p-a.p)
-
- centers.forEach(c=>{
-  let s=getData(c)
-  let t=targets[c]||{w:0,l:0}
-
-  let pw=percent(s.w,t.w)
-  let pl=percent(s.l,t.l)
-
-  let rank=arr.findIndex(x=>x.c===c)+1
-
-  let mnp=s.mnp||0
-  let used=s.used||0
 
   tb.innerHTML+=`
   <tr>
   <td>${c}</td>
   <td>${t.w||0}</td>
   <td>${s.w||0}</td>
-  <td>${pw}</td>
-  <td>${rank}</td>
-  <td>${mnp}</td>
-  <td>${ratio(mnp,s.w)}</td>
-  <td>${used}</td>
-  <td>${ratio(used,s.w)}</td>
+  <td>${percent(s.w,t.w)}</td>
+  <td>${s.mnp||0}</td>
+  <td>${ratio(s.mnp,s.w)}</td>
+  <td>${s.used||0}</td>
+  <td>${ratio(s.used,s.w)}</td>
   <td>${t.l||0}</td>
   <td>${s.l||0}</td>
-  <td>${pl}</td>
+  <td>${percent(s.l,t.l)}</td>
+  <td>${s.yak||0}</td>
   </tr>`
  })
 }
@@ -172,7 +159,10 @@ function openCenter(c){
  cur=c
  let s=getData(c)
  w.value=s.w||""
+ mnp.value=s.mnp||""
+ used.value=s.used||""
  l.value=s.l||""
+ yak.value=s.yak||""
  pTitle.innerText=c
  popup.style.display="block"
 }
@@ -180,7 +170,10 @@ function openCenter(c){
 function save(){
  db.ref("c_"+cur).update({
   w:Number(w.value||0),
+  mnp:Number(mnp.value||0),
+  used:Number(used.value||0),
   l:Number(l.value||0),
+  yak:Number(yak.value||0),
   t:Date.now()
  })
  popup.style.display="none"
