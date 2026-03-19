@@ -72,10 +72,9 @@ input{width:120px;margin:4px 0;padding:6px;}
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
 let cache={},targets={},cur=""
 
-const firebaseConfig={
-databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
-}
-firebase.initializeApp(firebaseConfig)
+firebase.initializeApp({
+ databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
+})
 const db=firebase.database()
 
 function pct(a,b){
@@ -173,7 +172,7 @@ function save(){
  popup.style.display="none"
 }
 
-<script>
+// ✅ target 연동
 async function loadTarget(){
  const res = await fetch("target.xlsx")
  const data = await res.arrayBuffer()
@@ -183,12 +182,19 @@ async function loadTarget(){
  const lSheet = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]], {header:1})
 
  const today = new Date().getDate()
- 
-renderBtns()
-loadTarget().then(loadData)
- 
+
  function getCol(header){
-  return header.findIndex(h => String(h).includes("/"+today))
+  for(let i=0;i<header.length;i++){
+   let v=header[i]
+
+   if(typeof v==="number"){
+    let d=XLSX.SSF.parse_date_code(v)
+    if(d && d.d===today) return i
+   }
+
+   if(typeof v==="string" && v.includes("/"+today)) return i
+  }
+  return -1
  }
 
  const col = getCol(wSheet[0])
@@ -203,6 +209,11 @@ loadTarget().then(loadData)
   }
  })
 }
+
+// 실행
+renderBtns()
+loadTarget().then(loadData)
 </script>
+
 </body>
 </html>
