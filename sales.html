@@ -10,19 +10,71 @@
 
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
+
 .topbar{display:flex;justify-content:space-between;margin-bottom:10px;}
 button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;}
+
 .centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:15px 0;}
-table{width:100%;border-collapse:collapse;font-size:16px;}
+
+table{width:100%;border-collapse:collapse;font-size:18px;}
 th{background:#0f2345;color:white;padding:10px;}
-td{border-bottom:1px solid #ddd;padding:8px;text-align:center;}
+td{border-bottom:1px solid #ddd;padding:10px;text-align:center;}
+
 .rankTop{background:#dbeafe;}
 .rankLow{background:#fee2e2;}
-.track{height:30px;background:#ddd;border-radius:20px;margin:10px 0;position:relative;}
-.runner{position:absolute;top:-5px;font-size:20px;}
-.finish{position:absolute;left:66%;top:0;bottom:0;width:4px;background:black;}
-.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-background:white;padding:20px;border-radius:10px;display:none;}
+
+.totalRow{background:#e2e8f0;font-weight:bold;}
+
+.signal{width:12px;height:12px;border-radius:50%;margin:auto;}
+.green{background:#22c55e;}
+.yellow{background:#facc15;}
+.red{background:#ef4444;}
+
+.track{
+ height:40px;
+ background:linear-gradient(#ddd,#ccc);
+ border-radius:20px;
+ position:relative;
+ margin:12px 0;
+ overflow:hidden;
+}
+
+.track::before{
+ content:"";
+ position:absolute;
+ left:0;right:0;top:50%;
+ height:2px;
+ background:white;
+ opacity:0.5;
+}
+
+.runner{
+ position:absolute;
+ top:5px;
+ font-size:22px;
+}
+
+.finish{
+ position:absolute;
+ left:66%;
+ top:0;
+ bottom:0;
+ width:6px;
+ background:repeating-linear-gradient(
+  45deg,
+  black,
+  black 5px,
+  white 5px,
+  white 10px
+ );
+}
+
+.popup{
+ position:fixed;top:50%;left:50%;
+ transform:translate(-50%,-50%);
+ background:white;padding:20px;border-radius:10px;display:none;
+}
+
 input{width:120px;margin:4px 0;padding:6px;}
 </style>
 </head>
@@ -41,6 +93,7 @@ input{width:120px;margin:4px 0;padding:6px;}
 <table id="tbl">
 <thead>
 <tr>
+<th></th>
 <th>센터</th>
 <th>무선목표</th><th>무선</th><th>달성율</th><th>순위</th><th>증분</th>
 <th>MNP</th><th>비중</th>
@@ -70,6 +123,10 @@ input{width:120px;margin:4px 0;padding:6px;}
 
 <script>
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
+
+const regionNorth=["서대문","의정부","고양","구리","노원","광진"]
+const regionGang=["강릉","원주","춘천"]
+
 let cache={},targets={},cur=""
 
 firebase.initializeApp({
@@ -78,7 +135,7 @@ firebase.initializeApp({
 const db=firebase.database()
 
 function pct(a,b){
- if(!a||!b) return 0
+ if(!a||!b) return "-"
  let v=a/b*100
  return v>=100?Math.round(v):(Math.round(v*10)/10)
 }
@@ -86,6 +143,14 @@ function pct(a,b){
 function ratio(a,b){
  if(!a||!b) return 0
  return Math.round(a/b*100)
+}
+
+function signal(ts){
+ if(!ts) return "red"
+ let diff=(Date.now()-ts)/1000/60
+ if(diff<60) return "green"
+ if(diff<120) return "yellow"
+ return "red"
 }
 
 function getData(c){return cache["c_"+c]||{}}
@@ -112,36 +177,47 @@ function render(){
   return {c,v:(s.l||0)/(t.l||1)}
  }).sort((a,b)=>b.v-a.v)
 
- let tw=0,tl=0,ttw=0,ttl=0
+ let sum={w:0,l:0,tw:0,tl:0}
 
  centers.forEach(c=>{
   let s=getData(c),t=targets[c]||{}
   let wr=wRank.findIndex(x=>x.c==c)+1
   let lr=lRank.findIndex(x=>x.c==c)+1
 
-  let dw=(s.w||0)-(s.prevW||0)
-  let dl=(s.l||0)-(s.prevL||0)
+  let sig=signal(s.ts)
 
   tb.innerHTML+=`
   <tr>
+  <td><div class="signal ${sig}"></div></td>
   <td>${c}</td>
   <td>${t.w||0}</td><td>${s.w||0}</td><td>${pct(s.w,t.w)}%</td>
   <td class="${wr<=2?'rankTop':wr>=8?'rankLow':''}">${wr}</td>
-  <td>${dw}</td>
+  <td>${(s.w||0)-(s.prevW||0)}</td>
   <td>${s.m||0}</td><td>${ratio(s.m,s.w)}%</td>
   <td>${s.u||0}</td><td>${ratio(s.u,s.w)}%</td>
   <td>${t.l||0}</td><td>${s.l||0}</td><td>${pct(s.l,t.l)}%</td>
   <td class="${lr<=2?'rankTop':lr>=8?'rankLow':''}">${lr}</td>
-  <td>${dl}</td>
+  <td>${(s.l||0)-(s.prevL||0)}</td>
   <td>${s.r||0}</td>
   </tr>`
 
-  tw+=s.w||0; tl+=s.l||0
-  ttw+=t.w||0; ttl+=t.l||0
+  sum.w+=s.w||0; sum.l+=s.l||0
+  sum.tw+=t.w||0; sum.tl+=t.l||0
  })
 
- rw.style.left=(tw/ttw*100)+"%"
- rl.style.left=(tl/ttl*100)+"%"
+ // 계
+ tb.innerHTML+=`
+ <tr class="totalRow">
+ <td></td><td>강북도매 계</td>
+ <td>${sum.tw}</td><td>${sum.w}</td><td>${pct(sum.w,sum.tw)}%</td>
+ <td colspan="6"></td>
+ <td>${sum.tl}</td><td>${sum.l}</td><td>${pct(sum.l,sum.tl)}%</td>
+ <td colspan="3"></td>
+ </tr>`
+
+ // 트랙
+ rw.style.left=Math.min(sum.w/sum.tw*100,100)+"%"
+ rl.style.left=Math.min(sum.l/sum.tl*100,100)+"%"
 }
 
 function loadData(){
@@ -162,55 +238,52 @@ function openCenter(c){
 function save(){
  let s=getData(cur)
  db.ref("c_"+cur).update({
-  prevW:s.w||0, prevL:s.l||0,
+  prevW:s.w||0,
+  prevL:s.l||0,
   w:Number(w.value||0),
   m:Number(m.value||0),
   u:Number(u.value||0),
   l:Number(l.value||0),
-  r:Number(r.value||0)
+  r:Number(r.value||0),
+  ts:Date.now()
  })
  popup.style.display="none"
 }
 
-// ✅ target 연동
 async function loadTarget(){
- const res = await fetch("target.xlsx")
- const data = await res.arrayBuffer()
- const wb = XLSX.read(data)
+ const res=await fetch("target.xlsx")
+ const data=await res.arrayBuffer()
+ const wb=XLSX.read(data)
 
- const wSheet = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1})
- const lSheet = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]], {header:1})
+ const wSheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
+ const lSheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
- const today = new Date().getDate()
+ const today=new Date().getDate()
 
  function getCol(header){
   for(let i=0;i<header.length;i++){
    let v=header[i]
-
    if(typeof v==="number"){
     let d=XLSX.SSF.parse_date_code(v)
     if(d && d.d===today) return i
    }
-
    if(typeof v==="string" && v.includes("/"+today)) return i
   }
-  return -1
  }
 
- const col = getCol(wSheet[0])
+ const col=getCol(wSheet[0])
 
  centers.forEach(c=>{
-  const wRow = wSheet.find(r => r[0] === c)
-  const lRow = lSheet.find(r => r[0] === c)
+  const wRow=wSheet.find(r=>r[0]===c)
+  const lRow=lSheet.find(r=>r[0]===c)
 
-  targets[c] = {
-    w: wRow ? Number(wRow[col] || 0) : 0,
-    l: lRow ? Number(lRow[col] || 0) : 0
+  targets[c]={
+   w:wRow?Number(wRow[col]||0):0,
+   l:lRow?Number(lRow[col]||0):0
   }
  })
 }
 
-// 실행
 renderBtns()
 loadTarget().then(loadData)
 </script>
