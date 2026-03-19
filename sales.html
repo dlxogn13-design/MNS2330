@@ -5,7 +5,6 @@
 <title>강북도매 유/무선 실적</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
@@ -23,6 +22,8 @@ th,td{text-align:center;vertical-align:middle;}
 th{background:#0f2345;color:#fff;padding:14px;font-weight:700;white-space:nowrap;}
 td{padding:10px;border-bottom:1px solid #ddd;font-weight:600;white-space:nowrap;}
 
+.group{background:#eef3ff;font-weight:700;}
+
 .rankTop{background:#dbeafe;}
 .rankLow{background:#fee2e2;}
 
@@ -32,23 +33,10 @@ td{padding:10px;border-bottom:1px solid #ddd;font-weight:600;white-space:nowrap;
 .red{background:#ef4444;}
 
 .track{height:40px;background:#ddd;border-radius:20px;position:relative;margin:12px 0;}
-.finish{position:absolute;left:66%;top:0;bottom:0;width:6px;background:repeating-linear-gradient(45deg,black,black 5px,white 5px,white 10px);}
+.finish{position:absolute;left:66%;top:0;bottom:0;width:6px;background:black;}
 
-.runner{
- position:absolute;
- top:-20px;
- display:flex;
- flex-direction:column;
- align-items:center;
- font-size:26px;
-}
-
-.runner span{
- font-size:20px;
- font-weight:bold;
-}
-
-canvas{margin-top:30px;}
+.runner{position:absolute;top:-12px;display:flex;flex-direction:column;align-items:center;}
+.runner span{font-size:14px;font-weight:bold;}
 
 .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 background:white;padding:20px;border-radius:10px;display:none;}
@@ -86,133 +74,91 @@ input{width:120px;margin:4px 0;padding:6px;}
 <h3>진행 트랙</h3>
 
 <div>무선</div>
-<div class="track">
-<div class="finish"></div>
-<div id="rw" class="runner"><span id="pw"></span>🏃‍➡️</div>
-</div>
+<div class="track"><div class="finish"></div><div id="rw" class="runner"><span id="pw"></span>🏃‍➡️</div></div>
 
 <div>유선</div>
-<div class="track">
-<div class="finish"></div>
-<div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div>
-</div>
-
-<h3>센터별 달성률 비교</h3>
-<canvas id="chart"></canvas>
+<div class="track"><div class="finish"></div><div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div></div>
 
 <div class="popup" id="popup">
 <h3 id="pTitle"></h3>
-<input id="w" placeholder="무선">
-<input id="m" placeholder="MNP">
-<input id="u" placeholder="중고">
-<input id="l" placeholder="유선">
-<input id="r" placeholder="약갱">
+<input id="w"><input id="m"><input id="u"><input id="l"><input id="r">
 <br><button onclick="save()">저장</button>
 </div>
 
 <script>
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
+const gangbuk=["서대문","의정부","고양","구리","노원","광진"]
+const gangwon=["강릉","원주","춘천"]
 
 let cache={},targets={},cur=""
 let targetLoaded=false
-let chart
 
-firebase.initializeApp({
- databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
-})
+firebase.initializeApp({databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"})
 const db=firebase.database()
-
-function pct(a,b){
- if(!a||!b) return 0
- return Math.round(a/b*100)
-}
-
-function signal(ts){
- if(!ts) return "red"
- let diff=(Date.now()-ts)/60000
- if(diff<60) return "green"
- if(diff<120) return "yellow"
- return "red"
-}
-
-function trackPos(p){
- if(p<=100) return (p/100)*66
- else return 66+Math.min(p-100,100)/100*34
-}
-
-function updateTime(){
- let n=new Date()
- titleTime.innerText=`${n.getMonth()+1}월 ${n.getDate()}일 ${n.getHours()}시 기준`
-}
-
-function adminReset(){
- let pw=prompt("비번")
- if(pw!=="2330") return
- centers.forEach(c=>{
-  db.ref("c_"+c).update({w:0,m:0,u:0,l:0,r:0,prevW:0,prevL:0,ts:0})
- })
-}
 
 function getData(c){return cache["c_"+c]||{}}
 
+function sum(list){
+ let o={w:0,l:0,m:0,u:0,r:0,wt:0,lt:0}
+ list.forEach(c=>{
+  let s=getData(c)
+  let t=targets[c]||{}
+  o.w+=s.w||0; o.l+=s.l||0
+  o.m+=s.m||0; o.u+=s.u||0; o.r+=s.r||0
+  o.wt+=t.w||0; o.lt+=t.l||0
+ })
+ return o
+}
+
+function renderBtns(){
+ let d=document.getElementById("btns")
+ d.innerHTML=""
+ centers.forEach(c=>{
+  d.innerHTML+=`<button onclick="openCenter('${c}')">${c}</button>`
+ })
+}
+
 function render(){
  if(!targetLoaded) return
+
  let tb=document.querySelector("#tbl tbody")
  tb.innerHTML=""
 
- let wData=[],lData=[]
+ let gAll=sum(centers)
+ let gBuk=sum(gangbuk)
+ let gWon=sum(gangwon)
+
+ function gRow(name,g){
+  let wa=g.wt?Math.round(g.w/g.wt*100):0
+  let la=g.lt?Math.round(g.l/g.lt*100):0
+
+  return `<tr class="group">
+  <td></td><td>${name}</td>
+  <td>${g.wt}</td><td>${g.w}</td><td>${wa}%</td><td>-</td><td>-</td>
+  <td>${g.m}</td><td>-</td>
+  <td>${g.u}</td><td>-</td>
+  <td>${g.lt}</td><td>${g.l}</td><td>${la}%</td><td>-</td><td>-</td>
+  <td>${g.r}</td>
+  </tr>`
+ }
+
+ tb.innerHTML+=gRow("강북도매 계",gAll)
+ tb.innerHTML+=gRow("강북상권 계",gBuk)
+ tb.innerHTML+=gRow("강원상권 계",gWon)
 
  centers.forEach(c=>{
   let s=getData(c),t=targets[c]||{}
-  let wPct=pct(s.w,t.w)
-  let lPct=pct(s.l,t.l)
-
-  wData.push(wPct)
-  lData.push(lPct)
 
   tb.innerHTML+=`
   <tr>
-  <td><div class="signal ${signal(s.ts)}"></div></td>
+  <td><div class="signal red"></div></td>
   <td>${c}</td>
-  <td>${t.w||0}</td><td>${s.w||0}</td><td>${wPct}%</td>
-  <td></td>
-  <td>${(s.w||0)-(s.prevW||0)}</td>
-  <td>${s.m||0}</td><td></td>
-  <td>${s.u||0}</td><td></td>
-  <td>${t.l||0}</td><td>${s.l||0}</td><td>${lPct}%</td>
-  <td></td>
-  <td>${(s.l||0)-(s.prevL||0)}</td>
+  <td>${t.w||0}</td><td>${s.w||0}</td><td>-</td><td>-</td><td>-</td>
+  <td>${s.m||0}</td><td>-</td>
+  <td>${s.u||0}</td><td>-</td>
+  <td>${t.l||0}</td><td>${s.l||0}</td><td>-</td><td>-</td><td>-</td>
   <td>${s.r||0}</td>
   </tr>`
- })
-
- drawChart(wData,lData)
- updateTime()
-}
-
-function drawChart(w,l){
- if(chart) chart.destroy()
-
- chart=new Chart(document.getElementById("chart"),{
-  type:"bar",
-  data:{
-   labels:centers,
-   datasets:[
-    {label:"무선",data:w},
-    {label:"유선",data:l}
-   ]
-  },
-  options:{
-   responsive:true,
-   plugins:{legend:{position:"top"}}
-  }
- })
-}
-
-function loadData(){
- db.ref().on("value",snap=>{
-  cache=snap.val()||{}
-  render()
  })
 }
 
@@ -220,18 +166,37 @@ async function loadTarget(){
  const res=await fetch("target.xlsx")
  const data=await res.arrayBuffer()
  const wb=XLSX.read(data)
+
  const ws=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
+ const ls=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
  const today=new Date().getDate()
- let col=ws[0].findIndex(v=>String(v).includes("/"+today))
+ let col=-1
+
+ for(let i=0;i<ws[0].length;i++){
+  let v=ws[0][i]
+  if(typeof v==="number"){
+   let d=XLSX.SSF.parse_date_code(v)
+   if(d && d.d===today){col=i;break}
+  }
+  if(typeof v==="string" && v.includes("/"+today)){col=i;break}
+ }
 
  centers.forEach(c=>{
-  let row=ws.find(r=>r[0]===c)
-  targets[c]={w:row?Number(row[col]||0):0,l:0}
+  let wr=ws.find(r=>r[0]===c)
+  let lr=ls.find(r=>r[0]===c)
+  targets[c]={w:wr?Number(wr[col]||0):0,l:lr?Number(lr[col]||0):0}
  })
 
  targetLoaded=true
  render()
+}
+
+function loadData(){
+ db.ref().on("value",snap=>{
+  cache=snap.val()||{}
+  render()
+ })
 }
 
 renderBtns()
