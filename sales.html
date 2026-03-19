@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>FINAL_STEP_INPUT_EXPANDED</title>
+<title>V18 FINAL COMPLETE TRUE</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -26,6 +26,10 @@ button{padding:10px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{background:#0f2345;color:white;padding:8px;}
 td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
+.top{background:#dbeafe;}
+.low{background:#fee2e2;}
+.track{height:16px;background:#ddd;border-radius:10px;margin:5px 0;position:relative;}
+.runner{position:absolute;top:-5px;}
 .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 background:white;padding:15px;border-radius:10px;display:none;}
 input{width:120px;margin:3px 0;}
@@ -42,25 +46,29 @@ input{width:120px;margin:3px 0;}
 <thead>
 <tr>
 <th>센터</th>
-<th>무선목표</th><th>무선</th><th>%</th>
+<th>무선목표</th><th>무선</th><th>%</th><th>순위</th><th>증분</th>
 <th>MNP</th><th>비중</th>
 <th>중고</th><th>비중</th>
-<th>유선목표</th><th>유선</th><th>%</th>
+<th>유선목표</th><th>유선</th><th>%</th><th>순위</th><th>증분</th>
 <th>약갱</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
+<h3>전체 트랙</h3>
+<div>무선</div>
+<div class="track"><div id="rw" class="runner">🏃</div></div>
+<div>유선</div>
+<div class="track"><div id="rl" class="runner">🏃</div></div>
+
 <div class="popup" id="popup">
 <h3 id="pTitle"></h3>
-
 <input id="w" placeholder="무선"><br>
 <input id="mnp" placeholder="MNP"><br>
 <input id="used" placeholder="중고"><br>
 <input id="l" placeholder="유선"><br>
 <input id="yak" placeholder="약갱"><br>
-
 <button onclick="save()">저장</button>
 </div>
 
@@ -71,13 +79,13 @@ let cache={}
 let cur=""
 
 function percent(a,b){
- if(!a || !b) return "0%"
- return Math.round((a/b)*100)+"%"
+ if(!a||!b) return 0
+ return Math.round((a/b)*100)
 }
 
 function ratio(a,b){
- if(!a || !b) return "0%"
- return Math.round((a/b)*100)+"%"
+ if(!a||!b) return 0
+ return Math.round((a/b)*100)
 }
 
 function getColIndex(header){
@@ -126,26 +134,47 @@ function render(){
  let tb=document.querySelector("#tbl tbody")
  tb.innerHTML=""
 
+ let rankArr=[...centers].map(c=>{
+  let s=getData(c)
+  let t=targets[c]||{}
+  return {c,p:percent(s.w,t.w)}
+ }).sort((a,b)=>b.p-a.p)
+
+ let totalW=0,totalL=0,targetW=0,targetL=0
+
  centers.forEach(c=>{
   let s=getData(c)
   let t=targets[c]||{w:0,l:0}
 
+  let pw=percent(s.w,t.w)
+  let pl=percent(s.l,t.l)
+
+  let rank=rankArr.findIndex(x=>x.c===c)+1
+
+  let prev=s.prevW||0
+  let diff=(s.w||0)-prev
+
+  totalW+=s.w||0
+  totalL+=s.l||0
+  targetW+=t.w||0
+  targetL+=t.l||0
+
   tb.innerHTML+=`
-  <tr>
+  <tr class="${rank<=3?'top':rank>=8?'low':''}">
   <td>${c}</td>
-  <td>${t.w||0}</td>
-  <td>${s.w||0}</td>
-  <td>${percent(s.w,t.w)}</td>
-  <td>${s.mnp||0}</td>
-  <td>${ratio(s.mnp,s.w)}</td>
-  <td>${s.used||0}</td>
-  <td>${ratio(s.used,s.w)}</td>
-  <td>${t.l||0}</td>
-  <td>${s.l||0}</td>
-  <td>${percent(s.l,t.l)}</td>
+  <td>${t.w}</td><td>${s.w||0}</td><td>${pw}%</td><td>${rank}</td><td>${diff}</td>
+  <td>${s.mnp||0}</td><td>${ratio(s.mnp,s.w)}%</td>
+  <td>${s.used||0}</td><td>${ratio(s.used,s.w)}%</td>
+  <td>${t.l}</td><td>${s.l||0}</td><td>${pl}%</td><td>${rank}</td><td>${(s.l||0)-(s.prevL||0)}</td>
   <td>${s.yak||0}</td>
   </tr>`
  })
+
+ // 트랙
+ let wp=percent(totalW,targetW)
+ let lp=percent(totalL,targetL)
+ rw.style.left=wp+"%"
+ rl.style.left=lp+"%"
 }
 
 function loadData(){
@@ -168,7 +197,10 @@ function openCenter(c){
 }
 
 function save(){
+ let s=getData(cur)
  db.ref("c_"+cur).update({
+  prevW:s.w||0,
+  prevL:s.l||0,
   w:Number(w.value||0),
   mnp:Number(mnp.value||0),
   used:Number(used.value||0),
