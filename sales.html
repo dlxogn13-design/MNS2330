@@ -9,36 +9,92 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <style>
-body{font-family:Arial;background:#ffffff;padding:20px;}
+body{
+ font-family:Arial;
+ background:#ffffff;
+ padding:20px;
+ color:#111;
+ font-weight:500;
+}
 
-.topbar{display:flex;gap:8px;justify-content:space-between;margin-bottom:10px;}
-button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;}
+.topbar{
+ display:flex;
+ gap:8px;
+ align-items:center;
+ margin-bottom:10px;
+}
 
-.centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:15px 0;}
+button{
+ padding:8px 12px;
+ border-radius:6px;
+ border:1px solid #ccc;
+ background:#eef1f7;
+ font-weight:600;
+}
 
-table{width:100%;border-collapse:collapse;font-size:18px;}
+/* 센터 버튼 파란색 */
+.centerGrid{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:8px;
+ margin:15px 0;
+}
+
+.centerGrid button{
+ background:#1e3a8a;
+ color:white;
+ border:none;
+ font-weight:600;
+}
+
+/* 테이블 */
+table{
+ width:100%;
+ border-collapse:collapse;
+ font-size:16px;
+}
+
+th, td{
+ text-align:center;
+ vertical-align:middle;
+}
 
 th{
- background:#0f2345;color:white;
+ background:#0f2345;
+ color:white;
  padding:14px 8px;
- line-height:1.3;
+ font-size:17px;
+ font-weight:700;
 }
 
 td{
- border-bottom:1px solid #ddd;
  padding:10px 6px;
- text-align:center;
+ border-bottom:1px solid #ddd;
+ font-size:16px;
+ font-weight:600;
 }
 
+/* 순위 색 */
 .rankTop{background:#dbeafe;}
 .rankLow{background:#fee2e2;}
-.totalRow{background:#e2e8f0;font-weight:bold;}
 
-.signal{width:12px;height:12px;border-radius:50%;margin:auto;}
+/* 합계 행 */
+.totalRow{
+ background:#e2e8f0;
+ font-weight:bold;
+}
+
+/* 신호등 */
+.signal{
+ width:12px;height:12px;
+ border-radius:50%;
+ margin:auto;
+}
 .green{background:#22c55e;}
 .yellow{background:#facc15;}
 .red{background:#ef4444;}
 
+/* 트랙 */
 .track{
  height:40px;
  background:linear-gradient(#ddd,#ccc);
@@ -53,10 +109,10 @@ td{
  top:0;
  bottom:0;
  width:6px;
- background:repeating-linear-gradient(45deg,black,black 5px,white 5px,white 10px);
+ background:repeating-linear-gradient(
+ 45deg,black,black 5px,white 5px,white 10px);
 }
 
-/* 🔥 트랙 아이콘 + % (위치 수정 완료) */
 .runner{
  position:absolute;
  top:-12px;
@@ -72,13 +128,22 @@ td{
  margin-bottom:-3px;
 }
 
+/* 팝업 */
 .popup{
- position:fixed;top:50%;left:50%;
+ position:fixed;
+ top:50%;left:50%;
  transform:translate(-50%,-50%);
- background:white;padding:20px;border-radius:10px;display:none;
+ background:white;
+ padding:20px;
+ border-radius:10px;
+ display:none;
 }
 
-input{width:120px;margin:4px 0;padding:6px;}
+input{
+ width:120px;
+ margin:4px 0;
+ padding:6px;
+}
 </style>
 </head>
 
@@ -114,14 +179,14 @@ input{width:120px;margin:4px 0;padding:6px;}
 
 <div>무선</div>
 <div class="track">
-  <div class="finish"></div>
-  <div id="rw" class="runner"><span id="pw"></span>🏃‍➡️</div>
+<div class="finish"></div>
+<div id="rw" class="runner"><span id="pw"></span>🏃‍➡️</div>
 </div>
 
 <div>유선</div>
 <div class="track">
-  <div class="finish"></div>
-  <div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div>
+<div class="finish"></div>
+<div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div>
 </div>
 
 <div class="popup" id="popup">
@@ -179,6 +244,7 @@ function updateTime(){
  titleTime.innerText=`${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}시 기준`
 }
 
+/* 🔥 초기화 (입력값만) + 목표 유지 */
 function adminReset(){
  let pw=prompt("비밀번호 입력")
  if(pw!=="2330"){
@@ -193,6 +259,11 @@ function adminReset(){
        prevW:0,prevL:0,ts:0
      })
    })
+
+   setTimeout(()=>{
+     loadTarget().then(render)
+   },300)
+
    alert("초기화 완료")
  }
 }
@@ -211,8 +282,10 @@ function sumRegion(list){
  let s={w:0,l:0,tw:0,tl:0}
  list.forEach(c=>{
   let d=getData(c),t=targets[c]||{}
-  s.w+=d.w||0; s.l+=d.l||0
-  s.tw+=t.w||0; s.tl+=t.l||0
+  s.w+=d.w||0
+  s.l+=d.l||0
+  s.tw+=t.w||0
+  s.tl+=t.l||0
  })
  return s
 }
@@ -257,6 +330,29 @@ function render(){
   sum.w+=s.w||0; sum.l+=s.l||0
   sum.tw+=t.w||0; sum.tl+=t.l||0
  })
+
+ let north=sumRegion(regionNorth)
+ let gang=sumRegion(regionGang)
+
+ tb.innerHTML+=`
+ <tr class="totalRow"><td></td><td>강북도매 계</td>
+ <td>${sum.tw}</td><td>${sum.w}</td><td>${pct(sum.w,sum.tw)}%</td>
+ <td colspan="6"></td>
+ <td>${sum.tl}</td><td>${sum.l}</td><td>${pct(sum.l,sum.tl)}%</td>
+ <td colspan="3"></td></tr>
+
+ <tr class="totalRow"><td></td><td>강북상권 계</td>
+ <td>${north.tw}</td><td>${north.w}</td><td>${pct(north.w,north.tw)}%</td>
+ <td colspan="6"></td>
+ <td>${north.tl}</td><td>${north.l}</td><td>${pct(north.l,north.tl)}%</td>
+ <td colspan="3"></td></tr>
+
+ <tr class="totalRow"><td></td><td>강원상권 계</td>
+ <td>${gang.tw}</td><td>${gang.w}</td><td>${pct(gang.w,gang.tw)}%</td>
+ <td colspan="6"></td>
+ <td>${gang.tl}</td><td>${gang.l}</td><td>${pct(gang.l,gang.tl)}%</td>
+ <td colspan="3"></td></tr>
+ `
 
  let wPct=sum.tw?Math.round(sum.w/sum.tw*100):0
  let lPct=sum.tl?Math.round(sum.l/sum.tl*100):0
