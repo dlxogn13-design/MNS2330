@@ -2,48 +2,22 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>V18 UPGRADE</title>
+<title>V18_PATCH</title>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDgTFfUykzYpLy21gYV3T6Yz3qJckqEwsQ",
-  databaseURL: "https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-</script>
-
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
-table{width:100%;border-collapse:collapse;font-size:15px;}
+table{width:100%;border-collapse:collapse;font-size:17px;}
 th{background:#0f2345;color:white;padding:10px;}
 td{padding:8px;text-align:center;border-bottom:1px solid #ddd;}
 .rankTop{background:#dbeafe;}
 .rankLow{background:#fee2e2;}
-.trackBox{margin-top:20px}
-.track{
-height:40px;
-background:linear-gradient(#ccc,#eee);
-border-radius:20px;
-position:relative;
-margin:10px 0;
-}
-.finish{
-position:absolute;
-right:33%;
-top:0;
-bottom:0;
-width:4px;
-background:black;
-}
-.runner{
-position:absolute;
-top:5px;
-font-size:20px;
-}
+.track{height:40px;background:#ddd;border-radius:20px;position:relative;margin:10px 0;}
+.finish{position:absolute;left:66%;top:0;bottom:0;width:4px;background:black;}
+.runner{position:absolute;top:5px;font-size:20px;}
 </style>
 </head>
 
@@ -63,47 +37,32 @@ font-size:20px;
 <tbody></tbody>
 </table>
 
-<div class="trackBox">
+<h3>전체 트랙</h3>
 <div>무선</div>
 <div class="track"><div class="finish"></div><div id="rw" class="runner">🏃‍♂️</div></div>
 <div>유선</div>
 <div class="track"><div class="finish"></div><div id="rl" class="runner">🏃‍♂️</div></div>
-</div>
 
 <script>
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
-let targets={}
 let cache={}
+let targets={}
 
 function pct(a,b){
  if(!a||!b) return 0
  let v=(a/b)*100
- return v>=100?Math.round(v):v.toFixed(1)
+ return v>=100?Math.round(v):(Math.round(v*10)/10)
 }
 
-async function loadTarget(){
- const res=await fetch("target.xlsx")
- const data=await res.arrayBuffer()
- const wb=XLSX.read(data)
-
- let w=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
- let l=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
-
- let today=new Date().getDate()
-
- function col(h){
-  return h.findIndex(x=>String(x).includes("/"+today))
- }
-
- let c=col(w[0])
-
- centers.forEach(n=>{
-  let rw=w.find(r=>r[0]==n)
-  let rl=l.find(r=>r[0]==n)
-  targets[n]={w:rw?rw[c]:0,l:rl?rl[c]:0}
+function loadData(){
+ firebase.initializeApp({
+  databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
  })
-
- loadData()
+ const db=firebase.database()
+ db.ref().on("value",snap=>{
+  cache=snap.val()||{}
+  render()
+ })
 }
 
 function data(c){return cache["c_"+c]||{}}
@@ -126,7 +85,7 @@ function render(){
 
  centers.forEach(c=>{
   let d=data(c)
-  let t=targets[c]||{}
+  let t=targets[c]||{w:0,l:0}
 
   let wr=wRank.findIndex(x=>x.c==c)+1
   let lr=lRank.findIndex(x=>x.c==c)+1
@@ -137,13 +96,13 @@ function render(){
   tb.innerHTML+=`
   <tr>
   <td>${c}</td>
-  <td>${t.w||0}</td>
+  <td>${t.w}</td>
   <td>${d.w||0}</td>
   <td>${pct(d.w,t.w)}%</td>
   <td class="${wClass}">${wr}</td>
   <td>${d.mnp||0}</td>
   <td>${d.used||0}</td>
-  <td>${t.l||0}</td>
+  <td>${t.l}</td>
   <td>${d.l||0}</td>
   <td>${pct(d.l,t.l)}%</td>
   <td class="${lClass}">${lr}</td>
@@ -159,14 +118,7 @@ function render(){
  rl.style.left=(tl/ttl*100)+"%"
 }
 
-function loadData(){
- db.ref().on("value",snap=>{
-  cache=snap.val()||{}
-  render()
- })
-}
-
-loadTarget()
+loadData()
 </script>
 
 </body>
