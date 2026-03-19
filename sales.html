@@ -134,13 +134,13 @@ input{width:120px;margin:4px 0;padding:6px;}
 <div>무선</div>
 <div class="track">
   <div class="finish"></div>
-  <div id="rw" class="runner">🏃‍➡️ <span id="pw"></span></div>
+  <div id="rw" class="runner"><span id="pw"></span> 🏃‍➡️</div>
 </div>
 
 <div>유선</div>
 <div class="track">
   <div class="finish"></div>
-  <div id="rl" class="runner">🏃‍➡️ <span id="pl"></span></div>
+  <div id="rl" class="runner"><span id="pl"></span> 🏃‍➡️</div>
 </div>
 
 <div class="popup" id="popup">
@@ -155,7 +155,6 @@ input{width:120px;margin:4px 0;padding:6px;}
 
 <script>
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
-
 const regionNorth=["서대문","의정부","고양","구리","노원","광진"]
 const regionGang=["강릉","원주","춘천"]
 
@@ -183,6 +182,14 @@ function signal(ts){
  if(diff<60) return "green"
  if(diff<120) return "yellow"
  return "red"
+}
+
+function trackPos(p){
+ if(p<=100){
+   return p*0.66
+ }else{
+   return 66+(p-100)*0.34
+ }
 }
 
 function getData(c){return cache["c_"+c]||{}}
@@ -249,46 +256,37 @@ function render(){
   sum.tw+=t.w||0; sum.tl+=t.l||0
  })
 
- // 강북도매 계
- tb.innerHTML+=`
- <tr class="totalRow">
- <td></td><td>강북도매 계</td>
- <td>${sum.tw}</td><td>${sum.w}</td><td>${pct(sum.w,sum.tw)}%</td>
- <td colspan="6"></td>
- <td>${sum.tl}</td><td>${sum.l}</td><td>${pct(sum.l,sum.tl)}%</td>
- <td colspan="3"></td>
- </tr>`
-
- // 상권 합계
  let north=sumRegion(regionNorth)
  let gang=sumRegion(regionGang)
 
  tb.innerHTML+=`
- <tr class="totalRow">
- <td></td><td>강북상권 계</td>
+ <tr class="totalRow"><td></td><td>강북도매 계</td>
+ <td>${sum.tw}</td><td>${sum.w}</td><td>${pct(sum.w,sum.tw)}%</td>
+ <td colspan="6"></td>
+ <td>${sum.tl}</td><td>${sum.l}</td><td>${pct(sum.l,sum.tl)}%</td>
+ <td colspan="3"></td></tr>
+
+ <tr class="totalRow"><td></td><td>강북상권 계</td>
  <td>${north.tw}</td><td>${north.w}</td><td>${pct(north.w,north.tw)}%</td>
  <td colspan="6"></td>
  <td>${north.tl}</td><td>${north.l}</td><td>${pct(north.l,north.tl)}%</td>
- <td colspan="3"></td>
- </tr>
+ <td colspan="3"></td></tr>
 
- <tr class="totalRow">
- <td></td><td>강원상권 계</td>
+ <tr class="totalRow"><td></td><td>강원상권 계</td>
  <td>${gang.tw}</td><td>${gang.w}</td><td>${pct(gang.w,gang.tw)}%</td>
  <td colspan="6"></td>
  <td>${gang.tl}</td><td>${gang.l}</td><td>${pct(gang.l,gang.tl)}%</td>
- <td colspan="3"></td>
- </tr>`
+ <td colspan="3"></td></tr>
+ `
 
- // 트랙 %
  let wPct=sum.tw?Math.round(sum.w/sum.tw*100):0
  let lPct=sum.tl?Math.round(sum.l/sum.tl*100):0
 
  pw.innerText=wPct+"%"
  pl.innerText=lPct+"%"
 
- rw.style.left=Math.min(wPct,100)+"%"
- rl.style.left=Math.min(lPct,100)+"%"
+ rw.style.left=trackPos(wPct)+"%"
+ rl.style.left=trackPos(lPct)+"%"
 }
 
 function loadData(){
@@ -355,8 +353,21 @@ async function loadTarget(){
  })
 }
 
+// ✅ 00시 초기화
+function resetAtMidnight(){
+ let now=new Date()
+ let next=new Date()
+ next.setHours(24,0,0,0)
+
+ setTimeout(()=>{
+   db.ref().set({})
+   location.reload()
+ }, next-now)
+}
+
 renderBtns()
 loadTarget().then(loadData)
+resetAtMidnight()
 </script>
 
 </body>
