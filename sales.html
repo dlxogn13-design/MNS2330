@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>STEP6.1 AUTO DATE FIX</title>
+<title>V18 FINAL COMPLETE</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -24,6 +24,9 @@ body{font-family:Arial;background:#f4f6fb;padding:20px;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{background:#0f2345;color:white;padding:8px;}
 td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
+.ok{background:#d4edda;}
+.bad{background:#f8d7da;}
+.warn{background:#fff3cd;}
 </style>
 </head>
 
@@ -35,8 +38,8 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 <thead>
 <tr>
 <th>센터</th>
-<th>무선목표</th><th>무선</th><th>달성%</th>
-<th>유선목표</th><th>유선</th><th>달성%</th>
+<th>무선목표</th><th>무선</th><th>%</th>
+<th>유선목표</th><th>유선</th><th>%</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -52,72 +55,67 @@ function percent(a,b){
  return Math.round((a/b)*100)+"%"
 }
 
-// 🔥 핵심: 날짜 자동 변환
-function getColIndex(headerRow){
- let today = new Date().getDate()
-
- for(let i=0;i<headerRow.length;i++){
-   let val = headerRow[i]
-
-   // 숫자 날짜 (엑셀 날짜코드)
-   if(typeof val === "number"){
-     let date = XLSX.SSF.parse_date_code(val)
-     if(date && date.d === today){
-       return i
-     }
-   }
-
-   // 문자열 (3/19 형태)
-   if(typeof val === "string"){
-     if(val.includes("/"+today)){
-       return i
-     }
-   }
+function getColIndex(header){
+ let today=new Date().getDate()
+ for(let i=0;i<header.length;i++){
+  let v=header[i]
+  if(typeof v==="number"){
+   let d=XLSX.SSF.parse_date_code(v)
+   if(d && d.d===today) return i
+  }
+  if(typeof v==="string" && v.includes("/"+today)) return i
  }
  return -1
 }
 
 async function loadTarget(){
- const res = await fetch("target.xlsx")
- const data = await res.arrayBuffer()
- const workbook = XLSX.read(data)
+ const res=await fetch("target.xlsx")
+ const data=await res.arrayBuffer()
+ const wb=XLSX.read(data)
 
- let wsW = workbook.Sheets[workbook.SheetNames[0]]
- let wsL = workbook.Sheets[workbook.SheetNames[1]]
+ let w=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
+ let l=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
- let jsonW = XLSX.utils.sheet_to_json(wsW,{header:1})
- let jsonL = XLSX.utils.sheet_to_json(wsL,{header:1})
+ let col=getColIndex(w[0])
 
- let colIndex = getColIndex(jsonW[0])
-
- centers.forEach((c,i)=>{
+ centers.forEach(c=>{
+  let rowW=w.find(r=>r[0]===c)
+  let rowL=l.find(r=>r[0]===c)
   targets[c]={
-   w: jsonW[i+1][colIndex]||0,
-   l: jsonL[i+1][colIndex]||0
+   w: rowW?rowW[col]:0,
+   l: rowL?rowL[col]:0
   }
  })
-
  loadData()
 }
 
 function getData(c){return cache["c_"+c]||{}}
 
+function getStatus(t){
+ let now=Date.now()
+ if(!t) return "bad"
+ if(now-t>3600000) return "warn"
+ return "ok"
+}
+
 function render(){
  let tb=document.querySelector("#tbl tbody")
  tb.innerHTML=""
-
  centers.forEach(c=>{
   let s=getData(c)
   let t=targets[c]||{w:0,l:0}
 
-  let w=Number(s.w||0)
-  let l=Number(s.l||0)
+  let cls=getStatus(s.t)
 
   tb.innerHTML+=`
-  <tr>
+  <tr class="${cls}">
   <td>${c}</td>
-  <td>${t.w}</td><td>${w}</td><td>${percent(w,t.w)}</td>
-  <td>${t.l}</td><td>${l}</td><td>${percent(l,t.l)}</td>
+  <td>${t.w||0}</td>
+  <td>${s.w||0}</td>
+  <td>${percent(s.w,t.w)}</td>
+  <td>${t.l||0}</td>
+  <td>${s.l||0}</td>
+  <td>${percent(s.l,t.l)}</td>
   </tr>`
  })
 }
