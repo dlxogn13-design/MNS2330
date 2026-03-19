@@ -9,141 +9,37 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <style>
-body{
- font-family:Arial;
- background:#ffffff;
- padding:20px;
- color:#111;
- font-weight:500;
-}
+body{font-family:Arial;background:#fff;padding:20px;color:#111;font-weight:500;}
 
-.topbar{
- display:flex;
- gap:8px;
- align-items:center;
- margin-bottom:10px;
-}
+.topbar{display:flex;gap:8px;margin-bottom:10px;}
+button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;font-weight:600;}
 
-button{
- padding:8px 12px;
- border-radius:6px;
- border:1px solid #ccc;
- background:#eef1f7;
- font-weight:600;
-}
+.centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:15px 0;}
+.centerGrid button{background:#1e3a8a;color:#fff;border:none;}
 
-/* 센터 버튼 파란색 */
-.centerGrid{
- display:grid;
- grid-template-columns:repeat(3,1fr);
- gap:8px;
- margin:15px 0;
-}
+table{width:100%;border-collapse:collapse;font-size:16px;}
+th,td{text-align:center;vertical-align:middle;}
+th{background:#0f2345;color:#fff;padding:14px;font-weight:700;}
+td{padding:10px;border-bottom:1px solid #ddd;font-weight:600;}
 
-.centerGrid button{
- background:#1e3a8a;
- color:white;
- border:none;
- font-weight:600;
-}
-
-/* 테이블 */
-table{
- width:100%;
- border-collapse:collapse;
- font-size:16px;
-}
-
-th, td{
- text-align:center;
- vertical-align:middle;
-}
-
-th{
- background:#0f2345;
- color:white;
- padding:14px 8px;
- font-size:17px;
- font-weight:700;
-}
-
-td{
- padding:10px 6px;
- border-bottom:1px solid #ddd;
- font-size:16px;
- font-weight:600;
-}
-
-/* 순위 색 */
 .rankTop{background:#dbeafe;}
 .rankLow{background:#fee2e2;}
+.totalRow{background:#e2e8f0;font-weight:bold;}
 
-/* 합계 행 */
-.totalRow{
- background:#e2e8f0;
- font-weight:bold;
-}
-
-/* 신호등 */
-.signal{
- width:12px;height:12px;
- border-radius:50%;
- margin:auto;
-}
+.signal{width:12px;height:12px;border-radius:50%;margin:auto;}
 .green{background:#22c55e;}
 .yellow{background:#facc15;}
 .red{background:#ef4444;}
 
-/* 트랙 */
-.track{
- height:40px;
- background:linear-gradient(#ddd,#ccc);
- border-radius:20px;
- position:relative;
- margin:12px 0;
-}
+.track{height:40px;background:#ddd;border-radius:20px;position:relative;margin:12px 0;}
+.finish{position:absolute;left:66%;top:0;bottom:0;width:6px;background:repeating-linear-gradient(45deg,black,black 5px,white 5px,white 10px);}
 
-.finish{
- position:absolute;
- left:66%;
- top:0;
- bottom:0;
- width:6px;
- background:repeating-linear-gradient(
- 45deg,black,black 5px,white 5px,white 10px);
-}
+.runner{position:absolute;top:-12px;display:flex;flex-direction:column;align-items:center;}
+.runner span{font-size:14px;font-weight:bold;}
 
-.runner{
- position:absolute;
- top:-12px;
- display:flex;
- flex-direction:column;
- align-items:center;
- font-size:20px;
-}
-
-.runner span{
- font-size:14px;
- font-weight:bold;
- margin-bottom:-3px;
-}
-
-/* 팝업 */
-.popup{
- position:fixed;
- top:50%;left:50%;
- transform:translate(-50%,-50%);
- background:white;
- padding:20px;
- border-radius:10px;
- display:none;
-}
-
-input{
- width:120px;
- margin:4px 0;
- padding:6px;
-}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+background:white;padding:20px;border-radius:10px;display:none;}
+input{width:120px;margin:4px 0;padding:6px;}
 </style>
 </head>
 
@@ -163,8 +59,7 @@ input{
 <table id="tbl">
 <thead>
 <tr>
-<th></th>
-<th>센터</th>
+<th></th><th>센터</th>
 <th>무선목표</th><th>무선</th><th>달성율</th><th>순위</th><th>증분</th>
 <th>MNP</th><th>비중</th>
 <th>중고</th><th>비중</th>
@@ -205,6 +100,7 @@ const regionNorth=["서대문","의정부","고양","구리","노원","광진"]
 const regionGang=["강릉","원주","춘천"]
 
 let cache={},targets={},cur=""
+let targetLoaded=false
 
 firebase.initializeApp({
  databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
@@ -240,31 +136,21 @@ function trackPos(p){
 }
 
 function updateTime(){
- let now=new Date()
- titleTime.innerText=`${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}시 기준`
+ let n=new Date()
+ titleTime.innerText=`${n.getMonth()+1}월 ${n.getDate()}일 ${n.getHours()}시 기준`
 }
 
-/* 🔥 초기화 (입력값만) + 목표 유지 */
 function adminReset(){
  let pw=prompt("비밀번호 입력")
- if(pw!=="2330"){
-   alert("비밀번호 틀림")
-   return
- }
+ if(pw!=="2330"){alert("비밀번호 틀림");return}
 
- if(confirm("입력값만 초기화합니다. 진행할까요?")){
+ if(confirm("입력값 초기화?")){
    centers.forEach(c=>{
      db.ref("c_"+c).update({
        w:0,m:0,u:0,l:0,r:0,
        prevW:0,prevL:0,ts:0
      })
    })
-
-   setTimeout(()=>{
-     loadTarget().then(render)
-   },300)
-
-   alert("초기화 완료")
  }
 }
 
@@ -282,47 +168,33 @@ function sumRegion(list){
  let s={w:0,l:0,tw:0,tl:0}
  list.forEach(c=>{
   let d=getData(c),t=targets[c]||{}
-  s.w+=d.w||0
-  s.l+=d.l||0
-  s.tw+=t.w||0
-  s.tl+=t.l||0
+  s.w+=d.w||0;s.l+=d.l||0
+  s.tw+=t.w||0;s.tl+=t.l||0
  })
  return s
 }
 
 function render(){
+ if(!targetLoaded) return
+
  let tb=document.querySelector("#tbl tbody")
  tb.innerHTML=""
-
- let wRank=[...centers].map(c=>{
-  let s=getData(c),t=targets[c]||{}
-  return {c,v:(s.w||0)/(t.w||1)}
- }).sort((a,b)=>b.v-a.v)
-
- let lRank=[...centers].map(c=>{
-  let s=getData(c),t=targets[c]||{}
-  return {c,v:(s.l||0)/(t.l||1)}
- }).sort((a,b)=>b.v-a.v)
 
  let sum={w:0,l:0,tw:0,tl:0}
 
  centers.forEach(c=>{
   let s=getData(c),t=targets[c]||{}
-  let wr=wRank.findIndex(x=>x.c==c)+1
-  let lr=lRank.findIndex(x=>x.c==c)+1
-  let sig=signal(s.ts)
-
   tb.innerHTML+=`
   <tr>
-  <td><div class="signal ${sig}"></div></td>
+  <td><div class="signal ${signal(s.ts)}"></div></td>
   <td>${c}</td>
   <td>${t.w||0}</td><td>${s.w||0}</td><td>${pct(s.w,t.w)}%</td>
-  <td class="${wr<=2?'rankTop':wr>=8?'rankLow':''}">${wr}</td>
+  <td></td>
   <td>${(s.w||0)-(s.prevW||0)}</td>
   <td>${s.m||0}</td><td>${ratio(s.m,s.w)}%</td>
   <td>${s.u||0}</td><td>${ratio(s.u,s.w)}%</td>
   <td>${t.l||0}</td><td>${s.l||0}</td><td>${pct(s.l,t.l)}%</td>
-  <td class="${lr<=2?'rankTop':lr>=8?'rankLow':''}">${lr}</td>
+  <td></td>
   <td>${(s.l||0)-(s.prevL||0)}</td>
   <td>${s.r||0}</td>
   </tr>`
@@ -330,29 +202,6 @@ function render(){
   sum.w+=s.w||0; sum.l+=s.l||0
   sum.tw+=t.w||0; sum.tl+=t.l||0
  })
-
- let north=sumRegion(regionNorth)
- let gang=sumRegion(regionGang)
-
- tb.innerHTML+=`
- <tr class="totalRow"><td></td><td>강북도매 계</td>
- <td>${sum.tw}</td><td>${sum.w}</td><td>${pct(sum.w,sum.tw)}%</td>
- <td colspan="6"></td>
- <td>${sum.tl}</td><td>${sum.l}</td><td>${pct(sum.l,sum.tl)}%</td>
- <td colspan="3"></td></tr>
-
- <tr class="totalRow"><td></td><td>강북상권 계</td>
- <td>${north.tw}</td><td>${north.w}</td><td>${pct(north.w,north.tw)}%</td>
- <td colspan="6"></td>
- <td>${north.tl}</td><td>${north.l}</td><td>${pct(north.l,north.tl)}%</td>
- <td colspan="3"></td></tr>
-
- <tr class="totalRow"><td></td><td>강원상권 계</td>
- <td>${gang.tw}</td><td>${gang.w}</td><td>${pct(gang.w,gang.tw)}%</td>
- <td colspan="6"></td>
- <td>${gang.tl}</td><td>${gang.l}</td><td>${pct(gang.l,gang.tl)}%</td>
- <td colspan="3"></td></tr>
- `
 
  let wPct=sum.tw?Math.round(sum.w/sum.tw*100):0
  let lPct=sum.tl?Math.round(sum.l/sum.tl*100):0
@@ -376,7 +225,7 @@ function loadData(){
 function openCenter(c){
  cur=c
  let s=getData(c)
- w.value=s.w||""; m.value=s.m||""; u.value=s.u||""; l.value=s.l||""; r.value=s.r||""
+ w.value=s.w||"";m.value=s.m||"";u.value=s.u||"";l.value=s.l||"";r.value=s.r||""
  pTitle.innerText=c
  popup.style.display="block"
 }
@@ -400,26 +249,37 @@ async function loadTarget(){
  const data=await res.arrayBuffer()
  const wb=XLSX.read(data)
 
- const wSheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
- const lSheet=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
+ const ws=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
+ const ls=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
  const today=new Date().getDate()
+ let col=-1
 
- function getCol(header){
-  return header.findIndex(h=>String(h).includes("/"+today))
+ for(let i=0;i<ws[0].length;i++){
+  let v=ws[0][i]
+
+  if(typeof v==="number"){
+   let d=XLSX.SSF.parse_date_code(v)
+   if(d && d.d===today){col=i;break}
+  }
+
+  if(typeof v==="string" && v.includes("/"+today)){col=i;break}
  }
 
- const col=getCol(wSheet[0])
+ if(col===-1){alert("목표 날짜 없음");return}
 
  centers.forEach(c=>{
-  const wRow=wSheet.find(r=>r[0]===c)
-  const lRow=lSheet.find(r=>r[0]===c)
+  let wr=ws.find(r=>r[0]===c)
+  let lr=ls.find(r=>r[0]===c)
 
   targets[c]={
-   w:wRow?Number(wRow[col]||0):0,
-   l:lRow?Number(lRow[col]||0):0
+   w:wr?Number(wr[col]||0):0,
+   l:lr?Number(lr[col]||0):0
   }
  })
+
+ targetLoaded=true
+ render()
 }
 
 renderBtns()
