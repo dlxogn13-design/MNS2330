@@ -100,9 +100,10 @@ input{width:120px;margin:4px 0;padding:6px;}
 <button onclick="location.reload()">새로고침</button>
 </div>
 
-<h2>강북도매 유/무선 실적</h2>
-
 <div class="centerGrid" id="btns"></div>
+
+<h2>강북도매 유/무선 실적</h2>
+<h3 id="titleTime"></h3>
 
 <table id="tbl">
 <thead>
@@ -184,12 +185,23 @@ function signal(ts){
  return "red"
 }
 
+// 🔥 트랙 수정 완료 버전
 function trackPos(p){
- if(p<=100){
-   return p*0.66
+ if(p <= 100){
+   return (p/100)*66
  }else{
-   return 66+(p-100)*0.34
+   let extra = Math.min(p-100,100)
+   return 66 + (extra/100)*34
  }
+}
+
+function updateTime(){
+ let now = new Date()
+ let m = now.getMonth()+1
+ let d = now.getDate()
+ let h = now.getHours()
+
+ titleTime.innerText = `${m}월 ${d}일 ${h}시 기준`
 }
 
 function getData(c){return cache["c_"+c]||{}}
@@ -234,7 +246,6 @@ function render(){
   let s=getData(c),t=targets[c]||{}
   let wr=wRank.findIndex(x=>x.c==c)+1
   let lr=lRank.findIndex(x=>x.c==c)+1
-
   let sig=signal(s.ts)
 
   tb.innerHTML+=`
@@ -287,6 +298,8 @@ function render(){
 
  rw.style.left=trackPos(wPct)+"%"
  rl.style.left=trackPos(lPct)+"%"
+
+ updateTime()
 }
 
 function loadData(){
@@ -353,7 +366,6 @@ async function loadTarget(){
  })
 }
 
-// ✅ 00시 초기화
 function resetAtMidnight(){
  let now=new Date()
  let next=new Date()
