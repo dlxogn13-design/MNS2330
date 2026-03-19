@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>V18 FULL RESTORE NEXT</title>
+<title>STEP FINAL 1</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -21,12 +21,13 @@ const db = firebase.database();
 
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
+.centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0;}
+button{padding:10px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{background:#0f2345;color:white;padding:8px;}
 td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 .top{background:#dbeafe;}
 .low{background:#fee2e2;}
-button{margin:2px;padding:6px 10px;}
 .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 background:white;padding:20px;border-radius:10px;display:none;}
 </style>
@@ -36,17 +37,15 @@ background:white;padding:20px;border-radius:10px;display:none;}
 
 <h2>강북도매 유/무선 실적</h2>
 
-<div>
-<button onclick="openCenter(c)" id="btns"></button>
-</div>
+<div class="centerGrid" id="btnWrap"></div>
 
 <table id="tbl">
 <thead>
 <tr>
 <th>센터</th>
 <th>무선목표</th><th>무선</th><th>%</th><th>순위</th>
-<th>MNP</th><th>중고</th>
-<th>유선목표</th><th>유선</th><th>%</th><th>순위</th>
+<th>MNP</th><th>비중</th><th>중고</th><th>비중</th>
+<th>유선목표</th><th>유선</th><th>%</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -66,7 +65,12 @@ let cache={}
 let cur=""
 
 function percent(a,b){
- if(!b) return "0%"
+ if(!b || b==0) return "0%"
+ return Math.round((a/b)*100)+"%"
+}
+
+function ratio(a,b){
+ if(!b || b==0) return "0%"
  return Math.round((a/b)*100)+"%"
 }
 
@@ -104,6 +108,14 @@ async function loadTarget(){
 
 function getData(c){return cache["c_"+c]||{}}
 
+function renderButtons(){
+ let wrap=document.getElementById("btnWrap")
+ wrap.innerHTML=""
+ centers.forEach(c=>{
+  wrap.innerHTML+=`<button onclick="openCenter('${c}')">${c}</button>`
+ })
+}
+
 function render(){
  let tb=document.querySelector("#tbl tbody")
  tb.innerHTML=""
@@ -128,19 +140,23 @@ function render(){
 
   let rank=arr.findIndex(x=>x.c===c)+1
 
+  let mnp=s.mnp||0
+  let used=s.used||0
+
   tb.innerHTML+=`
-  <tr onclick="openCenter('${c}')">
+  <tr>
   <td>${c}</td>
   <td>${t.w||0}</td>
   <td>${s.w||0}</td>
   <td>${pw}</td>
   <td>${rank}</td>
-  <td>${s.mnp||0}</td>
-  <td>${s.used||0}</td>
+  <td>${mnp}</td>
+  <td>${ratio(mnp,s.w)}</td>
+  <td>${used}</td>
+  <td>${ratio(used,s.w)}</td>
   <td>${t.l||0}</td>
   <td>${s.l||0}</td>
   <td>${pl}</td>
-  <td>${rank}</td>
   </tr>`
  })
 }
@@ -170,6 +186,7 @@ function save(){
  popup.style.display="none"
 }
 
+renderButtons()
 loadTarget()
 </script>
 
