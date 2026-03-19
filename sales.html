@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>V18 FINAL COMPLETE</title>
+<title>V18 FULL RESTORE NEXT</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -24,9 +24,11 @@ body{font-family:Arial;background:#f4f6fb;padding:20px;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{background:#0f2345;color:white;padding:8px;}
 td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
-.ok{background:#d4edda;}
-.bad{background:#f8d7da;}
-.warn{background:#fff3cd;}
+.top{background:#dbeafe;}
+.low{background:#fee2e2;}
+button{margin:2px;padding:6px 10px;}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+background:white;padding:20px;border-radius:10px;display:none;}
 </style>
 </head>
 
@@ -34,21 +36,34 @@ td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
 
 <h2>강북도매 유/무선 실적</h2>
 
+<div>
+<button onclick="openCenter(c)" id="btns"></button>
+</div>
+
 <table id="tbl">
 <thead>
 <tr>
 <th>센터</th>
-<th>무선목표</th><th>무선</th><th>%</th>
-<th>유선목표</th><th>유선</th><th>%</th>
+<th>무선목표</th><th>무선</th><th>%</th><th>순위</th>
+<th>MNP</th><th>중고</th>
+<th>유선목표</th><th>유선</th><th>%</th><th>순위</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
+<div class="popup" id="popup">
+<h3 id="pTitle"></h3>
+<input id="w" placeholder="무선"><br>
+<input id="l" placeholder="유선"><br>
+<button onclick="save()">저장</button>
+</div>
+
 <script>
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
 let targets={}
 let cache={}
+let cur=""
 
 function percent(a,b){
  if(!b) return "0%"
@@ -81,41 +96,51 @@ async function loadTarget(){
  centers.forEach(c=>{
   let rowW=w.find(r=>r[0]===c)
   let rowL=l.find(r=>r[0]===c)
-  targets[c]={
-   w: rowW?rowW[col]:0,
-   l: rowL?rowL[col]:0
-  }
+  targets[c]={ w: rowW?rowW[col]:0, l: rowL?rowL[col]:0 }
  })
+
  loadData()
 }
 
 function getData(c){return cache["c_"+c]||{}}
 
-function getStatus(t){
- let now=Date.now()
- if(!t) return "bad"
- if(now-t>3600000) return "warn"
- return "ok"
-}
-
 function render(){
  let tb=document.querySelector("#tbl tbody")
  tb.innerHTML=""
+
+ let arr=[]
+
+ centers.forEach(c=>{
+  let s=getData(c)
+  let t=targets[c]||{w:0,l:0}
+  let p=Number(percent(s.w||0,t.w).replace("%",""))
+  arr.push({c,p})
+ })
+
+ arr.sort((a,b)=>b.p-a.p)
+
  centers.forEach(c=>{
   let s=getData(c)
   let t=targets[c]||{w:0,l:0}
 
-  let cls=getStatus(s.t)
+  let pw=percent(s.w,t.w)
+  let pl=percent(s.l,t.l)
+
+  let rank=arr.findIndex(x=>x.c===c)+1
 
   tb.innerHTML+=`
-  <tr class="${cls}">
+  <tr onclick="openCenter('${c}')">
   <td>${c}</td>
   <td>${t.w||0}</td>
   <td>${s.w||0}</td>
-  <td>${percent(s.w,t.w)}</td>
+  <td>${pw}</td>
+  <td>${rank}</td>
+  <td>${s.mnp||0}</td>
+  <td>${s.used||0}</td>
   <td>${t.l||0}</td>
   <td>${s.l||0}</td>
-  <td>${percent(s.l,t.l)}</td>
+  <td>${pl}</td>
+  <td>${rank}</td>
   </tr>`
  })
 }
@@ -125,6 +150,24 @@ function loadData(){
   cache=snap.val()||{}
   render()
  })
+}
+
+function openCenter(c){
+ cur=c
+ let s=getData(c)
+ w.value=s.w||""
+ l.value=s.l||""
+ pTitle.innerText=c
+ popup.style.display="block"
+}
+
+function save(){
+ db.ref("c_"+cur).update({
+  w:Number(w.value||0),
+  l:Number(l.value||0),
+  t:Date.now()
+ })
+ popup.style.display="none"
 }
 
 loadTarget()
