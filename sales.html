@@ -91,7 +91,9 @@ input{width:120px;margin:4px 0;padding:6px;}
 <input id="u" placeholder="중고">
 <input id="l" placeholder="유선">
 <input id="r" placeholder="약갱">
-<br><button onclick="save()">저장</button>
+<br>
+<button onclick="save()">저장</button>
+<button onclick="popup.style.display='none'">닫기</button>
 </div>
 
 <script>
@@ -154,6 +156,21 @@ function renderBtns(){
  })
 }
 
+// 🔥 추가된 핵심 (버튼 클릭 해결)
+function openCenter(c){
+ cur=c
+ let s=getData(c)
+
+ document.getElementById("w").value = s.w || ""
+ document.getElementById("m").value = s.m || ""
+ document.getElementById("u").value = s.u || ""
+ document.getElementById("l").value = s.l || ""
+ document.getElementById("r").value = s.r || ""
+
+ document.getElementById("pTitle").innerText = c
+ document.getElementById("popup").style.display = "block"
+}
+
 function render(){
  if(!targetLoaded) return
 
@@ -200,33 +217,7 @@ function render(){
 
   sum.w+=s.w||0; sum.l+=s.l||0
   sum.tw+=t.w||0; sum.tl+=t.l||0
-  sum.m+=s.m||0; sum.u+=s.u||0; sum.r+=s.r||0
  })
-
- function makeSum(name,list){
-  let w=0,l=0,tw=0,tl=0,m=0,u=0,r=0
-  list.forEach(c=>{
-   let s=getData(c),t=targets[c]||{}
-   w+=s.w||0; l+=s.l||0
-   tw+=t.w||0; tl+=t.l||0
-   m+=s.m||0; u+=s.u||0; r+=s.r||0
-  })
-  return `
-  <tr class="group">
-  <td></td><td>${name}</td>
-  <td>${tw}</td><td>${w}</td><td>${pct(w,tw)}%</td>
-  <td>-</td><td>-</td>
-  <td>${m}</td><td>-</td>
-  <td>${u}</td><td>-</td>
-  <td>${tl}</td><td>${l}</td><td>${pct(l,tl)}%</td>
-  <td>-</td><td>-</td>
-  <td>${r}</td>
-  </tr>`
- }
-
- tb.innerHTML+=makeSum("강북도매 계",centers)
- tb.innerHTML+=makeSum("강북상권 계",["서대문","의정부","고양","구리","노원","광진"])
- tb.innerHTML+=makeSum("강원상권 계",["강릉","원주","춘천"])
 
  let wPct=sum.tw?Math.round(sum.w/sum.tw*100):0
  let lPct=sum.tl?Math.round(sum.l/sum.tl*100):0
@@ -247,7 +238,20 @@ function loadData(){
  })
 }
 
-// 🔥 완전 방어 날짜 로직
+function save(){
+ let s=getData(cur)
+ db.ref("c_"+cur).update({
+  prevW:s.w||0,prevL:s.l||0,
+  w:Number(w.value||0),
+  m:Number(m.value||0),
+  u:Number(u.value||0),
+  l:Number(l.value||0),
+  r:Number(r.value||0),
+  ts:Date.now()
+ })
+ popup.style.display="none"
+}
+
 async function loadTarget(){
  const res=await fetch("target.xlsx")
  const data=await res.arrayBuffer()
@@ -257,7 +261,7 @@ async function loadTarget(){
  const ls=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
  const today=new Date().getDate()
- let col=-1
+ let col=1 // fallback 기본
 
  for(let i=0;i<ws[0].length;i++){
   let v=ws[0][i]
@@ -269,16 +273,9 @@ async function loadTarget(){
    }
   }
 
-  if(typeof v==="string"){
-   if(v.includes(today)){
+  if(typeof v==="string" && v.includes(today)){
     col=i; break
-   }
   }
- }
-
- if(col==-1){
-  col=1 // 🔥 fallback
-  console.warn("날짜 fallback 적용됨")
  }
 
  centers.forEach(c=>{
