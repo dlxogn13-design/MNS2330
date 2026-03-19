@@ -173,9 +173,6 @@ function save(){
  popup.style.display="none"
 }
 
-renderBtns()
-loadTarget().then(loadData)
-</script>
 <script>
 async function loadTarget(){
  const res = await fetch("target.xlsx")
@@ -186,7 +183,10 @@ async function loadTarget(){
  const lSheet = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]], {header:1})
 
  const today = new Date().getDate()
-
+ 
+renderBtns()
+loadTarget().then(loadData)
+ 
  function getCol(header){
   return header.findIndex(h => String(h).includes("/"+today))
  }
