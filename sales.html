@@ -9,23 +9,22 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <style>
-body{font-family:Arial;background:#fff;padding:20px;color:#111;font-weight:500;}
+body{font-family:Arial;background:#fff;padding:20px;color:#111;font-weight:600;}
 
 .topbar{display:flex;gap:8px;margin-bottom:10px;}
-button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;font-weight:600;}
+button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;}
 
 .centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:15px 0;}
 .centerGrid button{background:#1e3a8a;color:#fff;border:none;}
 
 table{width:100%;border-collapse:collapse;font-size:16px;}
-th,td{text-align:center;vertical-align:middle;}
-th{background:#0f2345;color:#fff;padding:14px;font-weight:700;white-space:nowrap;}
-td{padding:10px;border-bottom:1px solid #ddd;font-weight:600;white-space:nowrap;}
-
-.group{background:#eef3ff;font-weight:700;}
+th{background:#0f2345;color:#fff;padding:14px;white-space:nowrap;}
+td{padding:10px;border-bottom:1px solid #ddd;text-align:center;white-space:nowrap;}
 
 .rankTop{background:#dbeafe;}
 .rankLow{background:#fee2e2;}
+
+.group{background:#e5e7eb;font-weight:700;}
 
 .signal{width:12px;height:12px;border-radius:50%;margin:auto;}
 .green{background:#22c55e;}
@@ -33,10 +32,11 @@ td{padding:10px;border-bottom:1px solid #ddd;font-weight:600;white-space:nowrap;
 .red{background:#ef4444;}
 
 .track{height:40px;background:#ddd;border-radius:20px;position:relative;margin:12px 0;}
-.finish{position:absolute;left:66%;top:0;bottom:0;width:6px;background:black;}
+.finish{position:absolute;left:66%;top:0;bottom:0;width:6px;
+background:repeating-linear-gradient(45deg,black,black 5px,white 5px,white 10px);}
 
-.runner{position:absolute;top:-12px;display:flex;flex-direction:column;align-items:center;}
-.runner span{font-size:14px;font-weight:bold;}
+.runner{position:absolute;top:-18px;text-align:center;font-size:20px;font-weight:bold;}
+.runner span{display:block;font-size:16px;}
 
 .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 background:white;padding:20px;border-radius:10px;display:none;}
@@ -74,41 +74,78 @@ input{width:120px;margin:4px 0;padding:6px;}
 <h3>진행 트랙</h3>
 
 <div>무선</div>
-<div class="track"><div class="finish"></div><div id="rw" class="runner"><span id="pw"></span>🏃‍➡️</div></div>
+<div class="track">
+<div class="finish"></div>
+<div id="rw" class="runner"><span id="pw"></span>🏃‍➡️</div>
+</div>
 
 <div>유선</div>
-<div class="track"><div class="finish"></div><div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div></div>
+<div class="track">
+<div class="finish"></div>
+<div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div>
+</div>
 
 <div class="popup" id="popup">
 <h3 id="pTitle"></h3>
-<input id="w"><input id="m"><input id="u"><input id="l"><input id="r">
+<input id="w" placeholder="무선">
+<input id="m" placeholder="MNP">
+<input id="u" placeholder="중고">
+<input id="l" placeholder="유선">
+<input id="r" placeholder="약갱">
 <br><button onclick="save()">저장</button>
 </div>
 
 <script>
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
-const gangbuk=["서대문","의정부","고양","구리","노원","광진"]
-const gangwon=["강릉","원주","춘천"]
 
 let cache={},targets={},cur=""
 let targetLoaded=false
 
-firebase.initializeApp({databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"})
+firebase.initializeApp({
+ databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
+})
 const db=firebase.database()
 
-function getData(c){return cache["c_"+c]||{}}
-
-function sum(list){
- let o={w:0,l:0,m:0,u:0,r:0,wt:0,lt:0}
- list.forEach(c=>{
-  let s=getData(c)
-  let t=targets[c]||{}
-  o.w+=s.w||0; o.l+=s.l||0
-  o.m+=s.m||0; o.u+=s.u||0; o.r+=s.r||0
-  o.wt+=t.w||0; o.lt+=t.l||0
- })
- return o
+function pct(a,b){
+ if(!a||!b) return "-"
+ let v=a/b*100
+ return v>=100?Math.round(v):(Math.round(v*10)/10)
 }
+
+function ratio(a,b){
+ if(!a||!b) return 0
+ return Math.round(a/b*100)
+}
+
+function signal(ts){
+ if(!ts) return "red"
+ let diff=(Date.now()-ts)/60000
+ if(diff<60) return "green"
+ if(diff<120) return "yellow"
+ return "red"
+}
+
+function trackPos(p){
+ if(p<=100) return (p/100)*66
+ return 66+Math.min(p-100,100)/100*34
+}
+
+function updateTime(){
+ let n=new Date()
+ titleTime.innerText=`${n.getMonth()+1}월 ${n.getDate()}일 ${n.getHours()}시 기준`
+}
+
+function adminReset(){
+ let pw=prompt("비밀번호")
+ if(pw!=="2330") return
+ if(confirm("초기화?")){
+  centers.forEach(c=>{
+   db.ref("c_"+c).update({w:0,m:0,u:0,l:0,r:0,prevW:0,prevL:0,ts:0})
+  })
+ }
+}
+
+function getData(c){return cache["c_"+c]||{}}
 
 function renderBtns(){
  let d=document.getElementById("btns")
@@ -124,42 +161,113 @@ function render(){
  let tb=document.querySelector("#tbl tbody")
  tb.innerHTML=""
 
- let gAll=sum(centers)
- let gBuk=sum(gangbuk)
- let gWon=sum(gangwon)
+ let wRank=[...centers].map(c=>{
+  let s=getData(c),t=targets[c]||{}
+  return {c,v:(s.w||0)/(t.w||1)}
+ }).sort((a,b)=>b.v-a.v)
 
- function gRow(name,g){
-  let wa=g.wt?Math.round(g.w/g.wt*100):0
-  let la=g.lt?Math.round(g.l/g.lt*100):0
+ let lRank=[...centers].map(c=>{
+  let s=getData(c),t=targets[c]||{}
+  return {c,v:(s.l||0)/(t.l||1)}
+ }).sort((a,b)=>b.v-a.v)
 
-  return `<tr class="group">
-  <td></td><td>${name}</td>
-  <td>${g.wt}</td><td>${g.w}</td><td>${wa}%</td><td>-</td><td>-</td>
-  <td>${g.m}</td><td>-</td>
-  <td>${g.u}</td><td>-</td>
-  <td>${g.lt}</td><td>${g.l}</td><td>${la}%</td><td>-</td><td>-</td>
-  <td>${g.r}</td>
-  </tr>`
- }
-
- tb.innerHTML+=gRow("강북도매 계",gAll)
- tb.innerHTML+=gRow("강북상권 계",gBuk)
- tb.innerHTML+=gRow("강원상권 계",gWon)
+ let sum={w:0,l:0,tw:0,tl:0,m:0,u:0,r:0}
 
  centers.forEach(c=>{
   let s=getData(c),t=targets[c]||{}
+  let wr=wRank.findIndex(x=>x.c==c)+1
+  let lr=lRank.findIndex(x=>x.c==c)+1
 
   tb.innerHTML+=`
   <tr>
-  <td><div class="signal red"></div></td>
+  <td><div class="signal ${signal(s.ts)}"></div></td>
   <td>${c}</td>
-  <td>${t.w||0}</td><td>${s.w||0}</td><td>-</td><td>-</td><td>-</td>
-  <td>${s.m||0}</td><td>-</td>
-  <td>${s.u||0}</td><td>-</td>
-  <td>${t.l||0}</td><td>${s.l||0}</td><td>-</td><td>-</td><td>-</td>
+  <td>${t.w||0}</td>
+  <td>${s.w||0}</td>
+  <td>${pct(s.w,t.w)}%</td>
+  <td class="${wr<=2?'rankTop':wr>=8?'rankLow':''}">${wr}</td>
+  <td>${(s.w||0)-(s.prevW||0)}</td>
+  <td>${s.m||0}</td>
+  <td>${ratio(s.m,s.w)}%</td>
+  <td>${s.u||0}</td>
+  <td>${ratio(s.u,s.w)}%</td>
+  <td>${t.l||0}</td>
+  <td>${s.l||0}</td>
+  <td>${pct(s.l,t.l)}%</td>
+  <td class="${lr<=2?'rankTop':lr>=8?'rankLow':''}">${lr}</td>
+  <td>${(s.l||0)-(s.prevL||0)}</td>
   <td>${s.r||0}</td>
   </tr>`
+
+  sum.w+=s.w||0; sum.l+=s.l||0
+  sum.tw+=t.w||0; sum.tl+=t.l||0
+  sum.m+=s.m||0; sum.u+=s.u||0; sum.r+=s.r||0
  })
+
+ function makeSum(name,list){
+  let w=0,l=0,tw=0,tl=0,m=0,u=0,r=0
+  list.forEach(c=>{
+   let s=getData(c),t=targets[c]||{}
+   w+=s.w||0; l+=s.l||0
+   tw+=t.w||0; tl+=t.l||0
+   m+=s.m||0; u+=s.u||0; r+=s.r||0
+  })
+  return `
+  <tr class="group">
+  <td></td><td>${name}</td>
+  <td>${tw}</td><td>${w}</td><td>${pct(w,tw)}%</td>
+  <td>-</td><td>-</td>
+  <td>${m}</td><td>-</td>
+  <td>${u}</td><td>-</td>
+  <td>${tl}</td><td>${l}</td><td>${pct(l,tl)}%</td>
+  <td>-</td><td>-</td>
+  <td>${r}</td>
+  </tr>`
+ }
+
+ tb.innerHTML+=makeSum("강북도매 계",centers)
+ tb.innerHTML+=makeSum("강북상권 계",["서대문","의정부","고양","구리","노원","광진"])
+ tb.innerHTML+=makeSum("강원상권 계",["강릉","원주","춘천"])
+
+ let wPct=sum.tw?Math.round(sum.w/sum.tw*100):0
+ let lPct=sum.tl?Math.round(sum.l/sum.tl*100):0
+
+ pw.innerText=wPct+"%"
+ pl.innerText=lPct+"%"
+
+ rw.style.left=trackPos(wPct)+"%"
+ rl.style.left=trackPos(lPct)+"%"
+
+ updateTime()
+}
+
+function loadData(){
+ db.ref().on("value",snap=>{
+  cache=snap.val()||{}
+  render()
+ })
+}
+
+function openCenter(c){
+ cur=c
+ let s=getData(c)
+ w.value=s.w||"";m.value=s.m||"";u.value=s.u||"";l.value=s.l||"";r.value=s.r||""
+ pTitle.innerText=c
+ popup.style.display="block"
+}
+
+function save(){
+ let s=getData(cur)
+ db.ref("c_"+cur).update({
+  prevW:s.w||0,prevL:s.l||0,
+  w:Number(w.value||0),
+  m:Number(m.value||0),
+  u:Number(u.value||0),
+  l:Number(l.value||0),
+  r:Number(r.value||0),
+  ts:Date.now()
+ })
+ popup.style.display="none"
 }
 
 async function loadTarget(){
@@ -171,16 +279,9 @@ async function loadTarget(){
  const ls=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
  const today=new Date().getDate()
- let col=-1
+ let col=ws[0].findIndex(v=>String(v).includes("/"+today))
 
- for(let i=0;i<ws[0].length;i++){
-  let v=ws[0][i]
-  if(typeof v==="number"){
-   let d=XLSX.SSF.parse_date_code(v)
-   if(d && d.d===today){col=i;break}
-  }
-  if(typeof v==="string" && v.includes("/"+today)){col=i;break}
- }
+ if(col==-1){alert("목표 날짜 없음");return}
 
  centers.forEach(c=>{
   let wr=ws.find(r=>r[0]===c)
@@ -190,13 +291,6 @@ async function loadTarget(){
 
  targetLoaded=true
  render()
-}
-
-function loadData(){
- db.ref().on("value",snap=>{
-  cache=snap.val()||{}
-  render()
- })
 }
 
 renderBtns()
