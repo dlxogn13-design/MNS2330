@@ -23,7 +23,6 @@ td{padding:10px;border-bottom:1px solid #ddd;text-align:center;white-space:nowra
 
 .rankTop{background:#dbeafe;}
 .rankLow{background:#fee2e2;}
-
 .group{background:#e5e7eb;font-weight:700;}
 
 .signal{width:12px;height:12px;border-radius:50%;margin:auto;}
@@ -35,7 +34,7 @@ td{padding:10px;border-bottom:1px solid #ddd;text-align:center;white-space:nowra
 .finish{position:absolute;left:66%;top:0;bottom:0;width:6px;
 background:repeating-linear-gradient(45deg,black,black 5px,white 5px,white 10px);}
 
-.runner{position:absolute;top:-18px;text-align:center;font-size:20px;font-weight:bold;}
+.runner{position:absolute;top:-20px;text-align:center;font-size:22px;font-weight:bold;}
 .runner span{display:block;font-size:16px;}
 
 .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -138,7 +137,7 @@ function updateTime(){
 function adminReset(){
  let pw=prompt("비밀번호")
  if(pw!=="2330") return
- if(confirm("초기화?")){
+ if(confirm("입력값 초기화?")){
   centers.forEach(c=>{
    db.ref("c_"+c).update({w:0,m:0,u:0,l:0,r:0,prevW:0,prevL:0,ts:0})
   })
@@ -248,28 +247,7 @@ function loadData(){
  })
 }
 
-function openCenter(c){
- cur=c
- let s=getData(c)
- w.value=s.w||"";m.value=s.m||"";u.value=s.u||"";l.value=s.l||"";r.value=s.r||""
- pTitle.innerText=c
- popup.style.display="block"
-}
-
-function save(){
- let s=getData(cur)
- db.ref("c_"+cur).update({
-  prevW:s.w||0,prevL:s.l||0,
-  w:Number(w.value||0),
-  m:Number(m.value||0),
-  u:Number(u.value||0),
-  l:Number(l.value||0),
-  r:Number(r.value||0),
-  ts:Date.now()
- })
- popup.style.display="none"
-}
-
+// 🔥 완전 방어 날짜 로직
 async function loadTarget(){
  const res=await fetch("target.xlsx")
  const data=await res.arrayBuffer()
@@ -279,9 +257,29 @@ async function loadTarget(){
  const ls=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
  const today=new Date().getDate()
- let col=ws[0].findIndex(v=>String(v).includes("/"+today))
+ let col=-1
 
- if(col==-1){alert("목표 날짜 없음");return}
+ for(let i=0;i<ws[0].length;i++){
+  let v=ws[0][i]
+
+  if(typeof v==="number"){
+   let d=XLSX.SSF.parse_date_code(v)
+   if(d && (d.d===today || d.d===today-1 || d.d===today+1)){
+    col=i; break
+   }
+  }
+
+  if(typeof v==="string"){
+   if(v.includes(today)){
+    col=i; break
+   }
+  }
+ }
+
+ if(col==-1){
+  col=1 // 🔥 fallback
+  console.warn("날짜 fallback 적용됨")
+ }
 
  centers.forEach(c=>{
   let wr=ws.find(r=>r[0]===c)
