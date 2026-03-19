@@ -2,22 +2,37 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>V18_PATCH</title>
+<title>V18 FINAL COMPLETE TRUE</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDgTFfUykzYpLy21gYV3T6Yz3qJckqEwsQ",
+  authDomain: "sales-dashboard-e7a79.firebaseapp.com",
+  databaseURL: "https://sales-dashboard-e7a79-default-rtdb.firebaseio.com",
+  projectId: "sales-dashboard-e7a79"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+</script>
+
 <style>
 body{font-family:Arial;background:#f4f6fb;padding:20px;}
-table{width:100%;border-collapse:collapse;font-size:17px;}
-th{background:#0f2345;color:white;padding:10px;}
-td{padding:8px;text-align:center;border-bottom:1px solid #ddd;}
-.rankTop{background:#dbeafe;}
-.rankLow{background:#fee2e2;}
-.track{height:40px;background:#ddd;border-radius:20px;position:relative;margin:10px 0;}
-.finish{position:absolute;left:66%;top:0;bottom:0;width:4px;background:black;}
-.runner{position:absolute;top:5px;font-size:20px;}
+.centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0;}
+button{padding:10px;border-radius:6px;border:1px solid #ccc;background:#eef1f7;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#0f2345;color:white;padding:8px;}
+td{border-bottom:1px solid #ddd;padding:6px;text-align:center;}
+.top{background:#dbeafe;}
+.low{background:#fee2e2;}
+.track{height:16px;background:#ddd;border-radius:10px;margin:5px 0;position:relative;}
+.runner{position:absolute;top:-5px;}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+background:white;padding:15px;border-radius:10px;display:none;}
+input{width:120px;margin:3px 0;}
 </style>
 </head>
 
@@ -25,13 +40,17 @@ td{padding:8px;text-align:center;border-bottom:1px solid #ddd;}
 
 <h2>강북도매 유/무선 실적</h2>
 
+<div class="centerGrid" id="btnWrap"></div>
+
 <table id="tbl">
 <thead>
 <tr>
 <th>센터</th>
-<th>무선목표</th><th>무선</th><th>달성율</th><th>순위</th>
-<th>MNP</th><th>중고</th>
-<th>유선목표</th><th>유선</th><th>달성율</th><th>순위</th>
+<th>무선목표</th><th>무선</th><th>%</th><th>순위</th><th>증분</th>
+<th>MNP</th><th>비중</th>
+<th>중고</th><th>비중</th>
+<th>유선목표</th><th>유선</th><th>%</th><th>순위</th><th>증분</th>
+<th>약갱</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -39,86 +58,161 @@ td{padding:8px;text-align:center;border-bottom:1px solid #ddd;}
 
 <h3>전체 트랙</h3>
 <div>무선</div>
-<div class="track"><div class="finish"></div><div id="rw" class="runner">🏃‍♂️</div></div>
+<div class="track"><div id="rw" class="runner">🏃</div></div>
 <div>유선</div>
-<div class="track"><div class="finish"></div><div id="rl" class="runner">🏃‍♂️</div></div>
+<div class="track"><div id="rl" class="runner">🏃</div></div>
+
+<div class="popup" id="popup">
+<h3 id="pTitle"></h3>
+<input id="w" placeholder="무선"><br>
+<input id="mnp" placeholder="MNP"><br>
+<input id="used" placeholder="중고"><br>
+<input id="l" placeholder="유선"><br>
+<input id="yak" placeholder="약갱"><br>
+<button onclick="save()">저장</button>
+</div>
 
 <script>
 const centers=["서대문","의정부","고양","구리","노원","광진","강릉","원주","춘천"]
-let cache={}
 let targets={}
+let cache={}
+let cur=""
 
-function pct(a,b){
+function percent(a,b){
  if(!a||!b) return 0
- let v=(a/b)*100
- return v>=100?Math.round(v):(Math.round(v*10)/10)
+ return Math.round((a/b)*100)
+}
+
+function ratio(a,b){
+ if(!a||!b) return 0
+ return Math.round((a/b)*100)
+}
+
+function getColIndex(header){
+ let today=new Date().getDate()
+ for(let i=0;i<header.length;i++){
+  let v=header[i]
+  if(typeof v==="number"){
+   let d=XLSX.SSF.parse_date_code(v)
+   if(d && d.d===today) return i
+  }
+  if(typeof v==="string" && v.includes("/"+today)) return i
+ }
+ return -1
+}
+
+async function loadTarget(){
+ const res=await fetch("target.xlsx")
+ const data=await res.arrayBuffer()
+ const wb=XLSX.read(data)
+
+ let w=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
+ let l=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
+
+ let col=getColIndex(w[0])
+
+ centers.forEach(c=>{
+  let rowW=w.find(r=>r[0]===c)
+  let rowL=l.find(r=>r[0]===c)
+  targets[c]={ w: rowW?rowW[col]:0, l: rowL?rowL[col]:0 }
+ })
+
+ loadData()
+}
+
+function getData(c){return cache["c_"+c]||{}}
+
+function renderButtons(){
+ let wrap=document.getElementById("btnWrap")
+ wrap.innerHTML=""
+ centers.forEach(c=>{
+  wrap.innerHTML+=`<button onclick="openCenter('${c}')">${c}</button>`
+ })
+}
+
+function render(){
+ let tb=document.querySelector("#tbl tbody")
+ tb.innerHTML=""
+
+ let rankArr=[...centers].map(c=>{
+  let s=getData(c)
+  let t=targets[c]||{}
+  return {c,p:percent(s.w,t.w)}
+ }).sort((a,b)=>b.p-a.p)
+
+ let totalW=0,totalL=0,targetW=0,targetL=0
+
+ centers.forEach(c=>{
+  let s=getData(c)
+  let t=targets[c]||{w:0,l:0}
+
+  let pw=percent(s.w,t.w)
+  let pl=percent(s.l,t.l)
+
+  let rank=rankArr.findIndex(x=>x.c===c)+1
+
+  let prev=s.prevW||0
+  let diff=(s.w||0)-prev
+
+  totalW+=s.w||0
+  totalL+=s.l||0
+  targetW+=t.w||0
+  targetL+=t.l||0
+
+  tb.innerHTML+=`
+  <tr class="${rank<=3?'top':rank>=8?'low':''}">
+  <td>${c}</td>
+  <td>${t.w}</td><td>${s.w||0}</td><td>${pw}%</td><td>${rank}</td><td>${diff}</td>
+  <td>${s.mnp||0}</td><td>${ratio(s.mnp,s.w)}%</td>
+  <td>${s.used||0}</td><td>${ratio(s.used,s.w)}%</td>
+  <td>${t.l}</td><td>${s.l||0}</td><td>${pl}%</td><td>${rank}</td><td>${(s.l||0)-(s.prevL||0)}</td>
+  <td>${s.yak||0}</td>
+  </tr>`
+ })
+
+ // 트랙
+ let wp=percent(totalW,targetW)
+ let lp=percent(totalL,targetL)
+ rw.style.left=wp+"%"
+ rl.style.left=lp+"%"
 }
 
 function loadData(){
- firebase.initializeApp({
-  databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
- })
- const db=firebase.database()
  db.ref().on("value",snap=>{
   cache=snap.val()||{}
   render()
  })
 }
 
-function data(c){return cache["c_"+c]||{}}
-
-function render(){
- let tb=document.querySelector("#tbl tbody")
- tb.innerHTML=""
-
- let wRank=[...centers].map(c=>{
-  let d=data(c),t=targets[c]||{}
-  return {c,v:(d.w||0)/(t.w||1)}
- }).sort((a,b)=>b.v-a.v)
-
- let lRank=[...centers].map(c=>{
-  let d=data(c),t=targets[c]||{}
-  return {c,v:(d.l||0)/(t.l||1)}
- }).sort((a,b)=>b.v-a.v)
-
- let tw=0,tl=0,ttw=0,ttl=0
-
- centers.forEach(c=>{
-  let d=data(c)
-  let t=targets[c]||{w:0,l:0}
-
-  let wr=wRank.findIndex(x=>x.c==c)+1
-  let lr=lRank.findIndex(x=>x.c==c)+1
-
-  let wClass=(wr<=2?"rankTop":wr>=8?"rankLow":"")
-  let lClass=(lr<=2?"rankTop":lr>=8?"rankLow":"")
-
-  tb.innerHTML+=`
-  <tr>
-  <td>${c}</td>
-  <td>${t.w}</td>
-  <td>${d.w||0}</td>
-  <td>${pct(d.w,t.w)}%</td>
-  <td class="${wClass}">${wr}</td>
-  <td>${d.mnp||0}</td>
-  <td>${d.used||0}</td>
-  <td>${t.l}</td>
-  <td>${d.l||0}</td>
-  <td>${pct(d.l,t.l)}%</td>
-  <td class="${lClass}">${lr}</td>
-  </tr>`
-
-  tw+=d.w||0
-  tl+=d.l||0
-  ttw+=t.w||0
-  ttl+=t.l||0
- })
-
- rw.style.left=(tw/ttw*100)+"%"
- rl.style.left=(tl/ttl*100)+"%"
+function openCenter(c){
+ cur=c
+ let s=getData(c)
+ w.value=s.w||""
+ mnp.value=s.mnp||""
+ used.value=s.used||""
+ l.value=s.l||""
+ yak.value=s.yak||""
+ pTitle.innerText=c
+ popup.style.display="block"
 }
 
-loadData()
+function save(){
+ let s=getData(cur)
+ db.ref("c_"+cur).update({
+  prevW:s.w||0,
+  prevL:s.l||0,
+  w:Number(w.value||0),
+  mnp:Number(mnp.value||0),
+  used:Number(used.value||0),
+  l:Number(l.value||0),
+  yak:Number(yak.value||0),
+  t:Date.now()
+ })
+ popup.style.display="none"
+}
+
+renderButtons()
+loadTarget()
 </script>
 
 </body>
