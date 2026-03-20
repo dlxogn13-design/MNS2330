@@ -358,19 +358,24 @@ async function loadTarget(){
  const ls=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
  const today=new Date().getDate()
- let col=1
+ let col=-1
 
  for(let i=0;i<ws[0].length;i++){
   let v=ws[0][i]
   if(typeof v==="number"){
    let d=XLSX.SSF.parse_date_code(v)
-   if(d && (d.d===today || d.d===today-1 || d.d===today+1)){
+   if(d && d.d===today){
     col=i; break
    }
   }
   if(typeof v==="string" && v.includes(today)){
     col=i; break
   }
+ }
+
+ if(col===-1){
+  alert("목표 날짜 매칭 실패")
+  return
  }
 
  centers.forEach(c=>{
