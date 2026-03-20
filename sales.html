@@ -77,8 +77,9 @@ th:nth-child(10){
  border-radius:30px;
  position:relative;
 
- width:calc(100% + 40px);   /* 🔥 양쪽 확장 */
- left:-20px;                /* 🔥 가운데 정렬 유지 */
+ width:100vw;                 /* 🔥 화면 기준 */
+ left:50%;
+ transform:translateX(-50%);  /* 🔥 가운데 정렬 */
 
  margin:18px 0;
 }
