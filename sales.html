@@ -111,6 +111,19 @@ th:nth-child(10){
  display:none;
 }
 input{width:140px;margin:6px 0;padding:8px;font-size:16px;}
+
+.track-title{
+ font-size:42px;
+ font-weight:900;
+ margin-top:40px;
+ letter-spacing:1px;
+}
+
+.track-label{
+ font-size:38px;
+ font-weight:900;
+ margin:10px 0 5px 5px;
+}
 </style>
 </head>
 
@@ -140,15 +153,15 @@ input{width:140px;margin:6px 0;padding:8px;font-size:16px;}
 <tbody></tbody>
 </table>
 
-<h3>진행 트랙</h3>
+<h3 class="track-title">진행 트랙</h3>
 
-<div>무선</div>
+<div class="track-label">무선</div>
 <div class="track">
 <div class="finish"></div>
 <div id="rw" class="runner"><span id="pw"></span>🏃‍➡️</div>
 </div>
 
-<div>유선</div>
+<div class="track-label">유선</div>
 <div class="track">
 <div class="finish"></div>
 <div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div>
