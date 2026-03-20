@@ -186,7 +186,7 @@ function render(){
   return {c,v:(s.l||0)/(t.l||1)}
  }).sort((a,b)=>b.v-a.v)
 
- let sum={w:0,l:0,tw:0,tl:0,m:0,u:0,r:0}
+ let sum={w:0,l:0,tw:0,tl:0}
 
  centers.forEach(c=>{
   let s=getData(c),t=targets[c]||{}
@@ -218,31 +218,45 @@ function render(){
   sum.tw+=t.w||0; sum.tl+=t.l||0
  })
 
- function makeSum(name,list){
-  let w=0,l=0,tw=0,tl=0,m=0,u=0,r=0
-  list.forEach(c=>{
-   let s=getData(c),t=targets[c]||{}
-   w+=s.w||0; l+=s.l||0
-   tw+=t.w||0; tl+=t.l||0
-   m+=s.m||0; u+=s.u||0; r+=s.r||0
-  })
+// ✅ 계 + 증분 포함
+function makeSum(name,list){
+ let w=0,l=0,tw=0,tl=0,m=0,u=0,r=0
+ let prevW=0, prevL=0
 
-  return `
-  <tr class="group">
+ list.forEach(c=>{
+  let s=getData(c),t=targets[c]||{}
+
+  w+=s.w||0
+  l+=s.l||0
+  tw+=t.w||0
+  tl+=t.l||0
+  m+=s.m||0
+  u+=s.u||0
+  r+=s.r||0
+
+  prevW+=s.prevW||0
+  prevL+=s.prevL||0
+ })
+
+ let diffW = w - prevW
+ let diffL = l - prevL
+
+ return `
+ <tr class="group">
   <td></td><td>${name}</td>
   <td>${tw}</td><td>${w}</td><td>${pct(w,tw)}%</td>
-  <td>-</td><td>-</td>
+  <td>-</td><td>${diffW}</td>
   <td>${m}</td><td>${ratio(m,w)}%</td>
   <td>${u}</td><td>${ratio(u,w)}%</td>
   <td>${tl}</td><td>${l}</td><td>${pct(l,tl)}%</td>
-  <td>-</td><td>-</td>
+  <td>-</td><td>${diffL}</td>
   <td>${r}</td>
-  </tr>`
- }
+ </tr>`
+}
 
- tb.innerHTML+=makeSum("강북도매 계",centers)
- tb.innerHTML+=makeSum("강북상권 계",["서대문","의정부","고양","구리","노원","광진"])
- tb.innerHTML+=makeSum("강원상권 계",["강릉","원주","춘천"])
+tb.innerHTML+=makeSum("강북도매 계",centers)
+tb.innerHTML+=makeSum("강북상권 계",["서대문","의정부","고양","구리","노원","광진"])
+tb.innerHTML+=makeSum("강원상권 계",["강릉","원주","춘천"])
 
  let wPct=sum.tw?Math.round(sum.w/sum.tw*100):0
  let lPct=sum.tl?Math.round(sum.l/sum.tl*100):0
