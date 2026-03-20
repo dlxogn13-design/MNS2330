@@ -17,9 +17,24 @@ button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#eef1
 .centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:15px 0;}
 .centerGrid button{background:#1e3a8a;color:#fff;border:none;}
 
-table{width:100%;border-collapse:collapse;font-size:16px;}
-th{background:#0f2345;color:#fff;padding:14px;white-space:nowrap;}
-td{padding:10px;border-bottom:1px solid #ddd;text-align:center;white-space:nowrap;}
+table{width:100%;border-collapse:collapse;font-size:17px;}
+th,td{
+ text-align:center;
+ padding:14px;
+ border-right:1px solid #ddd;
+ white-space:nowrap;
+}
+
+th{
+ background:#0f2345;
+ color:#fff;
+}
+
+/* 무선 / 유선 구분선 */
+td:nth-child(10),
+th:nth-child(10){
+ border-left:3px solid #000;
+}
 
 .rankTop{background:#dbeafe;}
 .rankLow{background:#fee2e2;}
@@ -62,7 +77,6 @@ input{width:120px;margin:4px 0;padding:6px;}
 <th></th><th>센터</th>
 <th>무선목표</th><th>무선</th><th>달성율</th><th>순위</th><th>증분</th>
 <th>MNP</th><th>비중</th>
-<th>중고</th><th>비중</th>
 <th>유선목표</th><th>유선</th><th>달성율</th><th>순위</th><th>증분</th>
 <th>약갱</th>
 </tr>
@@ -88,7 +102,6 @@ input{width:120px;margin:4px 0;padding:6px;}
 <h3 id="pTitle"></h3>
 <input id="w" placeholder="무선">
 <input id="m" placeholder="MNP">
-<input id="u" placeholder="중고">
 <input id="l" placeholder="유선">
 <input id="r" placeholder="약갱">
 <br>
@@ -141,7 +154,7 @@ function adminReset(){
  if(pw!=="2330") return
  if(confirm("입력값 초기화?")){
   centers.forEach(c=>{
-   db.ref("c_"+c).update({w:0,m:0,u:0,l:0,r:0,prevW:0,prevL:0,ts:0})
+   db.ref("c_"+c).update({w:0,m:0,l:0,r:0,prevW:0,prevL:0,ts:0})
   })
  }
 }
@@ -162,7 +175,6 @@ function openCenter(c){
 
  w.value=s.w||""
  m.value=s.m||""
- u.value=s.u||""
  l.value=s.l||""
  r.value=s.r||""
 
@@ -197,20 +209,22 @@ function render(){
   <tr>
   <td><div class="signal ${signal(s.ts)}"></div></td>
   <td>${c}</td>
+
   <td>${t.w||0}</td>
   <td>${s.w||0}</td>
   <td>${pct(s.w,t.w)}%</td>
   <td class="${wr<=2?'rankTop':wr>=8?'rankLow':''}">${wr}</td>
   <td>${(s.w||0)-(s.prevW||0)}</td>
+
   <td>${s.m||0}</td>
   <td>${ratio(s.m,s.w)}%</td>
-  <td>${s.u||0}</td>
-  <td>${ratio(s.u,s.w)}%</td>
+
   <td>${t.l||0}</td>
   <td>${s.l||0}</td>
   <td>${pct(s.l,t.l)}%</td>
   <td class="${lr<=2?'rankTop':lr>=8?'rankLow':''}">${lr}</td>
   <td>${(s.l||0)-(s.prevL||0)}</td>
+
   <td>${s.r||0}</td>
   </tr>`
 
@@ -218,24 +232,16 @@ function render(){
   sum.tw+=t.w||0; sum.tl+=t.l||0
  })
 
-// ✅ 계 + 증분 포함
 function makeSum(name,list){
- let w=0,l=0,tw=0,tl=0,m=0,u=0,r=0
+ let w=0,l=0,tw=0,tl=0,m=0,r=0
  let prevW=0, prevL=0
 
  list.forEach(c=>{
   let s=getData(c),t=targets[c]||{}
-
-  w+=s.w||0
-  l+=s.l||0
-  tw+=t.w||0
-  tl+=t.l||0
-  m+=s.m||0
-  u+=s.u||0
-  r+=s.r||0
-
-  prevW+=s.prevW||0
-  prevL+=s.prevL||0
+  w+=s.w||0; l+=s.l||0
+  tw+=t.w||0; tl+=t.l||0
+  m+=s.m||0; r+=s.r||0
+  prevW+=s.prevW||0; prevL+=s.prevL||0
  })
 
  let diffW = w - prevW
@@ -243,14 +249,13 @@ function makeSum(name,list){
 
  return `
  <tr class="group">
-  <td></td><td>${name}</td>
-  <td>${tw}</td><td>${w}</td><td>${pct(w,tw)}%</td>
-  <td>-</td><td>${diffW}</td>
-  <td>${m}</td><td>${ratio(m,w)}%</td>
-  <td>${u}</td><td>${ratio(u,w)}%</td>
-  <td>${tl}</td><td>${l}</td><td>${pct(l,tl)}%</td>
-  <td>-</td><td>${diffL}</td>
-  <td>${r}</td>
+ <td></td><td>${name}</td>
+ <td>${tw}</td><td>${w}</td><td>${pct(w,tw)}%</td>
+ <td>-</td><td>${diffW}</td>
+ <td>${m}</td><td>${ratio(m,w)}%</td>
+ <td>${tl}</td><td>${l}</td><td>${pct(l,tl)}%</td>
+ <td>-</td><td>${diffL}</td>
+ <td>${r}</td>
  </tr>`
 }
 
@@ -283,7 +288,6 @@ function save(){
   prevW:s.w||0,prevL:s.l||0,
   w:Number(w.value||0),
   m:Number(m.value||0),
-  u:Number(u.value||0),
   l:Number(l.value||0),
   r:Number(r.value||0),
   ts:Date.now()
@@ -304,14 +308,12 @@ async function loadTarget(){
 
  for(let i=0;i<ws[0].length;i++){
   let v=ws[0][i]
-
   if(typeof v==="number"){
    let d=XLSX.SSF.parse_date_code(v)
    if(d && (d.d===today || d.d===today-1 || d.d===today+1)){
     col=i; break
    }
   }
-
   if(typeof v==="string" && v.includes(today)){
     col=i; break
   }
