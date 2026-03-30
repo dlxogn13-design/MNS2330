@@ -567,7 +567,6 @@ let blob = await new Promise(resolve=>{
  let form = new FormData()
  form.append("chat_id", CHAT_ID)
  form.append("photo", blob, "result.png")
- form.append("caption", summary)
 
  let res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`,{
   method:"POST",
@@ -575,7 +574,16 @@ let blob = await new Promise(resolve=>{
 })
 
 let result = await res.json()
-
+await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`,{
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json"
+  },
+  body: JSON.stringify({
+    chat_id: CHAT_ID,
+    text: summary
+  })
+})
 console.log(result)
 
 if(result.ok){
