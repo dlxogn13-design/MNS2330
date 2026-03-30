@@ -158,6 +158,10 @@ input{
 <button onclick="location.href='index.html'">메인가기</button>
 <button onclick="location.reload()">새로고침</button>
 <button onclick="adminReset()">초기화</button>
+
+<!-- 🔥 여기 추가 -->
+<button onclick="sendTelegram()">📤 실적방 전송</button>
+
 </div>
 
 <div class="centerGrid" id="btns"></div>
@@ -213,6 +217,9 @@ firebase.initializeApp({
  databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
 })
 const db=firebase.database()
+
+// 🔥 여기 추가
+const ADMIN_PW = "2330"
 
 function pct(a,b){
  if(!a||!b) return "-"
@@ -428,6 +435,49 @@ async function loadTarget(){
 
 renderBtns()
 loadTarget().then(loadData)
+
+
+// 🔥 여기부터 붙여넣기
+async function sendTelegram(){
+
+ // 🔒 비밀번호 체크
+ let pw = prompt("비밀번호 입력")
+ if(pw !== ADMIN_PW){
+   alert("비밀번호 틀림")
+   return
+ }
+
+ let allDone = centers.every(c=>{
+   let s=getData(c)
+   return signal(s.ts)==="green"
+ })
+
+ if(!allDone){
+   alert("아직 완료 안된 센터 있음")
+   return
+ }
+
+ let area = document.getElementById("captureArea")
+ let canvas = await html2canvas(area)
+ let blob = await new Promise(res=>canvas.toBlob(res))
+
+ let summary = makeSummary()
+
+ const TOKEN = "8779626080:AAGHZ1prRVTQHzkEO9gglibFuXVc6AGTP0Y"
+ const CHAT_ID = "100352171290"
+
+ let form = new FormData()
+ form.append("chat_id", CHAT_ID)
+ form.append("photo", blob, "result.png")
+ form.append("caption", summary)
+
+ await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`,{
+   method:"POST",
+   body:form
+ })
+
+ alert("전송 완료")
+}
 </script>
 
 </body>
