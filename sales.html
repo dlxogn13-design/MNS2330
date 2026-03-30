@@ -467,8 +467,21 @@ async function sendTelegram(){
  }
 
  let area = document.getElementById("captureArea")
- let canvas = await html2canvas(area)
- let blob = await new Promise(res=>canvas.toBlob(res))
+
+let canvas = await html2canvas(area, {
+  scale: 1,
+  useCORS: true
+})
+// 🔥 안정 방식 (이걸로 바꿔)
+let blob = await new Promise(resolve=>{
+  canvas.toBlob(function(b){
+    if(!b){
+      alert("❌ 캡쳐 실패")
+      return
+    }
+    resolve(b)
+  })
+})
 
  let summary = "강북도매 실적 업데이트 완료"
  const TOKEN = "8779626080:AAFnBI12T_W4XeWgIo9c2BKwI8qXi1rqMOw"
@@ -478,10 +491,21 @@ async function sendTelegram(){
  form.append("photo", blob, "result.png")
  form.append("caption", summary)
 
- await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`,{
-   method:"POST",
-   body:form
- })
+ let res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`,{
+  method:"POST",
+  body:form
+})
+
+let result = await res.json()
+
+console.log(result)
+
+if(result.ok){
+  alert("✅ 텔레 전송 성공")
+}else{
+  alert("❌ 전송 실패")
+  console.log(result)
+}
 
  alert("전송 완료")
 }
