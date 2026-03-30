@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<head>
 <meta charset="UTF-8">
 <title>강북도매 유/무선 실적</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<!-- 🔥 여기 추가 -->
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
 <style>
 body{
@@ -169,6 +173,9 @@ input{
 <h2>강북도매 유/무선 실적</h2>
 <h3 id="titleTime"></h3>
 
+<!-- 🔥 여기 시작 -->
+<div id="captureArea">
+
 <table id="tbl">
 <thead>
 <tr>
@@ -195,6 +202,9 @@ input{
 <div class="finish"></div>
 <div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div>
 </div>
+
+</div>
+<!-- 🔥 여기 끝 -->
 
 <div class="popup" id="popup">
 <h3 id="pTitle"></h3>
@@ -464,8 +474,7 @@ async function sendTelegram(){
  let summary = makeSummary()
 
  const TOKEN = "8779626080:AAGHZ1prRVTQHzkEO9gglibFuXVc6AGTP0Y"
- const CHAT_ID = "100352171290"
-
+ const CHAT_ID = "-100352171290"
  let form = new FormData()
  form.append("chat_id", CHAT_ID)
  form.append("photo", blob, "result.png")
