@@ -445,7 +445,85 @@ async function loadTarget(){
 renderBtns()
 loadTarget().then(loadData)
 
+function makeSummary(){
 
+ let now = new Date()
+ let timeTxt = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}시 기준`
+
+ let arr = centers.map(c=>{
+   let s=getData(c), t=targets[c]||{}
+
+   let w = s.w||0, l = s.l||0
+   let tw = t.w||0, tl = t.l||0
+
+   let wPct = tw ? w/tw*100 : 0
+   let lPct = tl ? l/tl*100 : 0
+
+   let diffW = (s.w||0)-(s.prevW||0)
+   let diffL = (s.l||0)-(s.prevL||0)
+
+   return {
+     c,
+     w, l, tw, tl,
+     wPct: Math.round(wPct*10)/10,
+     lPct: Math.round(lPct*10)/10,
+     diffW, diffL
+   }
+ })
+
+ // 정렬
+ let wRank = [...arr].sort((a,b)=>b.wPct-a.wPct)
+ let lRank = [...arr].sort((a,b)=>b.lPct-a.lPct)
+
+ // 전체 합계
+ let sumW = arr.reduce((a,b)=>a+b.w,0)
+ let sumL = arr.reduce((a,b)=>a+b.l,0)
+ let sumTW = arr.reduce((a,b)=>a+b.tw,0)
+ let sumTL = arr.reduce((a,b)=>a+b.tl,0)
+
+ let totalWPct = sumTW ? Math.round(sumW/sumTW*1000)/10 : 0
+ let totalLPct = sumTL ? Math.round(sumL/sumTL*1000)/10 : 0
+
+ // 전체 증분
+ let totalDiffW = arr.reduce((a,b)=>a+b.diffW,0)
+ let totalDiffL = arr.reduce((a,b)=>a+b.diffL,0)
+
+ let text = `[강북도매 유/무선 실적 요약 - ${timeTxt}]\n\n`
+
+ // 🔥 무선
+ text += `■ 무선 (전체 ${totalWPct}%, +${totalDiffW}건)\n\n`
+
+ wRank.forEach((x,i)=>{
+   text += `${i+1}위 ${x.c}: ${x.wPct}% (${x.tw}건/${x.w}건/${x.diffW>=0?`+${x.diffW}`:x.diffW}건)\n`
+ })
+
+ text += `\nㅇ무선 전체: ${sumW-totalDiffW}→${sumW}건 (+${totalDiffW}건)\n\n`
+
+ // 🔥 유선
+ text += `■ 유선 (전체 ${totalLPct}%, +${totalDiffL}건)\n\n`
+
+ lRank.forEach((x,i)=>{
+   text += `${i+1}위 ${x.c}: ${x.lPct}% (${x.tl}건/${x.l}건/${x.diffL>=0?`+${x.diffL}`:x.diffL}건)\n`
+ })
+
+ text += `\nㅇ유선 전체: ${sumL-totalDiffL}→${sumL}건 (+${totalDiffL}건)\n\n`
+
+ // 🔥 핵심 요약 (자동)
+ let topDiff = [...arr].sort((a,b)=>b.diffW-a.diffW)[0]
+ let topL = [...arr].sort((a,b)=>b.lPct-a.lPct)[0]
+ let zeroL = arr.filter(x=>x.l===0)
+
+ text += "■ 핵심 요약\n"
+ text += `- 무선: ${topDiff.c} ${topDiff.diffW>0?`+${topDiff.diffW}건 최다 증가`:"변동 없음"}\n`
+ text += `- 유선: ${topL.c} ${topL.lPct}% 최고 달성\n`
+
+ if(zeroL.length){
+   text += `- 유선 무실적: ${zeroL.map(x=>x.c).join(", ")}\n`
+ }
+
+ return text
+}
+ 
 // 🔥 여기부터 붙여넣기
 async function sendTelegram(){
 
@@ -483,7 +561,7 @@ let blob = await new Promise(resolve=>{
   })
 })
 
- let summary = "강북도매 실적 업데이트 완료"
+ let summary = makeSummary()
  const TOKEN = "8779626080:AAFnBI12T_W4XeWgIo9c2BKwI8qXi1rqMOw"
  const CHAT_ID = "-1003352171290"
  let form = new FormData()
