@@ -421,8 +421,8 @@ let header = null
 for(let r of ws){
   if(!r) continue
 
-  let found = r.find(v => 
-  typeof v === "number" || String(v).includes("/")
+  let found = r.find(v =>
+  String(v).includes("/")
 )
   if(found){
     header = r
@@ -446,11 +446,20 @@ for(let i=0;i<header.length;i++){
   let txt = ""
 
   if(typeof v === "number"){
-    let d = XLSX.SSF.parse_date_code(v)
-    if(d){
-      txt = `${d.m}/${d.d}`
+  let d = XLSX.SSF.parse_date_code(v)
+  if(d){
+    txt = `${d.m}/${d.d}`
+  }
+} else {
+  txt = String(v).trim()
+
+  if(txt.includes("-")){
+    let p = txt.split("-")
+    if(p.length === 3){
+      txt = `${Number(p[1])}/${Number(p[2])}`
     }
-  }else{
+  }
+}
     txt = String(v).trim()
 
     if(txt.includes("-")){
