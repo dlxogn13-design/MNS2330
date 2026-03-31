@@ -446,18 +446,7 @@ for(let i=0;i<header.length;i++){
   }
 }
 
-  if(typeof v === "string"){
-    let txt = v.trim()
-    let match = txt.match(/(\d{1,2})\D(\d{1,2})/)
-    if(match){
-      let m = Number(match[1])
-      let d = Number(match[2])
-      if(m === tMonth && d === tDay){
-        col = i
-        break
-      }
-    }
-  }
+  
  }
 
  // 🔥 이 아래 코드는 그대로 유지
