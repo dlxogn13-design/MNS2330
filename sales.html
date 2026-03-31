@@ -409,43 +409,30 @@ async function loadTarget(){
  const data = await res.arrayBuffer()
  const wb = XLSX.read(data)
 
- const ws = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
- const ls = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
-
+ const ws = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1, raw:false})
+const ls = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1, raw:false})
  const now = new Date()
  const tDay = now.getDate()
  const tMonth = now.getMonth() + 1
 
- let col = -1
- let header = ws[0]
-
-const todayStr = `${tMonth}/${tDay}`
+ const todayStr = `${tMonth}/${tDay}`
 
 for(let i=0;i<header.length;i++){
   let v = header[i]
   if(!v) continue
 
-  // 👉 Date 객체 직접 처리 (핵심)
-  if(v instanceof Date){
-    let m = v.getMonth() + 1
-    let d = v.getDate()
+  let txt = String(v).trim()
 
-    if(m === tMonth && d === tDay){
-      col = i
-      break
-    }
-  }
-
-  // 👉 문자열 fallback
-  if(typeof v === "string"){
-    let txt = v.trim()
-
-    if(txt === `${tMonth}/${tDay}`){
-      col = i
-      break
-    }
+  if(txt === todayStr){
+    col = i
+    break
   }
 }
+ let col = -1
+ let header = ws[0]
+
+const todayStr = `${tMonth}/${tDay}`
+
 
  if(col === -1){
   alert("목표 날짜 매칭 실패")
