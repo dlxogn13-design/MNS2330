@@ -437,28 +437,34 @@ if(!header){
 
 const todayStr = `${tMonth}/${tDay}`
 
-let txt = ""
+const todayStr = `${tMonth}/${tDay}`
 
-if(typeof v === "number"){
-  let d = XLSX.SSF.parse_date_code(v)
-  if(d){
-    txt = `${d.m}/${d.d}`
-  }
-}else{
-  txt = String(v).trim()
+for(let i=0;i<header.length;i++){
+  let v = header[i]
+  if(!v) continue
 
-  if(txt.includes("-")){
-    let p = txt.split("-")
-    if(p.length === 3){
-      txt = `${Number(p[1])}/${Number(p[2])}`
+  let txt = ""
+
+  if(typeof v === "number"){
+    let d = XLSX.SSF.parse_date_code(v)
+    if(d){
+      txt = `${d.m}/${d.d}`
+    }
+  }else{
+    txt = String(v).trim()
+
+    if(txt.includes("-")){
+      let p = txt.split("-")
+      if(p.length === 3){
+        txt = `${Number(p[1])}/${Number(p[2])}`
+      }
     }
   }
-}
 
-if(txt === `${tMonth}/${tDay}`){
-  col = i
-  break
-}
+  if(txt === todayStr){
+    col = i
+    break
+  }
 }
 
  if(col === -1){
