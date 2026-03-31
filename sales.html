@@ -404,7 +404,7 @@ function save(){
 }
 
 async function loadTarget(){
- const res=await fetch("target.xlsx")
+ const res = await fetch("target.xlsx?t=" + Date.now())
  const data=await res.arrayBuffer()
  const wb=XLSX.read(data)
 
