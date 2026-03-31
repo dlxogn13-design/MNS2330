@@ -423,10 +423,10 @@ async function loadTarget(){
  }
 }
 
-if(typeof v==="string"){
- if(v.includes(today+"") || v.includes(today+"일")){
-  col = i; break
- }
+if(typeof v==="string" && v.endsWith(`/${today}`)){
+  col = i
+  break
+}
 }
  }
 
