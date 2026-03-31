@@ -415,18 +415,20 @@ async function loadTarget(){
  let col=-1
 
  for(let i=0;i<ws[0].length;i++){
-  let v=ws[0][i]
-  if(typeof v==="number"){
- let d=XLSX.SSF.parse_date_code(v)
- if(d && d.d === today){
-  col = i; break
- }
-}
+  let v = ws[0][i]
 
-if(typeof v==="string" && v.endsWith(`/${today}`)){
-  col = i
-  break
-}
+  if(typeof v === "number"){
+    let d = XLSX.SSF.parse_date_code(v)
+    if(d && d.d === today){
+      col = i
+      break
+    }
+  }
+
+  if(typeof v === "string" && v.endsWith(`/${today}`)){
+    col = i
+    break
+  }
 }
  }
 
