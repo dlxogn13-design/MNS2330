@@ -416,7 +416,22 @@ const tDay = now.getDate()
 const tMonth = now.getMonth() + 1
 
 let col = -1
-let header = ws[1]
+let header = null
+
+for(let r of ws){
+  if(!r) continue
+
+  let found = r.find(v => String(v).includes("/"))
+  if(found){
+    header = r
+    break
+  }
+}
+
+if(!header){
+  alert("헤더 못찾음")
+  return
+}
 
 const todayStr = `${tMonth}/${tDay}`
 
