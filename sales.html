@@ -421,7 +421,9 @@ let header = null
 for(let r of ws){
   if(!r) continue
 
-  let found = r.find(v => String(v).includes("/"))
+  let found = r.find(v => 
+  typeof v === "number" || String(v).includes("/")
+)
   if(found){
     header = r
     break
@@ -440,15 +442,19 @@ for(let i=0;i<header.length;i++){
   if(!v) continue
 
   // 🔥 1순위: Date 객체
-  if(v instanceof Date){
-    let m = v.getMonth() + 1
-    let d = v.getDate()
+  // 🔥 숫자 날짜 처리 (핵심)
+if(typeof v === "number"){
+  let date = XLSX.SSF.parse_date_code(v)
+  if(date){
+    let m = date.m
+    let d = date.d
 
     if(m === tMonth && d === tDay){
       col = i
       break
     }
   }
+}
 
   // 🔥 2순위: 문자열 fallback
   let txt = String(v).trim()
