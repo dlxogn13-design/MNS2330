@@ -437,31 +437,28 @@ if(!header){
 
 const todayStr = `${tMonth}/${tDay}`
 
-for(let i=0;i<header.length;i++){
-  let v = header[i]
-  if(!v) continue
+let txt = ""
 
-  // 🔥 1순위: Date 객체
-  // 🔥 숫자 날짜 처리 (핵심)
 if(typeof v === "number"){
-  let date = XLSX.SSF.parse_date_code(v)
-  if(date){
-    let m = date.m
-    let d = date.d
+  let d = XLSX.SSF.parse_date_code(v)
+  if(d){
+    txt = `${d.m}/${d.d}`
+  }
+}else{
+  txt = String(v).trim()
 
-    if(m === tMonth && d === tDay){
-      col = i
-      break
+  if(txt.includes("-")){
+    let p = txt.split("-")
+    if(p.length === 3){
+      txt = `${Number(p[1])}/${Number(p[2])}`
     }
   }
 }
 
-  // 🔥 2순위: 문자열 fallback
-  let txt = String(v).trim()
-  if(txt === `${tMonth}/${tDay}`){
-    col = i
-    break
-  }
+if(txt === `${tMonth}/${tDay}`){
+  col = i
+  break
+}
 }
 
  if(col === -1){
