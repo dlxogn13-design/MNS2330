@@ -440,38 +440,42 @@ const todayStr = `${tMonth}/${tDay}`
 
 
 for(let i=0;i<header.length;i++){
+for(let i=0;i<header.length;i++){
   let v = header[i]
   if(!v) continue
 
   let txt = ""
 
   if(typeof v === "number"){
-  let d = XLSX.SSF.parse_date_code(v)
-  if(d){
-    txt = `${d.m}/${d.d}`
-  }
-} else {
-  txt = String(v).trim()
+    let d = XLSX.SSF.parse_date_code(v)
+    if(d){
+      txt = `${d.m}/${d.d}`
+    }
+  } else {
+    txt = String(v).trim()
 
-  if(txt.includes("-")){
-    let p = txt.split("-")
-    if(p.length === 3){
-      txt = `${Number(p[1])}/${Number(p[2])}`
+    if(txt.includes("-")){
+      let p = txt.split("-")
+      if(p.length === 3){
+        txt = `${Number(p[1])}/${Number(p[2])}`
+      }
     }
   }
-}
- if(txt === todayStr){
+
+  if(txt === todayStr){
     col = i
     break
- }
+  }
+}
 
+// 🔥 여기로 내려와야됨 (for 밖)
 
- if(col === -1){
+if(col === -1){
   alert("목표 날짜 매칭 실패")
   return
- }
+}
 
- centers.forEach(c=>{
+centers.forEach(c=>{
   let wr = ws.find(r=>r[0]===c)
   let lr = ls.find(r=>r[0]===c)
 
@@ -479,10 +483,10 @@ for(let i=0;i<header.length;i++){
     w: wr ? Number(wr[col] || 0) : 0,
     l: lr ? Number(lr[col] || 0) : 0
   }
- })
+})
 
- targetLoaded = true
- render()
+targetLoaded = true
+render()
 }
 
 renderBtns()
