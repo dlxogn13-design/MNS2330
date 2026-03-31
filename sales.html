@@ -429,13 +429,12 @@ async function loadTarget(){
     col = i
     break
   }
-}
- }
+}   // ← for문만 닫힘 (정상)
 
- if(col===-1){
+if(col===-1){
   alert("목표 날짜 매칭 실패")
   return
- }
+}
 
  centers.forEach(c=>{
   let wr=ws.find(r=>r[0]===c)
@@ -600,8 +599,6 @@ if(result.ok){
 
 }  // 🔥 이게 핵심 (sendTelegram 닫기)
 
-</script>
- 
 </script>
 
 </body>
