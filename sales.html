@@ -451,14 +451,7 @@ for(let i=0;i<header.length;i++){
     txt = `${d.m}/${d.d}`
   }
 } else {
-  txt = String(v).trim()
 
-  if(txt.includes("-")){
-    let p = txt.split("-")
-    if(p.length === 3){
-      txt = `${Number(p[1])}/${Number(p[2])}`
-    }
-  }
 }
     txt = String(v).trim()
 
