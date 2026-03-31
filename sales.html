@@ -426,6 +426,8 @@ async function loadTarget(){
 
   if(typeof v === "number"){
     let date = new Date(Math.round((v - 25569) * 86400 * 1000))
+date.setHours(date.getHours() + 9)  // 🔥 이거 추가 핵심
+
 let m = date.getMonth() + 1
 let d = date.getDate()
 
