@@ -419,28 +419,28 @@ async function loadTarget(){
  let col = -1
  let header = ws[0]
 
- const now = new Date()
-const tDay = now.getDate()
-const tMonth = now.getMonth() + 1
-
 const todayStr = `${tMonth}/${tDay}`
 
 for(let i=0;i<header.length;i++){
   let v = header[i]
   if(!v) continue
 
-  if(typeof v === "string"){
-    let txt = v.trim()
+  // 👉 Date 객체 직접 처리 (핵심)
+  if(v instanceof Date){
+    let m = v.getMonth() + 1
+    let d = v.getDate()
 
-    if(txt === todayStr){
+    if(m === tMonth && d === tDay){
       col = i
       break
     }
   }
 
-  if(typeof v === "number"){
-    let d = XLSX.SSF.parse_date_code(v)
-    if(d && d.m === tMonth && d.d === tDay){
+  // 👉 문자열 fallback
+  if(typeof v === "string"){
+    let txt = v.trim()
+
+    if(txt === `${tMonth}/${tDay}`){
       col = i
       break
     }
