@@ -424,9 +424,20 @@ for(let i=0;i<header.length;i++){
   let v = header[i]
   if(!v) continue
 
-  let txt = String(v).trim()
+  // 🔥 1순위: Date 객체
+  if(v instanceof Date){
+    let m = v.getMonth() + 1
+    let d = v.getDate()
 
-  if(txt === todayStr){
+    if(m === tMonth && d === tDay){
+      col = i
+      break
+    }
+  }
+
+  // 🔥 2순위: 문자열 fallback
+  let txt = String(v).trim()
+  if(txt === `${tMonth}/${tDay}`){
     col = i
     break
   }
