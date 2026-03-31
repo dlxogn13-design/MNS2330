@@ -425,11 +425,14 @@ async function loadTarget(){
   if(!v) continue
 
   if(typeof v === "number"){
-    let d = XLSX.SSF.parse_date_code(v)
-    if(d && d.d === tDay && d.m === tMonth){
-      col = i
-      break
-    }
+    let date = new Date(Math.round((v - 25569) * 86400 * 1000))
+let m = date.getMonth() + 1
+let d = date.getDate()
+
+if(m === tMonth && d === tDay){
+  col = i
+  break
+}
   }
 
   if(typeof v === "string"){
