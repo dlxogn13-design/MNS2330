@@ -437,7 +437,7 @@ if(!header){
 
 const todayStr = `${tMonth}/${tDay}`
 
-const todayStr = `${tMonth}/${tDay}`
+
 
 for(let i=0;i<header.length;i++){
   let v = header[i]
@@ -458,14 +458,12 @@ for(let i=0;i<header.length;i++){
       if(p.length === 3){
         txt = `${Number(p[1])}/${Number(p[2])}`
       }
-    }
-  }
 
-  if(txt === todayStr){
+ if(txt === todayStr){
     col = i
     break
-  }
-}
+ }
+
 
  if(col === -1){
   alert("목표 날짜 매칭 실패")
