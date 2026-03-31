@@ -406,62 +406,56 @@ function save(){
 async function loadTarget(){
 
  const res = await fetch("target.xlsx?t=" + Date.now())
- const data=await res.arrayBuffer()
- const wb=XLSX.read(data)
+ const data = await res.arrayBuffer()
+ const wb = XLSX.read(data)
 
- const ws=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
- const ls=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
+ const ws = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1})
+ const ls = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]],{header:1})
 
- // 🔥 여기부터 교체
  const now = new Date()
-const tDay = now.getDate()
-const tMonth = now.getMonth()+1
+ const tDay = now.getDate()
+ const tMonth = now.getMonth() + 1
 
-let col = -1
-let header = ws[0]
+ let col = -1
+ let header = ws[0]
 
-for(let i=0;i<header.length;i++){
+ for(let i=0;i<header.length;i++){
   let v = header[i]
   if(!v) continue
 
-  // 🔥 엑셀 날짜 (가장 정확한 방식)
   if(typeof v === "number"){
     let d = XLSX.SSF.parse_date_code(v)
-    if(d){
-      if(d.m === tMonth && d.d === tDay){
-        col = i
-        break
-      }
+    if(d && d.m === tMonth && d.d === tDay){
+      col = i
+      break
     }
   }
 
-  // 🔥 문자열 대비 (보조)
   if(typeof v === "string"){
     let txt = v.replace(/\s/g,'')
-
     if(txt.includes(`${tMonth}/${tDay}`)){
       col = i
       break
     }
   }
-}
-
-  
  }
 
- // 🔥 이 아래 코드는 그대로 유지
- if(col===-1){
+ if(col === -1){
   alert("목표 날짜 매칭 실패")
   return
  }
 
  centers.forEach(c=>{
-  let wr=ws.find(r=>r[0]===c)
-  let lr=ls.find(r=>r[0]===c)
-  targets[c]={w:wr?Number(wr[col]||0):0,l:lr?Number(lr[col]||0):0}
+  let wr = ws.find(r=>r[0]===c)
+  let lr = ls.find(r=>r[0]===c)
+
+  targets[c] = {
+    w: wr ? Number(wr[col] || 0) : 0,
+    l: lr ? Number(lr[col] || 0) : 0
+  }
  })
 
- targetLoaded=true
+ targetLoaded = true
  render()
 }
 
