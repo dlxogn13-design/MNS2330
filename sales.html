@@ -417,14 +417,17 @@ async function loadTarget(){
  for(let i=0;i<ws[0].length;i++){
   let v=ws[0][i]
   if(typeof v==="number"){
-   let d=XLSX.SSF.parse_date_code(v)
-   if(d && d.d===today){
-    col=i; break
-   }
-  }
-  if(typeof v==="string" && v.includes(today)){
-    col=i; break
-  }
+ let d=XLSX.SSF.parse_date_code(v)
+ if(d && d.d === today){
+  col = i; break
+ }
+}
+
+if(typeof v==="string"){
+ if(v.includes(today+"") || v.includes(today+"일")){
+  col = i; break
+ }
+}
  }
 
  if(col===-1){
