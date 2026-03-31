@@ -436,10 +436,9 @@ if(!header){
 }
 
 const todayStr = `${tMonth}/${tDay}`
+const todayStr = `${tMonth}/${tDay}`
 
-
-
-for(let i=0;i<header.length;i++){
+// 🔥 날짜 찾기 (단일 for문만)
 for(let i=0;i<header.length;i++){
   let v = header[i]
   if(!v) continue
@@ -468,7 +467,7 @@ for(let i=0;i<header.length;i++){
   }
 }
 
-// 🔥 여기로 내려와야됨 (for 밖)
+// 🔥 여기부터는 반드시 for 밖
 
 if(col === -1){
   alert("목표 날짜 매칭 실패")
