@@ -422,8 +422,9 @@ for(let r of ws){
   if(!r) continue
 
   let found = r.find(v =>
-  String(v).includes("/")
-)
+    typeof v === "number" || v instanceof Date
+  )
+
   if(found){
     header = r
     break
