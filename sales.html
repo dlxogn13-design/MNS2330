@@ -445,19 +445,23 @@ for(let i=0;i<header.length;i++){
   let txt = ""
 
   if(typeof v === "number"){
-    let d = XLSX.SSF.parse_date_code(v)
-    if(d){
-      txt = `${d.m}/${d.d}`
-    }
-  } else {
-    txt = String(v).trim()
+  let d = XLSX.SSF.parse_date_code(v)
+  if(d){
+    txt = `${d.m}/${d.d}`
+  }
 
-    if(txt.includes("-")){
-      let p = txt.split("-")
-      if(p.length === 3){
-        txt = `${Number(p[1])}/${Number(p[2])}`
-      }
+} else if (v instanceof Date) {   // 🔥 여기에 들어가야 함
+  txt = `${v.getMonth()+1}/${v.getDate()}`
+
+} else {
+  txt = String(v).trim()
+
+  if(txt.includes("-")){
+    let p = txt.split("-")
+    if(p.length === 3){
+      txt = `${Number(p[1])}/${Number(p[2])}`
     }
+  }
   }
 
   if(txt === todayStr){
