@@ -12,146 +12,176 @@
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
 <style>
+
 body{
- font-family:Arial;
- background:#fff;
- padding:20px;
- color:#111;
- font-weight:700;
- font-size:20px;
+    font-family:Arial;
+    background:#efefef;
+    padding:6px;
+    margin:0;
+    font-weight:700;
 }
 
-.topbar{display:flex;gap:10px;margin-bottom:12px;}
+.topbar{
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+}
+
 button{
- padding:18px 24px;
- border-radius:8px;
- border:1px solid #ccc;
- background:#eef1f7;
- font-size:28px;
- font-weight:800;
+    padding:10px 16px;
+    border:none;
+    border-radius:6px;
+    background:#111827;
+    color:white;
+    font-size:18px;
+    font-weight:800;
+    cursor:pointer;
 }
 
-.centerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0;}
+.centerGrid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;
+    margin-bottom:12px;
+}
+
 .centerGrid button{
- background:#1e3a8a;
- color:#fff;
- border:none;
- font-size:25px;
- font-weight:800;
- padding:14px;
+    background:#1d4ed8;
+    font-size:18px;
+    padding:12px;
 }
 
-table{
- width:100%;
- border-collapse:collapse;
- font-size:25px;
+.board-wrap{
+    background:white;
+    border:1px solid #cfcfcf;
 }
 
-th,td{
- text-align:center;
- padding:16px;
- border-right:1px solid #bbb;
- white-space:nowrap;
+.board-title{
+    background:black;
+    color:white;
+    text-align:center;
+    font-size:34px;
+    padding:10px;
+    font-weight:900;
 }
 
-th{
- background:#0f2345;
- color:#fff;
- font-size:25px;
+.board-date{
+    text-align:center;
+    font-size:26px;
+    padding:10px 0;
+    font-weight:900;
 }
 
-td:nth-child(10),
-th:nth-child(10){
- border-left:4px solid #000;
+.section-title{
+    background:black;
+    color:white;
+    text-align:center;
+    font-size:28px;
+    padding:8px;
+    margin-top:6px;
+    font-weight:900;
 }
 
-.rankTop{background:#dbeafe;}
-.rankLow{background:#fee2e2;}
-.group{background:#e5e7eb;font-weight:800;}
-
-.signal{width:14px;height:14px;border-radius:50%;margin:auto;}
-.green{background:#22c55e;}
-.yellow{background:#facc15;}
-.red{background:#ef4444;}
-
-.track{
- height:60px;
- background:#ddd;
- border-radius:30px;
- position:relative;
-
- width:100vw;          /* 🔥 화면 기준 */
- margin-left:calc(-50vw + 50%);  /* 🔥 가운데 기준으로 풀 확장 */
+.status-table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
 }
 
-.finish{
- position:absolute;
- left:66%;
- top:0;
- bottom:0;
- width:8px;
- background:repeating-linear-gradient(45deg,black,black 5px,white 5px,white 10px);
+.status-table th{
+    background:black;
+    color:white;
+    border:1px solid #999;
+    padding:4px 2px;
+    font-size:19px;
 }
 
-.runner{
- position:absolute;
- top:-50px;
- text-align:center;
- font-size:72px;
- font-weight:bold;
-}
-.runner span{
- display:block;
- font-size:40px;
+.status-table td{
+    border:1px solid #cfcfcf;
+    padding:3px 2px;
+    text-align:center;
+    font-size:18px;
+    background:#f8f8f8;
+    font-weight:800;
+    letter-spacing:-0.5px;
 }
 
+.rankTop{
+    background:#001eff !important;
+    color:white;
+    font-weight:900;
+}
+
+.rankLow{
+    background:#ff1a1a !important;
+    color:white;
+    font-weight:900;
+}
+
+.groupRow td{
+    background:#d9e6ec !important;
+    font-weight:900;
+}
+.late{
+    background:#ff1f1f !important;
+    color:white !important;
+    font-weight:900;
+}
 .popup{
- position:fixed;
- top:50%;
- left:50%;
- transform:translate(-50%,-50%);
- background:#ffffff;
- padding:0 20px;                 /* 🔥 여백 크게 */
- border-radius:16px;
- display:none;
- width:420px;                 /* 🔥 크기 확대 */
- box-shadow:0 10px 30px rgba(0,0,0,0.25); /* 🔥 고급 느낌 */
- text-align:center;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:white;
+    width:420px;
+    padding:20px;
+    border-radius:12px;
+    display:none;
+    z-index:999;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
 }
 
 .popup h3{
- font-size:34px;              /* 🔥 제목 크게 */
- margin-bottom:20px;
+    font-size:28px;
+    text-align:center;
 }
 
-input{
- width:90%;
- margin:12px 0;
- padding:14px;
- font-size:22px;              /* 🔥 입력창 글자 크게 */
- border-radius:8px;
- border:1px solid #ccc;
+.popup input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    font-size:20px;
+    box-sizing:border-box;
 }
 
 .popup button{
- margin-top:10px;
- padding:14px 20px;
- font-size:20px;              /* 🔥 버튼 크게 */
- font-weight:800;
- border-radius:8px;
-}
-.track-title{
- font-size:42px;
- font-weight:900;
- margin-top:40px;
- letter-spacing:1px;
+    width:100%;
+    margin-top:10px;
 }
 
-.track-label{
- font-size:38px;
- font-weight:900;
- margin:10px 0 5px 5px;
+@media(max-width:768px){
+
+    .board-title{
+        font-size:24px;
+    }
+
+    .section-title{
+        font-size:20px;
+    }
+
+    .status-table th,
+    .status-table td{
+        font-size:14px;
+        padding:4px;
+    }
+
+    button{
+        font-size:14px;
+    }
+
 }
+
 </style>
 </head>
 
@@ -169,38 +199,67 @@ input{
 
 <div class="centerGrid" id="btns"></div>
 
-<h2>강북도매 유/무선 실적</h2>
+
 <h3 id="titleTime"></h3>
 
 <!-- 🔥 여기 시작 -->
 <div id="captureArea">
 
-<table id="tbl">
+<div class="board-wrap">
+
+<div class="board-title">
+강북도매 실적 현황
+</div>
+
+<div class="board-date" id="titleTime"></div>
+
+<!-- 무선 -->
+<div class="section-title">
+무선 실적
+</div>
+
+<table class="status-table" id="wirelessTbl">
 <thead>
 <tr>
-<th></th><th>센터</th>
-<th>무선목표</th><th>무선</th><th>달성율</th><th>순위</th><th>증분</th>
-<th>MNP</th><th>비중</th>
-<th>유선목표</th><th>유선</th><th>달성율</th><th>순위</th><th>증분</th>
-<th>약갱</th>
+<th>센터</th>
+<th>목표</th>
+<th>실적</th>
+<th>달성율</th>
+<th>순위</th>
+<th>증분</th>
+<th>MNP</th>
+<th>비중</th>
+<th>U-MNP</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
-<h3 class="track-title">진행 트랙</h3>
-
-<div class="track-label">무선</div>
-<div class="track">
-<div class="finish"></div>
-<div id="rw" class="runner"><span id="pw"></span>🏃‍➡️</div>
+<!-- 유선 -->
+<div class="section-title">
+유선 실적
 </div>
 
-<div class="track-label">유선</div>
-<div class="track">
-<div class="finish"></div>
-<div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div>
+<table class="status-table" id="lineTbl">
+<thead>
+<tr>
+<th>센터</th>
+<th>목표</th>
+<th>실적</th>
+<th>달성율</th>
+<th>순위</th>
+<th>증분</th>
+<th>약정</th>
+<th>증분</th>
+<th>(순+약)계</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
 </div>
+
+
 
 </div>
 <!-- 🔥 여기 끝 -->
@@ -231,9 +290,13 @@ const db=firebase.database()
 const ADMIN_PW = "2330"
 
 function pct(a,b){
- if(!a||!b) return "-"
- let v=a/b*100
- return v>=100?Math.round(v):(Math.round(v*10)/10)
+
+ if(!a || !b) return "0.0"
+
+ let v = (a/b)*100
+
+ return (Math.round(v*10)/10).toFixed(1)
+
 }
 
 function ratio(a,b){
@@ -255,8 +318,16 @@ function trackPos(p){
 }
 
 function updateTime(){
- let n=new Date()
- titleTime.innerText=`${n.getMonth()+1}월 ${n.getDate()}일 ${n.getHours()}시 기준`
+
+ let n = new Date()
+
+ let mm = n.getMonth()+1
+ let dd = n.getDate()
+ let hh = n.getHours()
+
+ titleTime.innerText =
+ `${mm}/${dd} ${hh}시 기준`
+
 }
 
 function adminReset(){
@@ -293,8 +364,11 @@ function openCenter(c){
 function render(){
 
 
- let tb=document.querySelector("#tbl tbody")
- tb.innerHTML=""
+  let wBody=document.querySelector("#wirelessTbl tbody")
+ let lBody=document.querySelector("#lineTbl tbody")
+
+ wBody.innerHTML=""
+ lBody.innerHTML=""
 
  let wRank=[...centers].map(c=>{
   let s=getData(c),t=targets[c]||{}
@@ -313,76 +387,103 @@ function render(){
   let wr=wRank.findIndex(x=>x.c==c)+1
   let lr=lRank.findIndex(x=>x.c==c)+1
 
-  tb.innerHTML+=`
-  <tr>
-  <td><div class="signal ${signal(s.ts)}"></div></td>
-  <td>${c}</td>
+  wBody.innerHTML += `
+<tr>
+<td class="${signal(s.ts)==='green' ? '' : 'late'}">${c}</td>
+<td>${t.w||0}</td>
+<td>${s.w||0}</td>
+<td>${pct(s.w,t.w)}%</td>
+<td class="${wr<=2?'rankTop':wr>=8?'rankLow':''}">${wr}</td>
+<td>${(s.w||0)-(s.prevW||0)}</td>
+<td>${s.m||0}</td>
+<td>${ratio(s.m,s.w)}%</td>
+<td>${s.m||0}</td>
+</tr>
+`
 
-  <td>${t.w||0}</td>
-  <td>${s.w||0}</td>
-  <td>${pct(s.w,t.w)}%</td>
-  <td class="${wr<=2?'rankTop':wr>=8?'rankLow':''}">${wr}</td>
-  <td>${(s.w||0)-(s.prevW||0)}</td>
+lBody.innerHTML += `
+<tr>
+<td class="${signal(s.ts)==='green' ? '' : 'late'}">${c}</td>
+<td>${t.l||0}</td>
+<td>${s.l||0}</td>
+<td>${pct(s.l,t.l)}%</td>
+<td class="${lr<=2?'rankTop':lr>=8?'rankLow':''}">${lr}</td>
+<td>${(s.l||0)-(s.prevL||0)}</td>
+<td>${s.r||0}</td>
+<td>${(s.r||0)-(s.prevR||0)}</td>
+<td>${(s.l||0)+(s.r||0)}</td>
+</tr>
+`
+})
 
-  <td>${s.m||0}</td>
-  <td>${ratio(s.m,s.w)}%</td>
+wBody.innerHTML += makeSum("강북도매",centers,"wireless")
+wBody.innerHTML += makeSum("강북상권",["서대문","의정부","고양","구리","노원","광진"],"wireless")
+wBody.innerHTML += makeSum("강원상권",["강릉","원주","춘천"],"wireless")
 
-  <td>${t.l||0}</td>
-  <td>${s.l||0}</td>
-  <td>${pct(s.l,t.l)}%</td>
-  <td class="${lr<=2?'rankTop':lr>=8?'rankLow':''}">${lr}</td>
-  <td>${(s.l||0)-(s.prevL||0)}</td>
+lBody.innerHTML += makeSum("강북도매",centers,"line")
+lBody.innerHTML += makeSum("강북상권",["서대문","의정부","고양","구리","노원","광진"],"line")
+lBody.innerHTML += makeSum("강원상권",["강릉","원주","춘천"],"line")
 
-  <td>${s.r||0}</td>
-  </tr>`
 
-  sum.w+=s.w||0; sum.l+=s.l||0
-  sum.tw+=t.w||0; sum.tl+=t.l||0
- })
 
-function makeSum(name,list){
+ updateTime()
+}
+function makeSum(name,list,type){
+
  let w=0,l=0,tw=0,tl=0,m=0,r=0
- let prevW=0, prevL=0
+ let prevW=0, prevL=0, prevR=0
 
  list.forEach(c=>{
-  let s=getData(c),t=targets[c]||{}
-  w+=s.w||0; l+=s.l||0
-  tw+=t.w||0; tl+=t.l||0
-  m+=s.m||0; r+=s.r||0
-  prevW+=s.prevW||0; prevL+=s.prevL||0
+   let s=getData(c),t=targets[c]||{}
+
+   w+=s.w||0
+   l+=s.l||0
+
+   tw+=t.w||0
+   tl+=t.l||0
+
+   m+=s.m||0
+   r+=s.r||0
+
+   prevW+=s.prevW||0
+   prevL+=s.prevL||0
+   prevR+=s.prevR||0
  })
 
  let diffW = w - prevW
  let diffL = l - prevL
+ let diffR = r - prevR
+
+ if(type==="wireless"){
+   return `
+   <tr class="groupRow">
+   <td>${name}</td>
+   <td>${tw}</td>
+   <td>${w}</td>
+   <td>${pct(w,tw)}%</td>
+   <td>-</td>
+   <td>${diffW}</td>
+   <td>${m}</td>
+   <td>${ratio(m,w)}%</td>
+   <td>${m}</td>
+   </tr>
+   `
+ }
 
  return `
- <tr class="group">
- <td></td><td>${name}</td>
- <td>${tw}</td><td>${w}</td><td>${pct(w,tw)}%</td>
- <td>-</td><td>${diffW}</td>
- <td>${m}</td><td>${ratio(m,w)}%</td>
- <td>${tl}</td><td>${l}</td><td>${pct(l,tl)}%</td>
- <td>-</td><td>${diffL}</td>
+ <tr class="groupRow">
+ <td>${name}</td>
+ <td>${tl}</td>
+ <td>${l}</td>
+ <td>${pct(l,tl)}%</td>
+ <td>-</td>
+ <td>${diffL}</td>
  <td>${r}</td>
- </tr>`
+ <td>${diffR}</td>
+ <td>${l+r}</td>
+ </tr>
+ `
 }
-
-tb.innerHTML+=makeSum("강북도매 계",centers)
-tb.innerHTML+=makeSum("강북상권 계",["서대문","의정부","고양","구리","노원","광진"])
-tb.innerHTML+=makeSum("강원상권 계",["강릉","원주","춘천"])
-
- let wPct=sum.tw?Math.round(sum.w/sum.tw*100):0
- let lPct=sum.tl?Math.round(sum.l/sum.tl*100):0
-
- pw.innerText=wPct+"%"
- pl.innerText=lPct+"%"
-
- rw.style.left=trackPos(wPct)+"%"
- rl.style.left=trackPos(lPct)+"%"
-
- updateTime()
-}
-
 function loadData(){
  db.ref().on("value",snap=>{
   cache=snap.val()||{}
@@ -393,7 +494,9 @@ function loadData(){
 function save(){
  let s=getData(cur)
  db.ref("c_"+cur).update({
-  prevW:s.w||0,prevL:s.l||0,
+  prevW:s.w||0,
+prevL:s.l||0,
+prevR:s.r||0,
   w:Number(w.value||0),
   m:Number(m.value||0),
   l:Number(l.value||0),
