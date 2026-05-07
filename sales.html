@@ -93,16 +93,18 @@ button{
     background:black;
     color:white;
     border:1px solid #999;
-    padding:8px 4px;
-    font-size:22px;
+    padding:4px 2px;
+    font-size:19px;
 }
 
 .status-table td{
     border:1px solid #cfcfcf;
-    padding:6px 4px;
+    padding:3px 2px;
     text-align:center;
-    font-size:22px;
+    font-size:18px;
     background:#f8f8f8;
+    font-weight:800;
+    letter-spacing:-0.5px;
 }
 
 .rankTop{
@@ -193,7 +195,7 @@ button{
 
 <div class="centerGrid" id="btns"></div>
 
-<h2>강북도매 유/무선 실적</h2>
+
 <h3 id="titleTime"></h3>
 
 <!-- 🔥 여기 시작 -->
@@ -284,9 +286,13 @@ const db=firebase.database()
 const ADMIN_PW = "2330"
 
 function pct(a,b){
- if(!a||!b) return "-"
- let v=a/b*100
- return v>=100?Math.round(v):(Math.round(v*10)/10)
+
+ if(!a || !b) return "0.0"
+
+ let v = (a/b)*100
+
+ return (Math.round(v*10)/10).toFixed(1)
+
 }
 
 function ratio(a,b){
@@ -308,8 +314,16 @@ function trackPos(p){
 }
 
 function updateTime(){
- let n=new Date()
- titleTime.innerText=`${n.getMonth()+1}월 ${n.getDate()}일 ${n.getHours()}시 기준`
+
+ let n = new Date()
+
+ let mm = n.getMonth()+1
+ let dd = n.getDate()
+ let hh = n.getHours()
+
+ titleTime.innerText =
+ `${mm}/${dd} ${hh}시 기준`
+
 }
 
 function adminReset(){
@@ -398,13 +412,13 @@ lBody.innerHTML += `
 `
 })
 
-wBody.innerHTML += makeSum("강북도매 계",centers,"wireless")
-wBody.innerHTML += makeSum("강북상권 계",["서대문","의정부","고양","구리","노원","광진"],"wireless")
-wBody.innerHTML += makeSum("강원상권 계",["강릉","원주","춘천"],"wireless")
+wBody.innerHTML += makeSum("강북도매",centers,"wireless")
+wBody.innerHTML += makeSum("강북상권",["서대문","의정부","고양","구리","노원","광진"],"wireless")
+wBody.innerHTML += makeSum("강원상권",["강릉","원주","춘천"],"wireless")
 
-lBody.innerHTML += makeSum("강북도매 계",centers,"line")
-lBody.innerHTML += makeSum("강북상권 계",["서대문","의정부","고양","구리","노원","광진"],"line")
-lBody.innerHTML += makeSum("강원상권 계",["강릉","원주","춘천"],"line")
+lBody.innerHTML += makeSum("강북도매",centers,"line")
+lBody.innerHTML += makeSum("강북상권",["서대문","의정부","고양","구리","노원","광진"],"line")
+lBody.innerHTML += makeSum("강원상권",["강릉","원주","춘천"],"line")
 
 
 
