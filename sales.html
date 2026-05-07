@@ -256,7 +256,7 @@ button{
 <div class="centerGrid" id="btns"></div>
 
 
-<h3 id="titleTime"></h3>
+
 
 <!-- 🔥 여기 시작 -->
 <div id="captureArea">
@@ -392,7 +392,7 @@ function adminReset(){
  if(pw!=="2330") return
  if(confirm("입력값 초기화?")){
   centers.forEach(c=>{
-   db.ref("c_"+c).update({w:0,m:0,l:0,r:0,prevW:0,prevL:0,ts:0})
+   db.ref("c_"+c).update({w:0,m:0,u:0,l:0,r:0,prevW:0,prevL:0,ts:0})
   })
  }
 }
