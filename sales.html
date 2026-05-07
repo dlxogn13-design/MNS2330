@@ -324,6 +324,7 @@ button{
 <h3 id="pTitle"></h3>
 <input id="w" placeholder="무선">
 <input id="m" placeholder="MNP">
+<input id="u" placeholder="U-MNP">
 <input id="l" placeholder="유선">
 <input id="r" placeholder="약갱">
 <br>
@@ -382,7 +383,7 @@ function updateTime(){
  let hh = n.getHours()
 
  titleTime.innerText =
- `${mm}/${dd} ${hh}시 기준`
+`${mm}/${dd}일 ${String(hh).padStart(2,'0')}시 기준`
 
 }
 
@@ -411,6 +412,7 @@ function openCenter(c){
  let s=getData(c)
  w.value=s.w||""
  m.value=s.m||""
+ u.value=s.u||""
  l.value=s.l||""
  r.value=s.r||""
  pTitle.innerText=c
@@ -453,7 +455,7 @@ function render(){
 <td>${(s.w||0)-(s.prevW||0)}</td>
 <td>${s.m||0}</td>
 <td>${ratio(s.m,s.w)}%</td>
-<td>${s.m||0}</td>
+<td>${s.u||0}</td>
 </tr>
 `
 
@@ -486,7 +488,7 @@ lBody.innerHTML += makeSum("강원상권",["강릉","원주","춘천"],"line")
 }
 function makeSum(name,list,type){
 
- let w=0,l=0,tw=0,tl=0,m=0,r=0
+ let w=0,l=0,tw=0,tl=0,m=0,u=0,r=0
  let prevW=0, prevL=0, prevR=0
 
  list.forEach(c=>{
@@ -521,7 +523,7 @@ function makeSum(name,list,type){
    <td>${diffW}</td>
    <td>${m}</td>
    <td>${ratio(m,w)}%</td>
-   <td>${m}</td>
+   <td>${u}</td>
    </tr>
    `
  }
@@ -555,6 +557,7 @@ prevL:s.l||0,
 prevR:s.r||0,
   w:Number(w.value||0),
   m:Number(m.value||0),
+  u:Number(u.value||0),    
   l:Number(l.value||0),
   r:Number(r.value||0),
   ts:Date.now()
