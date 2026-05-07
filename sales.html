@@ -253,19 +253,7 @@ button{
 
 </div>
 
-<h3 class="track-title">진행 트랙</h3>
 
-<div class="track-label">무선</div>
-<div class="track">
-<div class="finish"></div>
-<div id="rw" class="runner"><span id="pw"></span>🏃‍➡️</div>
-</div>
-
-<div class="track-label">유선</div>
-<div class="track">
-<div class="finish"></div>
-<div id="rl" class="runner"><span id="pl"></span>🏃‍➡️</div>
-</div>
 
 </div>
 <!-- 🔥 여기 끝 -->
@@ -404,11 +392,11 @@ lBody.innerHTML += `
 <td class="${lr<=2?'rankTop':lr>=8?'rankLow':''}">${lr}</td>
 <td>${(s.l||0)-(s.prevL||0)}</td>
 <td>${s.r||0}</td>
-<td>${(s.l||0)-(s.prevL||0)}</td>
+<td>${(s.r||0)-(s.prevR||0)}</td>
 <td>${(s.l||0)+(s.r||0)}</td>
 </tr>
 `
-}
+})
 
 wBody.innerHTML += makeSum("강북도매 계",centers,"wireless")
 wBody.innerHTML += makeSum("강북상권 계",["서대문","의정부","고양","구리","노원","광진"],"wireless")
@@ -418,18 +406,66 @@ lBody.innerHTML += makeSum("강북도매 계",centers,"line")
 lBody.innerHTML += makeSum("강북상권 계",["서대문","의정부","고양","구리","노원","광진"],"line")
 lBody.innerHTML += makeSum("강원상권 계",["강릉","원주","춘천"],"line")
 
- let wPct=sum.tw?Math.round(sum.w/sum.tw*100):0
- let lPct=sum.tl?Math.round(sum.l/sum.tl*100):0
 
- pw.innerText=wPct+"%"
- pl.innerText=lPct+"%"
-
- rw.style.left=trackPos(wPct)+"%"
- rl.style.left=trackPos(lPct)+"%"
 
  updateTime()
 }
+function makeSum(name,list,type){
 
+ let w=0,l=0,tw=0,tl=0,m=0,r=0
+ let prevW=0, prevL=0, prevR=0
+
+ list.forEach(c=>{
+   let s=getData(c),t=targets[c]||{}
+
+   w+=s.w||0
+   l+=s.l||0
+
+   tw+=t.w||0
+   tl+=t.l||0
+
+   m+=s.m||0
+   r+=s.r||0
+
+   prevW+=s.prevW||0
+   prevL+=s.prevL||0
+   prevR+=s.prevR||0
+ })
+
+ let diffW = w - prevW
+ let diffL = l - prevL
+ let diffR = r - prevR
+
+ if(type==="wireless"){
+   return `
+   <tr class="groupRow">
+   <td>${name}</td>
+   <td>${tw}</td>
+   <td>${w}</td>
+   <td>${pct(w,tw)}%</td>
+   <td>-</td>
+   <td>${diffW}</td>
+   <td>${m}</td>
+   <td>${ratio(m,w)}%</td>
+   <td>${m}</td>
+   </tr>
+   `
+ }
+
+ return `
+ <tr class="groupRow">
+ <td>${name}</td>
+ <td>${tl}</td>
+ <td>${l}</td>
+ <td>${pct(l,tl)}%</td>
+ <td>-</td>
+ <td>${diffL}</td>
+ <td>${r}</td>
+ <td>${diffR}</td>
+ <td>${l+r}</td>
+ </tr>
+ `
+}
 function loadData(){
  db.ref().on("value",snap=>{
   cache=snap.val()||{}
@@ -440,7 +476,9 @@ function loadData(){
 function save(){
  let s=getData(cur)
  db.ref("c_"+cur).update({
-  prevW:s.w||0,prevL:s.l||0,
+  prevW:s.w||0,
+prevL:s.l||0,
+prevR:s.r||0,
   w:Number(w.value||0),
   m:Number(m.value||0),
   l:Number(l.value||0),
