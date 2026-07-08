@@ -741,7 +741,25 @@ tbody tr:last-child td{
         padding:11px 8px;
 
     }
+.summary-table th,
+.summary-table td,
+.member-table th,
+.member-table td{
 
+    white-space:nowrap;
+
+}
+.member-table td:nth-child(1){
+
+    width:90px;
+
+}
+
+.member-table td:nth-child(2){
+
+    width:90px;
+
+}
 }
 
 
