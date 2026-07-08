@@ -1,1 +1,60 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>약정갱신 운영센터</title>
+<link rel="stylesheet" href="renewal.css">
+</head>
+<body>
+<div class="container">
+<header class="header">
+<h1>📞 약정갱신 운영센터</h1>
+<div class="date-area">
+<span id="today"></span>
+<button onclick="location.href='index.html'">🏠 메인가기</button>
+</div>
+</header>
+
+<section class="dashboard">
+<div class="card"><div>📋</div><h2>0</h2><p>권매</p></div>
+<div class="card"><div>📨</div><h2>0</h2><p>전달</p></div>
+<div class="card"><div>✅</div><h2>0</h2><p>성공</p></div>
+<div class="card"><div>📈</div><h2>0%</h2><p>성공률</p></div>
+</section>
+
+<section class="briefing">
+<h2>🤖 강북이 브리핑</h2>
+<p>오늘 데이터를 불러오는 중입니다.</p>
+</section>
+
+<section class="menu-grid">
+<div class="menu-card" onclick="location.href='renewal_status.html'">
+<h3>📊 권매 현황</h3>
+<p>권매 입력 및 센터별 현황</p>
+</div>
+<div class="menu-card" onclick="location.href='renewal_growth.html'">
+<h3>👤 영업M 성장 리포트</h3>
+<p>월 누적 · 센터 비교 · 그래프</p>
+</div>
+<div class="menu-card" onclick="location.href='renewal_calendar.html'">
+<h3>📅 AI 비교분석</h3>
+<p>전일/전주/전월 비교</p>
+</div>
+<div class="menu-card">
+<h3>📄 운영보고서</h3>
+<p>준비중</p>
+</div>
+</section>
+
+<footer>Renewal Management System V0.1</footer>
+</div>
+<script>
+const d=new Date();
+const w=["일","월","화","수","목","금","토"];
+document.getElementById("today").textContent=
+`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")} (${w[d.getDay()]})`;
+</script>
+</body>
+</html>
