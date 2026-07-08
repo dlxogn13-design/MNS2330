@@ -361,7 +361,24 @@ tbody tr:last-child td{
 
 .member-table input{
 
-    width:70px;
+    width:100%;
+
+    min-width:45px;
+
+    max-width:60px;
+   .member-table td{
+
+    vertical-align:middle;
+
+}
+
+.member-table td:nth-child(3),
+.member-table td:nth-child(4),
+.member-table td:nth-child(5){
+
+    width:60px;
+
+}
 
     height:38px;
 
