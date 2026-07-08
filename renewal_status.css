@@ -269,7 +269,7 @@ table{
 
     border-collapse:collapse;
 
-    min-width:900px;
+    table-layout:fixed;
 
     background:#fff;
 
@@ -730,11 +730,7 @@ tbody tr:last-child td{
 
     }
 
-    table{
-
-        min-width:760px;
-
-    }
+    
 
     thead th,
 
