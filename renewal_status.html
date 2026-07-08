@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>📊 권매 현황</title>
+
+    <link rel="stylesheet" href="renewal_status.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="page">
+
+    <!-- ===========================
+            HEADER
+    ============================ -->
+
+    <header class="top-header">
+
+        <div class="title-area">
+
+            <h1>📊 권매 현황</h1>
+
+            <p>
+                Renewal Management System
+            </p>
+
+        </div>
+
+        <div class="top-buttons">
+
+            <button
+                id="btnHome"
+                class="btn btn-home">
+
+                🏠 메인가기
+
+            </button>
+
+            <button
+                id="btnRefresh"
+                class="btn btn-refresh">
+
+                🔄 새로고침
+
+            </button>
+
+            <button
+                id="btnReset"
+                class="btn btn-danger">
+
+                🗑 초기화
+
+            </button>
+
+            <button
+                id="btnTelegram"
+                class="btn btn-primary">
+
+                📤 권매방 전송
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- ===========================
+            SEARCH
+    ============================ -->
+
+    <section class="search-box">
+
+        <div class="search-item">
+
+            <label>
+
+                센터
+
+            </label>
+
+            <select id="centerSelect">
+
+                <option value="">전체센터</option>
+
+                <option>서대문</option>
+
+                <option>의정부</option>
+
+                <option>고양</option>
+
+                <option>구리</option>
+
+                <option>노원</option>
+
+                <option>광진</option>
+
+                <option>강릉</option>
+
+                <option>원주</option>
+
+                <option>춘천</option>
+
+            </select>
+
+        </div>
+
+
+
+        <div class="search-item">
+
+            <label>
+
+                성명 검색
+
+            </label>
+
+            <input
+                type="text"
+                id="searchName"
+                placeholder="성명을 입력하세요">
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ===========================
+          센터 요약
+    ============================ -->
+
+    <section class="summary-section">
+
+        <div class="section-title">
+
+            센터별 권매 현황
+
+        </div>
+
+        <div class="table-wrap">
+
+            <table
+                class="summary-table"
+                id="summaryTable">
+
+                <thead>
+
+                <tr>
+
+                    <th>센터</th>
+
+                    <th>권매</th>
+
+                    <th>전달</th>
+
+                    <th>성공</th>
+
+                    <th>성공률</th>
+
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                <tr>
+
+                    <td>서대문</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0.0%</td>
+
+                </tr>
+
+                <tr>
+
+                    <td>의정부</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0.0%</td>
+
+                </tr>
+
+                <tr>
+
+                    <td>고양</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0.0%</td>
+
+                </tr>
+
+                <tr>
+
+                    <td>구리</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0.0%</td>
+
+                </tr>
+
+                <tr>
+
+                    <td>노원</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0.0%</td>
+
+                </tr>
+                                <tr>
+
+                    <td>광진</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0.0%</td>
+
+                </tr>
+
+                <tr>
+
+                    <td>강릉</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0.0%</td>
+
+                </tr>
+
+                <tr>
+
+                    <td>원주</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0.0%</td>
+
+                </tr>
+
+                <tr>
+
+                    <td>춘천</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0</td>
+
+                    <td>0.0%</td>
+
+                </tr>
+
+                <tr class="total-row">
+
+                    <td>합계</td>
+
+                    <td id="sumRenewal">0</td>
+
+                    <td id="sumTransfer">0</td>
+
+                    <td id="sumSuccess">0</td>
+
+                    <td id="sumRate">0.0%</td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+
+
+
+    <!-- ===========================
+            담당M 입력
+    ============================ -->
+
+    <section class="input-section">
+
+        <div class="section-title">
+
+            담당M 권매 입력
+
+        </div>
+
+        <div class="table-wrap">
+
+            <table
+                id="memberTable"
+                class="member-table">
+
+                <thead>
+
+                <tr>
+
+                    <th>센터</th>
+
+                    <th>영업M</th>
+
+                    <th>권매</th>
+
+                    <th>전달</th>
+
+                    <th>성공</th>
+
+                    <th>성공률</th>
+
+                    <th>입력</th>
+
+                </tr>
+
+                </thead>
+
+                <tbody id="memberBody">
+
+                    <!-- JS에서 생성 -->
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+
+
+
+    <!-- ===========================
+            저장 완료 Toast
+    ============================ -->
+
+    <div
+        id="toast"
+        class="toast">
+
+        저장되었습니다.
+
+    </div>
+
+
+
+
+
+    <!-- ===========================
+            초기화 비밀번호
+    ============================ -->
+
+    <div
+        id="passwordModal"
+        class="modal hidden">
+
+        <div class="modal-content">
+
+            <h2>
+
+                관리자 인증
+
+            </h2>
+
+            <p>
+
+                비밀번호를 입력하세요.
+
+            </p>
+
+            <input
+                type="password"
+                id="adminPassword"
+                placeholder="비밀번호">
+
+            <div class="modal-buttons">
+
+                <button
+                    id="passwordConfirm"
+                    class="btn btn-primary">
+
+                    확인
+
+                </button>
+
+                <button
+                    id="passwordCancel"
+                    class="btn">
+
+                    취소
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+        <!-- ===========================
+            권매방 전송 비밀번호
+    ============================ -->
+
+    <div
+        id="telegramModal"
+        class="modal hidden">
+
+        <div class="modal-content">
+
+            <h2>
+
+                권매방 전송
+
+            </h2>
+
+            <p>
+
+                비밀번호를 입력하세요.
+
+            </p>
+
+            <input
+                type="password"
+                id="telegramPassword"
+                placeholder="비밀번호">
+
+            <div class="modal-buttons">
+
+                <button
+                    id="telegramConfirm"
+                    class="btn btn-primary">
+
+                    전송
+
+                </button>
+
+                <button
+                    id="telegramCancel"
+                    class="btn">
+
+                    취소
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+
+    <!-- ===========================
+            Loading
+    ============================ -->
+
+    <div
+        id="loading"
+        class="loading hidden">
+
+        <div class="spinner"></div>
+
+        <p>
+
+            데이터를 처리중입니다...
+
+        </p>
+
+    </div>
+
+
+
+
+
+</div>
+
+<script src="renewal.js"></script>
+
+</body>
+
+</html>
