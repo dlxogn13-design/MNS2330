@@ -207,26 +207,25 @@ function bindEvents(){
         renewalInput.addEventListener("input",calculateRate);
         successInput.addEventListener("input",calculateRate);
 
-        saveButton.addEventListener("click",()=>{
+    saveButton.addEventListener("click",()=>{
 
-            saveButton.innerHTML="저장 완료";
+    updateSummary();
 
-            saveButton.disabled=true;
+    showToast();
 
-            saveButton.style.background="#28a745";
+    saveButton.innerHTML="✅";
 
-            setTimeout(()=>{
+    saveButton.style.background="#28a745";
 
-                saveButton.innerHTML="✅";
+    setTimeout(()=>{
 
-            },500);
+        saveButton.innerHTML="저장";
 
-            updateSummary();
+        saveButton.style.background="";
 
-            showToast();
+    },1200);
 
-        });
-
+});
     });
 
 }
@@ -414,7 +413,7 @@ document
 .getElementById("btnRefresh")
 .addEventListener("click",()=>{
 
-    location.reload();
+    alert("Firebase 연동 후 사용 가능합니다.");
 
 });
 
