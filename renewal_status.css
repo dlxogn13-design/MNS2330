@@ -406,23 +406,32 @@ tbody tr:last-child td{
 
 .member-table button{
 
+    width:52px;
+
+    height:34px;
+
     border:none;
 
     background:#2d7ef7;
 
     color:#fff;
 
-    border-radius:8px;
-
-    padding:9px 16px;
+    border-radius:6px;
 
     cursor:pointer;
 
-    font-size:14px;
+    font-size:12px;
 
     font-weight:600;
 
     transition:.2s;
+
+    padding:0;
+
+}
+.member-table td:last-child{
+
+    width:58px;
 
 }
 
