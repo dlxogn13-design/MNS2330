@@ -77,5 +77,28 @@ const w=["일","월","화","수","목","금","토"];
 document.getElementById("today").textContent=
 `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")} (${w[d.getDay()]})`;
 </script>
+<script>
+
+const dashboard =
+JSON.parse(localStorage.getItem("renewalDashboard"));
+
+if(dashboard){
+
+    document.getElementById("homeRenewal").textContent =
+    dashboard.renewal;
+
+    document.getElementById("homeTransfer").textContent =
+    dashboard.transfer;
+
+    document.getElementById("homeSuccess").textContent =
+    dashboard.success;
+
+    document.getElementById("homeRate").textContent =
+    dashboard.rate + "%";
+
+}
+
+</script>
+    
 </body>
 </html>
