@@ -306,7 +306,23 @@ function updateSummary(){
     document.getElementById("sumTransfer").textContent = totalTransfer;
     document.getElementById("sumSuccess").textContent = totalSuccess;
     document.getElementById("sumRate").textContent = totalRate.toFixed(1)+"%";
+/* ======================================================
+   HOME 대시보드 연동
+====================================================== */
 
+const dashboardData = {
+
+    renewal: totalRenewal,
+    transfer: totalTransfer,
+    success: totalSuccess,
+    rate: totalRate.toFixed(1)
+
+};
+
+localStorage.setItem(
+    "renewalDashboard",
+    JSON.stringify(dashboardData)
+);
 }
 /* ======================================================
    Toast
