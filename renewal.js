@@ -222,6 +222,22 @@ function bindEvents(){
 
     updateSummary();
 
+    const center = row.cells[0].textContent.trim();
+    const name = row.cells[1].textContent.trim();
+
+    const renewal = Number(renewalInput.value) || 0;
+    const transfer = Number(transferInput.value) || 0;
+    const success = Number(successInput.value) || 0;
+
+    db.ref("renewal/"+center+"/"+name).set({
+
+        renewal: renewal,
+        transfer: transfer,
+        success: success,
+        updatedAt: Date.now()
+
+    });
+
     showToast();
 
     saveButton.innerHTML="✅";
