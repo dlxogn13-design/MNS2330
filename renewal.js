@@ -229,14 +229,24 @@ function bindEvents(){
     const transfer = Number(transferInput.value) || 0;
     const success = Number(successInput.value) || 0;
 
-    db.ref("renewal/"+center+"/"+name).set({
+   db.ref("renewal/"+center+"/"+name).set({
 
-        renewal: renewal,
-        transfer: transfer,
-        success: success,
-        updatedAt: Date.now()
+    renewal: renewal,
+    transfer: transfer,
+    success: success,
+    updatedAt: Date.now()
 
-    });
+})
+.then(()=>{
+
+    console.log("Firebase 저장 성공");
+
+})
+.catch((err)=>{
+
+    console.error("Firebase 저장 실패", err);
+
+});
 
     showToast();
 
