@@ -180,6 +180,8 @@ function createMemberTable(){
 
     bindEvents();
 
+loadFirebase();
+
 }
 /* ======================================================
    이벤트 등록
@@ -619,7 +621,50 @@ document
 
 });
 
+/* ======================================================
+   Firebase 불러오기
+====================================================== */
 
+function loadFirebase(){
+
+    db.ref("renewal").once("value",(snapshot)=>{
+
+        const data = snapshot.val();
+
+        if(!data) return;
+
+        const rows = memberBody.querySelectorAll("tr");
+
+        rows.forEach(row=>{
+
+            const center = row.cells[0].textContent.trim();
+            const name = row.cells[1].textContent.trim();
+
+            if(
+                data[center] &&
+                data[center][name]
+            ){
+
+                const item = data[center][name];
+
+                row.querySelector(".renewal").value =
+                    item.renewal || 0;
+
+                row.querySelector(".transfer").value =
+                    item.transfer || 0;
+
+                row.querySelector(".success").value =
+                    item.success || 0;
+
+            }
+
+        });
+
+        updateSummary();
+
+    });
+
+}
 
 /* ======================================================
    END
