@@ -4,7 +4,18 @@
    V0.1
 ====================================================== */
 
+/* ======================================================
+   Firebase
+====================================================== */
+
+firebase.initializeApp({
+    databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
+});
+
+const db = firebase.database();
+
 const ADMIN_PASSWORD = "2330";
+
 
 /* ======================================================
    센터 목록
