@@ -452,9 +452,19 @@ function resetAllData(){
 
     });
 
+    db.ref("renewal").remove()
+.then(()=>{
+
     updateSummary();
 
     showToast();
+
+})
+.catch((err)=>{
+
+    console.error(err);
+
+});
 
 }
 
