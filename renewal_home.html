@@ -84,11 +84,13 @@ document.getElementById("today").textContent=
 </script>
 <script>
 
-<script>
+if (!firebase.apps.length) {
 
-firebase.initializeApp({
-    databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
-});
+    firebase.initializeApp({
+        databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
+    });
+
+}
 
 const db = firebase.database();
 
