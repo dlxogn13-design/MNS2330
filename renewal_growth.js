@@ -246,7 +246,15 @@ function updateAI(list){
 
     }
 
-    const top=list[0];
+const topRate = list[0].rate;
+const topSuccess = list[0].success;
+const topRenewal = list[0].renewal;
+
+const topMembers = list.filter(item =>
+    item.rate === topRate &&
+    item.success === topSuccess &&
+    item.renewal === topRenewal
+);
 
     const avg=
         list.reduce((a,b)=>a+b.rate,0)/list.length;
@@ -254,8 +262,8 @@ function updateAI(list){
     const low=
         [...list].sort((a,b)=>a.rate-b.rate)[0];
 
-    document.getElementById("aiTop").textContent=
-        `🏆 우수 담당자 : ${top.name} (${top.rate.toFixed(1)}%)`;
+    document.getElementById("aiTop").textContent =
+`🏆 우수 담당자 : ${topMembers.map(x=>x.name).join(", ")} (${topRate.toFixed(1)}%)`;
 
     document.getElementById("aiCenter").textContent=
     `🎯 전체 평균 성공률 : ${avg.toFixed(1)}%`;
