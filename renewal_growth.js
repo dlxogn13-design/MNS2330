@@ -163,7 +163,8 @@ function renderGrowth(data){
 <td>
 
 ${item.name}
-
+<span class="center-name">(${item.center})</span>
+</td>
 <br>
 
 <span class="center-name">
