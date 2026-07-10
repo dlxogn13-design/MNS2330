@@ -214,10 +214,10 @@ function updateAI(list){
         `🏆 우수 담당자 : ${top.name} (${top.rate.toFixed(1)}%)`;
 
     document.getElementById("aiCenter").textContent=
-        `📊 전체 평균 성공률 : ${avg.toFixed(1)}%`;
+    `🎯 전체 평균 성공률 : ${avg.toFixed(1)}%`;
 
-    document.getElementById("aiImprove").textContent=
-        `📈 개선 대상 : ${low.name} (${low.rate.toFixed(1)}%)`;
+document.getElementById("aiImprove").textContent=
+    `⚠️ 개선 대상 : ${low.name} (${low.rate.toFixed(1)}%)`;
 
 }
 
