@@ -101,20 +101,54 @@ function renderGrowth(data){
 
     list.sort((a,b)=>{
 
-        if(b.rate!==a.rate){
+    // 성공률 우선
+    if(b.rate!==a.rate){
 
-            return b.rate-a.rate;
+        return b.rate-a.rate;
 
-        }
+    }
+
+    // 성공건수
+    if(b.success!==a.success){
 
         return b.success-a.success;
 
-    });
+    }
+
+    // 권매건수
+
+    return b.renewal-a.renewal;
+
+});
 
     let totalRenewal=0;
     let totalTransfer=0;
     let totalSuccess=0;
+    let rank = 1;
+    let displayRank = 1;
+   
       list.forEach((item,index)=>{
+
+    if(index>0){
+
+        const prev=list[index-1];
+
+        if(
+            item.rate===prev.rate &&
+            item.success===prev.success &&
+            item.renewal===prev.renewal
+        ){
+
+            displayRank=rank;
+
+        }else{
+
+            rank=index+1;
+            displayRank=rank;
+
+        }
+
+    }
 
         totalRenewal += item.renewal;
         totalTransfer += item.transfer;
@@ -124,7 +158,16 @@ function renderGrowth(data){
 
         <tr>
 
-            <td>${index+1}</td>
+            <td>
+
+${displayRank===rank && index>0 && list[index-1] &&
+item.rate===list[index-1].rate &&
+item.success===list[index-1].success &&
+item.renewal===list[index-1].renewal
+? `공동 ${displayRank}`
+: displayRank}
+
+</td>
 
             <td>${item.center}</td>
 
