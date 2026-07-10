@@ -189,3 +189,80 @@ body{
     border-top:2px solid #4f7cff;
 
 }
+.ai-section{
+
+    margin-bottom:20px;
+
+}
+
+.ai-card{
+
+    background:#fff;
+    border-radius:14px;
+    padding:16px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+
+}
+
+.ai-card ul{
+
+    list-style:none;
+
+}
+
+.ai-card li{
+
+    padding:8px 0;
+    border-bottom:1px solid #f0f0f0;
+    font-size:14px;
+    line-height:1.5;
+
+}
+
+.ai-card li:last-child{
+
+    border-bottom:none;
+
+}
+
+footer{
+
+    text-align:center;
+    color:#888;
+    font-size:12px;
+    padding:20px 0;
+
+}
+
+/* ==========================
+   Mobile
+========================== */
+
+@media(max-width:480px){
+
+    .page{
+
+        padding:12px;
+
+    }
+
+    .top-header{
+
+        flex-direction:column;
+        gap:12px;
+
+    }
+
+    .top-buttons{
+
+        width:100%;
+
+    }
+
+    .btn{
+
+        flex:1;
+
+    }
+
+}
