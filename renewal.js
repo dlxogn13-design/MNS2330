@@ -349,20 +349,7 @@ function updateSummary(){
    HOME 대시보드 연동
 ====================================================== */
 
-const dashboardData = {
 
-    renewal: totalRenewal,
-    transfer: totalTransfer,
-    success: totalSuccess,
-    rate: totalRate.toFixed(1)
-
-};
-
-localStorage.setItem(
-    "renewalDashboard",
-    JSON.stringify(dashboardData)
-);
-}
 /* ======================================================
    Toast
 ====================================================== */
