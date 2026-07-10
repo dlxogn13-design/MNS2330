@@ -164,8 +164,7 @@ ${displayRank===rank && index>0 && list[index-1] &&
 item.rate===list[index-1].rate &&
 item.success===list[index-1].success &&
 item.renewal===list[index-1].renewal
-? `공동 ${displayRank}`
-: displayRank}
+<td>${displayRank}</td>
 
 </td>
 
