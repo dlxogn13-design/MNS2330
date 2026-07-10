@@ -145,7 +145,7 @@ body{
 
     width:100%;
     border-collapse:collapse;
-    min-width:650px;
+    table-layout:fixed;
 
 }
 
@@ -155,7 +155,8 @@ body{
     color:#fff;
     font-size:13px;
     font-weight:600;
-    padding:12px 8px;
+    padding:8px 4px;
+    font-size:12px;
     text-align:center;
     white-space:nowrap;
 
@@ -164,9 +165,9 @@ body{
 .growth-table td{
 
     border-bottom:1px solid #ececec;
-    padding:10px 8px;
+    padding:6px 4px;
     text-align:center;
-    font-size:13px;
+    font-size:12px;
     white-space:nowrap;
 
 }
