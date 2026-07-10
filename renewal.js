@@ -345,6 +345,8 @@ function updateSummary(){
     document.getElementById("sumTransfer").textContent = totalTransfer;
     document.getElementById("sumSuccess").textContent = totalSuccess;
     document.getElementById("sumRate").textContent = totalRate.toFixed(1)+"%";
+
+   }
 /* ======================================================
    HOME 대시보드 연동
 ====================================================== */
