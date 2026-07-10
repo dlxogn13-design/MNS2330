@@ -156,33 +156,24 @@ function renderGrowth(data){
 
         growthBody.innerHTML += `
 
-        <tr>
+<tr>
 
-            <td>
-
-${displayRank===rank && index>0 && list[index-1] &&
-item.rate===list[index-1].rate &&
-item.success===list[index-1].success &&
-item.renewal===list[index-1].renewal
 <td>${displayRank}</td>
 
-</td>
+<td>${item.center}</td>
 
-            <td>${item.center}</td>
+<td>${item.name}</td>
 
-            <td>${item.name}</td>
+<td>${item.renewal}</td>
 
-            <td>${item.renewal}</td>
+<td>${item.transfer}</td>
 
-            <td>${item.transfer}</td>
+<td>${item.success}</td>
 
-            <td>${item.success}</td>
+<td>${item.rate.toFixed(1)}%</td>
 
-            <td>${item.rate.toFixed(1)}%</td>
-
-        </tr>
-
-        `;
+</tr>
+`;
 
     });
 
