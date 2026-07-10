@@ -2,10 +2,15 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>약정갱신 운영센터</title>
 <link rel="stylesheet" href="renewal.css">
+
 </head>
 <body>
 <div class="container">
@@ -79,24 +84,51 @@ document.getElementById("today").textContent=
 </script>
 <script>
 
-const dashboard =
-JSON.parse(localStorage.getItem("renewalDashboard"));
+<script>
 
-if(dashboard){
+firebase.initializeApp({
+    databaseURL:"https://sales-dashboard-e7a79-default-rtdb.firebaseio.com"
+});
 
-    document.getElementById("homeRenewal").textContent =
-    dashboard.renewal;
+const db = firebase.database();
 
-    document.getElementById("homeTransfer").textContent =
-    dashboard.transfer;
+db.ref("renewal").on("value",(snapshot)=>{
 
-    document.getElementById("homeSuccess").textContent =
-    dashboard.success;
+    const data = snapshot.val();
 
-    document.getElementById("homeRate").textContent =
-    dashboard.rate + "%";
+    let renewal=0;
+    let transfer=0;
+    let success=0;
 
-}
+    if(data){
+
+        Object.keys(data).forEach(center=>{
+
+            Object.keys(data[center]).forEach(name=>{
+
+                renewal += data[center][name].renewal || 0;
+                transfer += data[center][name].transfer || 0;
+                success += data[center][name].success || 0;
+
+            });
+
+        });
+
+    }
+
+    document.getElementById("homeRenewal").textContent=renewal;
+    document.getElementById("homeTransfer").textContent=transfer;
+    document.getElementById("homeSuccess").textContent=success;
+
+    const rate=
+        renewal===0
+        ?0
+        :(success/renewal*100);
+
+    document.getElementById("homeRate").textContent=
+        rate.toFixed(1)+"%";
+
+});
 
 </script>
     
