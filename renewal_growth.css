@@ -1,0 +1,191 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    font-family:'Pretendard',sans-serif;
+    background:#f4f7fb;
+    color:#333;
+
+}
+
+.page{
+
+    max-width:480px;
+    margin:0 auto;
+    padding:15px;
+
+}
+
+.top-header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:18px;
+
+}
+
+.title-area h1{
+
+    font-size:24px;
+    font-weight:700;
+
+}
+
+.title-area p{
+
+    margin-top:4px;
+    color:#777;
+    font-size:13px;
+
+}
+
+.top-buttons{
+
+    display:flex;
+    gap:8px;
+
+}
+
+.btn{
+
+    border:none;
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:13px;
+    cursor:pointer;
+
+}
+
+.btn-home{
+
+    background:#4f7cff;
+    color:#fff;
+
+}
+
+.btn-refresh{
+
+    background:#17a2b8;
+    color:#fff;
+
+}
+.search-box{
+
+    background:#fff;
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:18px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+
+}
+
+.search-item{
+
+    display:flex;
+    flex-direction:column;
+    margin-bottom:12px;
+
+}
+
+.search-item:last-child{
+
+    margin-bottom:0;
+
+}
+
+.search-item label{
+
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:6px;
+    color:#666;
+
+}
+
+.search-item select,
+.search-item input{
+
+    height:42px;
+    border:1px solid #dcdfe6;
+    border-radius:10px;
+    padding:0 12px;
+    font-size:14px;
+    background:#fff;
+
+}
+
+.section-title{
+
+    font-size:17px;
+    font-weight:700;
+    margin-bottom:12px;
+
+}
+
+.report-section{
+
+    margin-bottom:18px;
+
+}
+
+.table-wrap{
+
+    background:#fff;
+    border-radius:14px;
+    overflow-x:auto;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+
+}
+.growth-table{
+
+    width:100%;
+    border-collapse:collapse;
+    min-width:650px;
+
+}
+
+.growth-table th{
+
+    background:#4f7cff;
+    color:#fff;
+    font-size:13px;
+    font-weight:600;
+    padding:12px 8px;
+    text-align:center;
+    white-space:nowrap;
+
+}
+
+.growth-table td{
+
+    border-bottom:1px solid #ececec;
+    padding:10px 8px;
+    text-align:center;
+    font-size:13px;
+    white-space:nowrap;
+
+}
+
+.growth-table tbody tr:hover{
+
+    background:#f8fbff;
+
+}
+
+.total-row{
+
+    background:#eef4ff;
+    font-weight:700;
+
+}
+
+.total-row td{
+
+    border-top:2px solid #4f7cff;
+
+}
