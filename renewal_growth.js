@@ -33,7 +33,24 @@ document.getElementById("periodSelect");
 
 const searchName =
 document.getElementById("searchName");
+
 let currentData = {};
+
+const btnTelegram =
+document.getElementById("btnTelegram");
+
+const telegramModal =
+document.getElementById("telegramModal");
+
+const telegramPassword =
+document.getElementById("telegramPassword");
+
+const telegramConfirm =
+document.getElementById("telegramConfirm");
+
+const telegramCancel =
+document.getElementById("telegramCancel");
+
 /* ======================================================
    시작
 ====================================================== */
@@ -296,6 +313,43 @@ document
 
 document
 .getElementById("btnRefresh")
+/* ======================================================
+   권매방 전송 모달
+====================================================== */
+
+btnTelegram.addEventListener("click",()=>{
+
+    telegramPassword.value="";
+
+    telegramModal.classList.remove("hidden");
+
+    telegramPassword.focus();
+
+});
+
+telegramCancel.addEventListener("click",()=>{
+
+    telegramModal.classList.add("hidden");
+
+});
+
+telegramConfirm.addEventListener("click",()=>{
+
+    if(telegramPassword.value !== "2330"){
+
+        alert("비밀번호가 올바르지 않습니다.");
+
+        telegramPassword.value="";
+
+        return;
+
+    }
+
+    telegramModal.classList.add("hidden");
+
+    alert("권매방 전송 기능은 다음 단계에서 연결합니다.");
+
+});   
 .addEventListener("click",()=>{
 
     loadGrowth();
