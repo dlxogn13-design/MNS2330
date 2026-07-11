@@ -160,10 +160,9 @@ function renderGrowth(data){
 
     <td>${displayRank}</td>
 
-    <td>
-        ${item.name}
-        <span class="center-name">(${item.center})</span>
-    </td>
+    <td>${item.center}</td>
+
+    <td>${item.name}</td>
 
     <td>${item.renewal}</td>
 
