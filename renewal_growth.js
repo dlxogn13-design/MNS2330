@@ -154,37 +154,30 @@ function renderGrowth(data){
         totalTransfer += item.transfer;
         totalSuccess += item.success;
 
-        growthBody.innerHTML += `
+      growthBody.innerHTML += `
 
 <tr>
 
-<td>${displayRank}</td>
+    <td>${displayRank}</td>
 
-<td>
+    <td>
+        ${item.name}
+        <span class="center-name">(${item.center})</span>
+    </td>
 
-${item.name}
-<span class="center-name">(${item.center})</span>
-</td>
+    <td>${item.renewal}</td>
 
-<span class="center-name">
+    <td>${item.transfer}</td>
 
-</span>
+    <td>${item.success}</td>
 
-</td>
-
-<td>${item.renewal}</td>
-
-<td>${item.transfer}</td>
-
-<td>${item.success}</td>
-
-<td>${item.rate.toFixed(1)}%</td>
+    <td>${item.rate.toFixed(1)}%</td>
 
 </tr>
+
 `;
 
-    });
-
+});
     document.getElementById("sumRenewal").textContent =
         totalRenewal;
 
