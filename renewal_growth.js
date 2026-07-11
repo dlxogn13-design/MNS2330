@@ -165,7 +165,6 @@ function renderGrowth(data){
 ${item.name}
 <span class="center-name">(${item.center})</span>
 </td>
-<br>
 
 <span class="center-name">
 
