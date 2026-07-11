@@ -168,8 +168,6 @@ ${item.name}
 
 <span class="center-name">
 
-(${item.center})
-
 </span>
 
 </td>
