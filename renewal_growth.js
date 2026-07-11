@@ -33,7 +33,7 @@ document.getElementById("periodSelect");
 
 const searchName =
 document.getElementById("searchName");
-
+let currentData = {};
 /* ======================================================
    시작
 ====================================================== */
@@ -52,9 +52,9 @@ function loadGrowth(){
 
     db.ref("renewal").on("value",(snapshot)=>{
 
-        const data = snapshot.val() || {};
+        currentData = snapshot.val() || {};
 
-        renderGrowth(data);
+        renderGrowth(currentData);
 
     });
 
@@ -68,6 +68,11 @@ function renderGrowth(data){
     growthBody.innerHTML="";
 
     let list=[];
+   
+   const selectedCenter = centerSelect.value;
+
+   const keyword =
+    searchName.value.trim().toLowerCase();
 
     Object.keys(data).forEach(center=>{
 
@@ -83,7 +88,21 @@ function renderGrowth(data){
                 renewal===0
                 ?0
                 :(success/renewal*100);
+// 센터 필터
+if(
+    selectedCenter &&
+    center !== selectedCenter
+){
+    return;
+}
 
+// 성명 검색
+if(
+    keyword &&
+    !name.toLowerCase().includes(keyword)
+){
+    return;
+}
             list.push({
 
                 center:center,
@@ -203,13 +222,13 @@ function renderGrowth(data){
 
 centerSelect.addEventListener("change",()=>{
 
-    loadGrowth();
+    renderGrowth(currentData);
 
 });
 
 searchName.addEventListener("input",()=>{
 
-    loadGrowth();
+    renderGrowth(currentData);
 
 });
 
