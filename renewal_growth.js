@@ -313,6 +313,13 @@ document
 
 document
 .getElementById("btnRefresh")
+.addEventListener("click",()=>{
+
+    loadGrowth();
+
+});
+
+
 /* ======================================================
    권매방 전송 모달
 ====================================================== */
@@ -348,10 +355,5 @@ telegramConfirm.addEventListener("click",()=>{
     telegramModal.classList.add("hidden");
 
     alert("권매방 전송 기능은 다음 단계에서 연결합니다.");
-
-});   
-.addEventListener("click",()=>{
-
-    loadGrowth();
 
 });
