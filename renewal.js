@@ -467,7 +467,21 @@ document
 .getElementById("btnRefresh")
 .addEventListener("click",()=>{
 
-    alert("Firebase 연동 후 사용 가능합니다.");
+    // 검색 조건 초기화
+    centerSelect.value = "";
+    searchName.value = "";
+
+    // 담당M 전체 다시 표시
+    const rows = memberBody.querySelectorAll("tr");
+
+    rows.forEach(row=>{
+
+        row.style.display = "";
+
+    });
+
+    // Firebase 최신 저장값 다시 불러오기
+    loadFirebase();
 
 });
 
