@@ -315,7 +315,21 @@ document
 .getElementById("btnRefresh")
 .addEventListener("click",()=>{
 
-    loadGrowth();
+    // 검색 조건 초기화
+    centerSelect.value = "";
+    searchName.value = "";
+
+    // 기간 선택 기본값 복원
+    periodSelect.selectedIndex = 0;
+
+    // Firebase 최신 데이터 다시 불러오기
+    db.ref("renewal").once("value",(snapshot)=>{
+
+        currentData = snapshot.val() || {};
+
+        renderGrowth(currentData);
+
+    });
 
 });
 
