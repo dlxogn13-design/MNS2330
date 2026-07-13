@@ -35,6 +35,7 @@ const searchName =
 document.getElementById("searchName");
 
 let currentData = {};
+let currentHistory = {};
 
 const btnTelegram =
 document.getElementById("btnTelegram");
@@ -67,13 +68,129 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 function loadGrowth(){
 
-    db.ref("renewal").on("value",(snapshot)=>{
+    db.ref("renewal_history").on("value",(snapshot)=>{
 
-        currentData = snapshot.val() || {};
+        currentHistory = snapshot.val() || {};
 
-        renderGrowth(currentData);
+        applyPeriodData();
 
     });
+
+}
+
+
+/* ======================================================
+   기간별 데이터 집계
+====================================================== */
+
+function applyPeriodData(){
+
+    const period = periodSelect.value;
+
+    const now = new Date();
+
+    const todayKey =
+        now.getFullYear() + "-" +
+        String(now.getMonth()+1).padStart(2,"0") + "-" +
+        String(now.getDate()).padStart(2,"0");
+
+    const result = {};
+
+    Object.keys(currentHistory).forEach(dateKey=>{
+
+        const date = new Date(dateKey + "T00:00:00");
+
+        let include = false;
+
+        // 오늘
+        if(period === "today"){
+
+            include = dateKey === todayKey;
+
+        }
+
+        // 이번주 : 월요일부터 오늘까지
+        if(period === "week"){
+
+            const monday = new Date(now);
+
+            const day = now.getDay();
+
+            const diff =
+                day === 0
+                ? -6
+                : 1 - day;
+
+            monday.setDate(now.getDate() + diff);
+
+            monday.setHours(0,0,0,0);
+
+            const end = new Date(now);
+
+            end.setHours(23,59,59,999);
+
+            include =
+                date >= monday &&
+                date <= end;
+
+        }
+
+        // 이번달
+        if(period === "month"){
+
+            include =
+                date.getFullYear() === now.getFullYear() &&
+                date.getMonth() === now.getMonth() &&
+                date <= now;
+
+        }
+
+        if(!include) return;
+
+        const dayData = currentHistory[dateKey];
+
+        Object.keys(dayData).forEach(center=>{
+
+            if(!result[center]){
+
+                result[center] = {};
+
+            }
+
+            Object.keys(dayData[center]).forEach(name=>{
+
+                const item = dayData[center][name];
+
+                if(!result[center][name]){
+
+                    result[center][name] = {
+
+                        renewal:0,
+                        transfer:0,
+                        success:0
+
+                    };
+
+                }
+
+                result[center][name].renewal +=
+                    item.renewal || 0;
+
+                result[center][name].transfer +=
+                    item.transfer || 0;
+
+                result[center][name].success +=
+                    item.success || 0;
+
+            });
+
+        });
+
+    });
+
+    currentData = result;
+
+    renderGrowth(currentData);
 
 }
 /* ======================================================
@@ -246,6 +363,11 @@ centerSelect.addEventListener("change",()=>{
 searchName.addEventListener("input",()=>{
 
     renderGrowth(currentData);
+
+});
+periodSelect.addEventListener("change",()=>{
+
+    applyPeriodData();
 
 });
 
