@@ -704,3 +704,35 @@ function loadFirebase(){
 ====================================================== */
 
 updateSummary();
+/* ======================================================
+   임시 테스트용 과거 데이터 생성
+   실행 확인 후 반드시 삭제
+====================================================== */
+
+async function createTestHistory(){
+
+    const snapshot =
+        await db.ref("renewal").once("value");
+
+    const data = snapshot.val();
+
+    if(!data){
+
+        console.log("복사할 renewal 데이터가 없습니다.");
+
+        return;
+
+    }
+
+    const updates = {};
+
+    updates["renewal_history/2026-07-10"] = data;
+    updates["renewal_history/2026-07-11"] = data;
+
+    await db.ref().update(updates);
+
+    console.log("과거 테스트 데이터 생성 완료");
+
+}
+
+createTestHistory();
