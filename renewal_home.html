@@ -52,7 +52,11 @@
 
 <section class="briefing">
 <h2>🤖 강북이 브리핑</h2>
-<p>오늘 데이터를 불러오는 중입니다.</p>
+
+<div id="briefingContent">
+    오늘 데이터를 불러오는 중입니다.
+</div>
+
 </section>
 
 <section class="menu-grid">
@@ -92,43 +96,390 @@ if (!firebase.apps.length) {
 
 }
 
-const db = firebase.database();
+/* ======================================================
+   강북이 홈 브리핑
+====================================================== */
 
-db.ref("renewal").on("value",(snapshot)=>{
+const members = [
 
-    const data = snapshot.val();
+    { center:"서대문", name:"유승준" },
+    { center:"서대문", name:"허만석" },
+    { center:"서대문", name:"최성환" },
 
-    let renewal=0;
-    let transfer=0;
-    let success=0;
+    { center:"의정부", name:"윤경식" },
+    { center:"의정부", name:"김하늘" },
+    { center:"의정부", name:"김다성" },
+    { center:"의정부", name:"이주영" },
 
-    if(data){
+    { center:"고양", name:"노민기" },
+    { center:"고양", name:"조대형" },
+    { center:"고양", name:"김준호" },
+    { center:"고양", name:"김세미" },
 
-        Object.keys(data).forEach(center=>{
+    { center:"구리", name:"이세훈" },
+    { center:"구리", name:"박남두" },
+    { center:"구리", name:"유소연" },
+    { center:"구리", name:"최수정" },
 
-            Object.keys(data[center]).forEach(name=>{
+    { center:"노원", name:"김태욱" },
+    { center:"노원", name:"이율린" },
+    { center:"노원", name:"김택민" },
 
-                renewal += data[center][name].renewal || 0;
-                transfer += data[center][name].transfer || 0;
-                success += data[center][name].success || 0;
+    { center:"광진", name:"최재현" },
+    { center:"광진", name:"이경민" },
+    { center:"광진", name:"오은지" },
 
-            });
+    { center:"강릉", name:"김경환" },
+    { center:"강릉", name:"심아롬" },
+    { center:"강릉", name:"김경원" },
+    { center:"강릉", name:"박수용" },
 
-        });
+    { center:"원주", name:"이인훈" },
+    { center:"원주", name:"서정원" },
+    { center:"원주", name:"조민희" },
+    { center:"원주", name:"김지훈" },
+
+    { center:"춘천", name:"임원일" },
+    { center:"춘천", name:"양승환" },
+    { center:"춘천", name:"인기돈" }
+
+];
+
+
+/* ======================================================
+   날짜 키 생성
+====================================================== */
+
+function getDateKey(date){
+
+    return (
+        date.getFullYear() + "-" +
+        String(date.getMonth()+1).padStart(2,"0") + "-" +
+        String(date.getDate()).padStart(2,"0")
+    );
+
+}
+
+
+/* ======================================================
+   직전 근무일 계산
+   근무일 : 월 ~ 토
+====================================================== */
+
+function getPreviousWorkday(date){
+
+    const prev = new Date(date);
+
+    prev.setDate(prev.getDate()-1);
+
+    // 일요일이면 토요일로 이동
+    if(prev.getDay() === 0){
+
+        prev.setDate(prev.getDate()-1);
 
     }
 
-    document.getElementById("homeRenewal").textContent=renewal;
-    document.getElementById("homeTransfer").textContent=transfer;
-    document.getElementById("homeSuccess").textContent=success;
+    return prev;
 
-    const rate=
-        renewal===0
-        ?0
-        :(success/renewal*100);
+}
 
-    document.getElementById("homeRate").textContent=
-        rate.toFixed(1)+"%";
+
+/* ======================================================
+   하루 데이터 합계
+====================================================== */
+
+function getTotals(data){
+
+    let renewal = 0;
+    let transfer = 0;
+    let success = 0;
+
+    if(!data){
+
+        return {
+            renewal:0,
+            transfer:0,
+            success:0
+        };
+
+    }
+
+    Object.keys(data).forEach(center=>{
+
+        Object.keys(data[center]).forEach(name=>{
+
+            const item = data[center][name];
+
+            renewal += item.renewal || 0;
+            transfer += item.transfer || 0;
+            success += item.success || 0;
+
+        });
+
+    });
+
+    return {
+        renewal,
+        transfer,
+        success
+    };
+
+}
+
+
+/* ======================================================
+   전일 대비 증감률
+====================================================== */
+
+function getChange(current,previous){
+
+    if(previous === 0){
+
+        if(current === 0){
+
+            return "0.0%";
+
+        }
+
+        return "신규";
+
+    }
+
+    const change =
+        ((current-previous)/previous)*100;
+
+    const sign =
+        change > 0 ? "+" : "";
+
+    return sign + change.toFixed(1) + "%";
+
+}
+
+
+/* ======================================================
+   Firebase 날짜별 이력 읽기
+====================================================== */
+
+db.ref("renewal_history").on("value",(snapshot)=>{
+
+    const history = snapshot.val() || {};
+
+    const today = new Date();
+
+    const previousWorkday =
+        getPreviousWorkday(today);
+
+    const todayKey =
+        getDateKey(today);
+
+    const previousKey =
+        getDateKey(previousWorkday);
+
+
+    const todayData =
+        history[todayKey] || {};
+
+    const previousData =
+        history[previousKey] || {};
+
+
+    const todayTotal =
+        getTotals(todayData);
+
+    const previousTotal =
+        getTotals(previousData);
+
+
+    /* ==================================================
+       홈 상단 현황
+    ================================================== */
+
+    document.getElementById("homeRenewal").textContent =
+        todayTotal.renewal;
+
+    document.getElementById("homeTransfer").textContent =
+        todayTotal.transfer;
+
+    document.getElementById("homeSuccess").textContent =
+        todayTotal.success;
+
+
+    const successRate =
+        todayTotal.renewal === 0
+        ? 0
+        : (todayTotal.success / todayTotal.renewal) * 100;
+
+
+    document.getElementById("homeRate").textContent =
+        successRate.toFixed(1) + "%";
+
+
+    /* ==================================================
+       전달률 계산
+    ================================================== */
+
+    const todayTransferRate =
+        todayTotal.renewal === 0
+        ? 0
+        : (todayTotal.transfer / todayTotal.renewal) * 100;
+
+
+    const previousTransferRate =
+        previousTotal.renewal === 0
+        ? 0
+        : (previousTotal.transfer / previousTotal.renewal) * 100;
+
+
+    const transferRateDiff =
+        todayTransferRate - previousTransferRate;
+
+
+    /* ==================================================
+       미전달 / 전달 후 미성공
+    ================================================== */
+
+    const notTransferred =
+        Math.max(
+            0,
+            todayTotal.renewal - todayTotal.transfer
+        );
+
+
+    const notSuccessful =
+        Math.max(
+            0,
+            todayTotal.transfer - todayTotal.success
+        );
+
+
+    /* ==================================================
+       미입력 담당 계산
+    ================================================== */
+
+    let missingCount = 0;
+
+
+    members.forEach(member=>{
+
+        const centerData =
+            todayData[member.center];
+
+        const saved =
+            centerData &&
+            centerData[member.name];
+
+        if(!saved){
+
+            missingCount++;
+
+        }
+
+    });
+
+
+    /* ==================================================
+       퍼널 흐름 해석
+    ================================================== */
+
+    let flowMessage = "";
+
+
+    if(todayTotal.renewal === 0){
+
+        flowMessage =
+            "현재까지 등록된 권매 활동이 없습니다.";
+
+    }
+    else if(transferRateDiff > 0){
+
+        flowMessage =
+            `전달률은 ${todayTransferRate.toFixed(1)}%로 ` +
+            `전 근무일보다 ${transferRateDiff.toFixed(1)}%p 상승해 ` +
+            `권매 이후 전달 흐름이 개선되고 있습니다.`;
+
+    }
+    else if(transferRateDiff < 0){
+
+        flowMessage =
+            `전달률은 ${todayTransferRate.toFixed(1)}%로 ` +
+            `전 근무일보다 ${Math.abs(transferRateDiff).toFixed(1)}%p 하락해 ` +
+            `권매 이후 전달 전환에 추가 점검이 필요합니다.`;
+
+    }
+    else{
+
+        flowMessage =
+            `전달률은 ${todayTransferRate.toFixed(1)}%로 ` +
+            `전 근무일과 동일한 수준을 유지하고 있습니다.`;
+
+    }
+
+
+    /* ==================================================
+       미입력 브리핑
+    ================================================== */
+
+    const missingMessage =
+        missingCount === 0
+        ? "오늘 전체 담당M의 입력이 완료되었습니다."
+        : `오늘 미입력 담당은 ${missingCount}명입니다.`;
+
+
+    /* ==================================================
+       강북이 브리핑 출력
+    ================================================== */
+
+    document.getElementById("briefingContent").innerHTML = `
+
+        <div class="briefing-summary">
+
+            <strong>
+                권매 ${todayTotal.renewal}건
+                &nbsp; | &nbsp;
+                전달 ${todayTotal.transfer}건
+                &nbsp; | &nbsp;
+                성공 ${todayTotal.success}건
+            </strong>
+
+        </div>
+
+        <div class="briefing-change">
+
+            전 근무일 대비
+            권매 ${getChange(
+                todayTotal.renewal,
+                previousTotal.renewal
+            )}
+            &nbsp; | &nbsp;
+
+            전달 ${getChange(
+                todayTotal.transfer,
+                previousTotal.transfer
+            )}
+            &nbsp; | &nbsp;
+
+            성공 ${getChange(
+                todayTotal.success,
+                previousTotal.success
+            )}
+
+        </div>
+
+        <p>
+            ${flowMessage}
+        </p>
+
+        <p>
+            현재 미전달 ${notTransferred}건,
+            전달 후 미성공 ${notSuccessful}건으로
+            후속 관리가 필요합니다.
+        </p>
+
+        <p>
+            ${missingMessage}
+        </p>
+
+    `;
 
 });
 
