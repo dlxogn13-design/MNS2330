@@ -378,45 +378,65 @@ periodSelect.addEventListener("change",()=>{
 
 function updateAI(list){
 
+    // 선택된 기간명
+    const periodText = {
+        today: "오늘",
+        week: "이번주",
+        month: "이번달"
+    }[periodSelect.value] || "오늘";
+
+
+    // 데이터가 없을 경우
     if(list.length===0){
 
         document.getElementById("aiTop").textContent =
-        "🏆 오늘 입력된 데이터가 없습니다.";
+        `🏆 ${periodText} 입력된 데이터가 없습니다.`;
 
         document.getElementById("aiCenter").textContent =
-        "📊 센터 평균을 계산할 수 없습니다.";
+        `🎯 ${periodText} 전체 평균 성공률을 계산할 수 없습니다.`;
 
         document.getElementById("aiImprove").textContent =
-        "📈 분석 대상이 없습니다.";
+        `⚠️ ${periodText} 분석 대상이 없습니다.`;
 
         return;
 
     }
 
-const topRate = list[0].rate;
-const topSuccess = list[0].success;
-const topRenewal = list[0].renewal;
 
-const topMembers = list.filter(item =>
-    item.rate === topRate &&
-    item.success === topSuccess &&
-    item.renewal === topRenewal
-);
+    // 우수 담당자 기준
+    const topRate = list[0].rate;
+    const topSuccess = list[0].success;
+    const topRenewal = list[0].renewal;
 
-    const avg=
-        list.reduce((a,b)=>a+b.rate,0)/list.length;
 
-    const low=
+    // 동일 성과 공동 순위 모두 표시
+    const topMembers = list.filter(item =>
+        item.rate === topRate &&
+        item.success === topSuccess &&
+        item.renewal === topRenewal
+    );
+
+
+    // 전체 평균 성공률
+    const avg =
+        list.reduce((a,b)=>a+b.rate,0) / list.length;
+
+
+    // 개선 대상
+    const low =
         [...list].sort((a,b)=>a.rate-b.rate)[0];
 
+
     document.getElementById("aiTop").textContent =
-`🏆 우수 담당자 : ${topMembers.map(x=>x.name).join(", ")} (${topRate.toFixed(1)}%)`;
+    `🏆 ${periodText} 우수 담당자 : ${topMembers.map(x=>x.name).join(", ")} (${topRate.toFixed(1)}%)`;
 
-    document.getElementById("aiCenter").textContent=
-    `🎯 전체 평균 성공률 : ${avg.toFixed(1)}%`;
 
-document.getElementById("aiImprove").textContent=
-    `⚠️ 개선 대상 : ${low.name} (${low.rate.toFixed(1)}%)`;
+    document.getElementById("aiCenter").textContent =
+    `🎯 ${periodText} 전체 평균 성공률 : ${avg.toFixed(1)}%`;
+
+
+    document.getElementById("aiImprove").textContent =
+    `⚠️ ${periodText} 개선 대상 : ${low.name} (${low.rate.toFixed(1)}%)`;
 
 }
 
