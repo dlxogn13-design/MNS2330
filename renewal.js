@@ -231,14 +231,34 @@ function bindEvents(){
     const transfer = Number(transferInput.value) || 0;
     const success = Number(successInput.value) || 0;
 
-   db.ref("renewal/"+center+"/"+name).set({
+   const today = new Date();
+
+const dateKey =
+    today.getFullYear() + "-" +
+    String(today.getMonth()+1).padStart(2,"0") + "-" +
+    String(today.getDate()).padStart(2,"0");
+
+const saveData = {
 
     renewal: renewal,
     transfer: transfer,
     success: success,
     updatedAt: Date.now()
 
-})
+};
+
+const updates = {};
+
+updates["renewal/"+center+"/"+name] = saveData;
+
+updates[
+    "renewal_history/" +
+    dateKey + "/" +
+    center + "/" +
+    name
+] = saveData;
+
+db.ref().update(updates)
 .then(()=>{
 
     console.log("Firebase 저장 성공");
