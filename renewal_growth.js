@@ -418,8 +418,16 @@ function updateAI(list){
 
 
     // 전체 평균 성공률
-    const avg =
-        list.reduce((a,b)=>a+b.rate,0) / list.length;
+    const totalRenewal =
+    list.reduce((sum,item)=>sum+item.renewal,0);
+
+const totalSuccess =
+    list.reduce((sum,item)=>sum+item.success,0);
+
+const avg =
+    totalRenewal===0
+    ?0
+    :(totalSuccess/totalRenewal*100);
 
 
     // 개선 대상
