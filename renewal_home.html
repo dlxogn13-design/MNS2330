@@ -96,6 +96,8 @@ if (!firebase.apps.length) {
 
 }
 
+const db = firebase.database();
+
 /* ======================================================
    강북이 홈 브리핑
 ====================================================== */
@@ -274,12 +276,6 @@ db.ref("renewal_history").on("value",(snapshot)=>{
 
 const previousKey =
     getDateKey(previousWorkday);
-
-console.log("==============");
-console.log("TodayKey :", todayKey);
-console.log("PreviousKey :", previousKey);
-console.log("History :", history);
-console.log("TodayData :", history[todayKey]);
 
 
     const todayData =
