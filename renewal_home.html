@@ -270,10 +270,16 @@ db.ref("renewal_history").on("value",(snapshot)=>{
         getPreviousWorkday(today);
 
     const todayKey =
-        getDateKey(today);
+    getDateKey(today);
 
-    const previousKey =
-        getDateKey(previousWorkday);
+const previousKey =
+    getDateKey(previousWorkday);
+
+console.log("==============");
+console.log("TodayKey :", todayKey);
+console.log("PreviousKey :", previousKey);
+console.log("History :", history);
+console.log("TodayData :", history[todayKey]);
 
 
     const todayData =
